@@ -1,7 +1,7 @@
 'use strict';
 // ---------- Settings (saved separately from the game) ----------
 const SETTINGS_KEY = 'fernhollow-settings-v1';
-const SAVE_KEY = 'fernhollow-save-v1';
+const SAVE_KEY = 'fernhollow-save-v2'; // v2: new hand-drawn map
 const Settings = Object.assign(
   { music: 50, sfx: 80, zoom: 'normal', touch: 'auto', rumble: true, clock24: false, highlight: true },
   Store.get(SETTINGS_KEY, {})
@@ -79,7 +79,7 @@ const LOOKS = {
 
 const NPCS = {
   thistle: {
-    name: 'Thistle', home: [82, 48], hours: [8, 20],
+    name: 'Thistle', home: [27, 53], hours: [8, 20],
     loves: ['bloom', 'dew'], likes: ['carrot', 'berry', 'cap'], hates: ['gloom', 'gel'],
     intro: "Oh! You must be the new farmer! I'm Thistle: seeds, sprouts and gossip, all sold right here at my stall. Open from 8 in the morning till 8 at night!",
     lines: [
@@ -100,7 +100,7 @@ const NPCS = {
     hearts: ["You know, you're my favorite customer. Don't tell the others!"],
   },
   mirabel: {
-    name: 'Mirabel', home: [98, 47], hours: [9, 21],
+    name: 'Mirabel', home: [43, 52], hours: [9, 21],
     loves: ['shard', 'glowcap'], likes: ['cap', 'gloom', 'bloom'], hates: ['fiber'],
     intro: "Ah. The new keeper of the old farm. Your grandmother was a dear friend of mine. I'm Mirabel: tonics, lanterns, and the occasional curse removal.",
     lines: [
@@ -120,11 +120,11 @@ const NPCS = {
     hearts: ["You've a kind heart. Rare, in my experience. Don't lose it."],
   },
   bram: {
-    name: 'Bram', home: [102, 58], hours: [8, 19],
+    name: 'Bram', home: [46, 67], hours: [8, 19],
     loves: ['ore', 'stew'], likes: ['stone', 'pumpkin', 'ember'], hates: ['dew'],
     intro: "Hrm. New farmer, eh? Bram. I make tools, fences, sprinklers. If it's metal, it's mine.",
     lines: [
-      'Star-Iron Ore comes from the Crystal Hills, east of here. Mind the slimes.',
+      'Star-Iron Ore comes from the Crystal Hills, east past your farm. Mind the slimes.',
       'A Rune Sprinkler waters the eight tiles around it every morning. Saves your back.',
       'Crystal nodes take a few good swings. Put your shoulders into it.',
       'My copper watering can holds more than twice as much. Worth every coin.',
@@ -140,13 +140,14 @@ const NPCS = {
     hearts: ["You're alright, farmer. Better than alright. Don't make it weird."],
   },
   lumi: {
-    name: 'Lumi', home: [76, 18], hours: [10, 23],
+    name: 'Lumi', home: [20, 40], hours: [10, 23],
     loves: ['dew', 'berry'], likes: ['bloom', 'glowcap', 'carrot'], hates: ['ore', 'stone'],
     intro: "Hi hi! You can see me? Most big-folk can't! I'm Lumi. I live in the mushroom house in the woods!",
     lines: [
       'The mushrooms whisper where the Fairy Caps grow. They grow back every few days!',
       "Moonblooms shine at night like little moons. They're my favorite!",
       'If you get lost in the woods, just follow the path. The trees always lead home.',
+      'Have you seen Moonfall? The waterfall where the river begins, way up north. It sparkles at night!',
       'The Moonwell glows brightest on the darkest nights.',
       "I'm not allowed in the hills. Too many rocks that bite!",
     ],
@@ -160,12 +161,13 @@ const NPCS = {
     hearts: ["You're my best big-folk friend. I made you a secret handshake. It's mostly wiggling."],
   },
   oswin: {
-    name: 'Elder Oswin', home: [86, 55], hours: [7, 19],
+    name: 'Elder Oswin', home: [32, 60], hours: [7, 19],
     loves: ['pumpkin', 'stew'], likes: ['carrot', 'melon', 'cap'], hates: ['gel'],
     intro: 'So you made it. Welcome to Fernhollow, child. Your grandmother tended that farm for fifty years. The land has been waiting for you.',
     lines: [
       'The hollow remembers those who care for it.',
       'Ship your goods in the Market Crate beside your house. The merchants collect it each night.',
+      'Cross the little bridge south of town and you will find Fairy Isle. Lovely place for a walk.',
       'In my youth, the fae danced in the square every full moon. Perhaps they will again.',
       'Rest when you are tired. A farmer who passes out in a field wakes up poorer.',
     ],

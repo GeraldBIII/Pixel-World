@@ -1,7 +1,10 @@
 'use strict';
-const W = 140, H = 100;
-const GND = { GRASS: 0, PATH: 1, WATER: 2, SAND: 3, TILLED: 4, PLAZA: 5, FOREST: 6, ROCKY: 7, BRIDGE: 8 };
-const OB = { NONE: 0, OAK: 1, PINE: 2, STUMP: 3, ROCK: 4, CRYSTAL: 5, ORE: 6, WEED: 7, TWIG: 8, BUSH: 9, CAP: 10, DEW: 11, GLOW: 12, FENCE: 13, SPRINKLER: 14, LANTERN: 15, BLOCK: 16, LAMP: 17, CRATE: 18, BOULDER: 19, SIGN: 20 };
+// The world is built from a hand-drawn map. Every coordinate in MAP_REF is a pixel
+// position on the reference photo; toTile() turns it into a tile (8 photo px = 1 tile).
+const W = 160, H = 156;
+const PX0 = 140, PY0 = 430, PXS = 8;
+const GND = { GRASS: 0, PATH: 1, WATER: 2, SAND: 3, TILLED: 4, PLAZA: 5, FOREST: 6, ROCKY: 7, BRIDGE: 8, CLIFF: 9, FALLS: 10 };
+const OB = { NONE: 0, OAK: 1, PINE: 2, STUMP: 3, ROCK: 4, CRYSTAL: 5, ORE: 6, WEED: 7, TWIG: 8, BUSH: 9, CAP: 10, DEW: 11, GLOW: 12, FENCE: 13, SPRINKLER: 14, LANTERN: 15, BLOCK: 16, LAMP: 17, CRATE: 18, BOULDER: 19, SIGN: 20, DENSE: 21 };
 
 const OBJ_INFO = [];
 OBJ_INFO[OB.OAK] = { solid: 1, hp: 6, tool: 'axe', drops: [['wood', 5, 8]], becomes: OB.STUMP, pc: '#8c5a35' };
@@ -24,33 +27,80 @@ OBJ_INFO[OB.BLOCK] = { solid: 1 };
 OBJ_INFO[OB.LAMP] = { solid: 1 };
 OBJ_INFO[OB.CRATE] = { solid: 1 };
 OBJ_INFO[OB.SIGN] = { solid: 1 };
+OBJ_INFO[OB.DENSE] = { solid: 1 }; // the impassable eastern forest: can't be chopped
 const PLACE_OBJ = { fence: OB.FENCE, sprinkler: OB.SPRINKLER, lantern: OB.LANTERN };
 const TOOL_NAMES = { axe: 'an axe', pick: 'a pickaxe', any: 'a tool' };
 
-const FARM = { x0: 12, y0: 31, x1: 56, y1: 72 };
-const VILLAGE = { x0: 67, y0: 38, x1: 110, y1: 72 };
-const SPAWN = { x: 31, y: 37 };
+// ---------- The reference map (photo pixel coordinates) ----------
+const MAP_REF = {
+  // Blue: sheer cliffs along the north and west edges
+  cliffTop: [[130, 700], [205, 680], [240, 640], [300, 600], [380, 580], [470, 570], [520, 560], [525, 520], [545, 495], [650, 488], [760, 483], [840, 490], [870, 540], [900, 580], [960, 615], [1010, 620], [1030, 580], [1050, 548], [1090, 550], [1160, 580], [1230, 610], [1290, 625], [1340, 628], [1430, 630]],
+  cliffLeft: [[205, 600], [205, 680], [200, 760], [195, 900], [192, 1000], [190, 1036]],
+  // Green: dense forest along the east edge
+  forestEast: [[1320, 560], [1320, 950], [1358, 960], [1365, 1036]],
+  // Yellow: where the land meets the sea (the sea is to the south)
+  coasts: [
+    // West coast, the town's shore, the big southern peninsula, then up to the left river mouth
+    [[130, 1030], [190, 1030], [215, 1050], [245, 1080], [275, 1085], [295, 1060], [305, 1030], [335, 995], [380, 978], [430, 970], [490, 975], [530, 988], [545, 1010], [530, 1040], [490, 1065], [445, 1095], [405, 1135], [385, 1180], [378, 1240], [385, 1300], [410, 1350], [440, 1400], [470, 1450], [500, 1468], [535, 1455], [565, 1420], [580, 1370], [585, 1300], [583, 1230], [580, 1180], [585, 1140], [620, 1110], [660, 1085], [690, 1065], [705, 1040]],
+    // South shore of the farm, between the two river mouths
+    [[770, 1040], [775, 1100], [780, 1170], [840, 1192], [900, 1190], [970, 1182], [1005, 1168], [1022, 1130], [1025, 1090]],
+    // East coast
+    [[1045, 1100], [1070, 1140], [1100, 1135], [1135, 1105], [1155, 1060], [1162, 1010], [1190, 985], [1230, 985], [1280, 1005], [1330, 1020], [1365, 1025], [1430, 1030]],
+  ],
+  // Temporary walls across the river mouths so the sea doesn't flood inland while generating
+  plugs: [[[705, 1040], [770, 1040]], [[1025, 1090], [1045, 1100]]],
+  islands: [
+    [[640, 1150], [670, 1145], [690, 1170], [695, 1220], [690, 1265], [660, 1292], [630, 1290], [610, 1270], [605, 1230], [612, 1185], [640, 1150]],
+    [[1060, 1160], [1100, 1170], [1125, 1200], [1125, 1250], [1100, 1280], [1070, 1290], [1035, 1270], [1015, 1235], [1015, 1195], [1040, 1165], [1060, 1160]],
+    [[810, 1465], [850, 1470], [878, 1500], [880, 1560], [865, 1600], [835, 1625], [805, 1620], [785, 1585], [775, 1530], [785, 1485], [810, 1465]],
+  ],
+  // The river: falls from the waterfall (W), splits around your farm, and runs into the sea
+  rivers: [
+    { pts: [[628, 470], [628, 520], [630, 590], [650, 640], [690, 680], [725, 720], [750, 770], [765, 810]], r0: 1.3, r1: 1.5 },
+    { pts: [[765, 810], [752, 850], [738, 900], [730, 950], [728, 1000], [735, 1040], [740, 1090]], r0: 1.4, r1: 2.6 },
+    { pts: [[765, 810], [820, 828], [900, 838], [960, 850], [990, 885], [995, 930], [1008, 990], [1030, 1060], [1035, 1110], [1040, 1160]], r0: 1.4, r1: 2.0 },
+  ],
+};
+const toTile = ([x, y]) => [Math.floor((x - PX0) / PXS), Math.floor((y - PY0) / PXS)];
+function polyAt(poly, v, axis) { // interpolate along a monotonic polyline
+  const a = axis, b = 1 - axis;
+  if (v <= poly[0][a]) return poly[0][b];
+  for (let k = 0; k < poly.length - 1; k++) {
+    const p = poly[k], q = poly[k + 1];
+    if (v <= q[a]) return p[b] + (q[b] - p[b]) * ((v - p[a]) / ((q[a] - p[a]) || 1));
+  }
+  return poly[poly.length - 1][b];
+}
+
+const SPAWN = { x: 91, y: 60 };
+const HOUSE_CLEAR = { x0: 85, y0: 54, x1: 98, y1: 64 };
+let FARM = { x0: 0, y0: 0, x1: 0, y1: 0 };
+const VILLAGE = { x0: 19, y0: 44, x1: 50, y1: 67 };
+const PLAZA = { x: 35, y: 57 };
+const PENINSULA = { x0: 28, y0: 70, x1: 58, y1: 132 };
 
 const World = {
   ground: new Uint8Array(W * H), obj: new Uint8Array(W * H), wet: new Uint8Array(W * H),
-  bmap: new Int16Array(W * H), crops: new Map(), hp: new Map(), buildings: [], signs: new Map(),
+  bmap: new Int16Array(W * H), farm: new Uint8Array(W * H), cliffD: new Uint8Array(W * H),
+  crops: new Map(), hp: new Map(), buildings: [], signs: new Map(),
 };
 
 const BUILDING_DEFS = [
-  { id: 'house', kind: 'farmhouse', x: 28, y: 33, w: 6, h: 4, door: 3, label: 'Sleep', action: 'sleep' },
-  { id: 'seeds', kind: 'seedshop', x: 77, y: 43, w: 5, h: 4, door: 2, label: 'Shop', action: 'shop', shop: 'seeds' },
-  { id: 'apoth', kind: 'apothecary', x: 93, y: 42, w: 5, h: 4, door: 2, label: 'Shop', action: 'shop', shop: 'apothecary' },
-  { id: 'forge', kind: 'forge', x: 99, y: 53, w: 5, h: 4, door: 1, label: 'Shop', action: 'shop', shop: 'forge' },
-  { id: 'elder', kind: 'elderhouse', x: 78, y: 56, w: 5, h: 4, door: 2, label: 'Knock', action: 'msg', msg: "Elder Oswin's house. He's usually out by the fountain during the day." },
-  { id: 'cottage', kind: 'cottage', x: 93, y: 58, w: 4, h: 3, door: 1, label: 'Knock', action: 'msg', msg: 'Nobody answers. A note on the door reads: "Gone adventuring!"' },
-  { id: 'lumi', kind: 'mushhouse', x: 72, y: 13, w: 4, h: 4, door: 1, label: 'Knock', action: 'msg', msg: "Lumi's mushroom house. It smells like rain and honey." },
-  { id: 'moonwell', kind: 'moonwell', x: 44, y: 11, w: 3, h: 3, label: 'Drink', action: 'moonwell', any: true },
-  { id: 'fountain', kind: 'fountain', x: 88, y: 50, w: 3, h: 3, label: 'Wish', action: 'fountain', any: true },
+  { id: 'house', kind: 'farmhouse', x: 88, y: 56, w: 6, h: 4, door: 3, label: 'Sleep', action: 'sleep' },
+  { id: 'seeds', kind: 'seedshop', x: 23, y: 49, w: 5, h: 4, door: 2, label: 'Shop', action: 'shop', shop: 'seeds' },
+  { id: 'apoth', kind: 'apothecary', x: 39, y: 47, w: 5, h: 4, door: 2, label: 'Shop', action: 'shop', shop: 'apothecary' },
+  { id: 'forge', kind: 'forge', x: 43, y: 62, w: 5, h: 4, door: 1, label: 'Shop', action: 'shop', shop: 'forge' },
+  { id: 'elder', kind: 'elderhouse', x: 22, y: 59, w: 5, h: 4, door: 2, label: 'Knock', action: 'msg', msg: "Elder Oswin's house. He's usually out by the fountain during the day." },
+  { id: 'cottage', kind: 'cottage', x: 37, y: 63, w: 4, h: 3, door: 1, label: 'Knock', action: 'msg', msg: 'Nobody answers. A note on the door reads: "Gone adventuring!"' },
+  { id: 'lumi', kind: 'mushhouse', x: 16, y: 34, w: 4, h: 4, door: 1, label: 'Knock', action: 'msg', msg: "Lumi's mushroom house. It smells like rain and honey." },
+  { id: 'moonwell', kind: 'moonwell', x: 44, y: 30, w: 3, h: 3, label: 'Drink', action: 'moonwell', any: true },
+  { id: 'fountain', kind: 'fountain', x: 34, y: 56, w: 3, h: 3, label: 'Wish', action: 'fountain', any: true },
 ];
 
 const MAP_LABELS = [
-  ['Your Farm', 33, 56], ['Fernhollow', 89, 64], ['Whispering Woods', 36, 7], ['Crystal Hills', 125, 22],
-  ['Moonlake', 74, 88], ['Sunny Meadow', 24, 84], ['Moonwell', 45, 18], ["Lumi's House", 74, 22],
+  ['Your Farm', 92, 78], ['Fernhollow', 34, 72], ['Whispering Woods', 30, 26], ['Crystal Hills', 132, 48],
+  ['Moonfall', 61, 4], ['Sunny Meadow', 43, 112], ['Moonwell', 45, 38], ["Lumi's House", 18, 44],
+  ['Fairy Isle', 63, 112], ['The Southern Sea', 92, 122], ['North Fields', 92, 34],
 ];
 
 const idx = (x, y) => y * W + x;
@@ -58,11 +108,12 @@ const inb = (x, y) => x >= 0 && y >= 0 && x < W && y < H;
 const gAt = (x, y) => (inb(x, y) ? World.ground[idx(x, y)] : GND.WATER);
 const oAt = (x, y) => (inb(x, y) ? World.obj[idx(x, y)] : OB.BLOCK);
 const inRect = (r, x, y) => x >= r.x0 && x <= r.x1 && y >= r.y0 && y <= r.y1;
-const inFarm = (x, y) => inRect(FARM, x, y);
+const inFarm = (x, y) => inb(x, y) && World.farm[idx(x, y)] === 1;
+const blockedGround = g => g === GND.WATER || g === GND.CLIFF || g === GND.FALLS;
 function solidTile(x, y) {
   if (!inb(x, y)) return true;
   const i = idx(x, y);
-  if (World.ground[i] === GND.WATER) return true;
+  if (blockedGround(World.ground[i])) return true;
   const o = World.obj[i];
   return !!(o && OBJ_INFO[o].solid);
 }
@@ -74,42 +125,135 @@ function zoneAt(x, y) {
   if (g === GND.FOREST) return 'woods';
   if (g === GND.ROCKY) return 'hills';
   if (g === GND.WATER || g === GND.SAND || g === GND.BRIDGE) return 'lake';
-  if (y > 72 && x < 48) return 'meadow';
+  if (inRect(PENINSULA, x, y)) return 'meadow';
   return 'wild';
 }
 
 function genWorld() {
-  const G = World.ground, O = World.obj;
-  G.fill(GND.GRASS); O.fill(0); World.wet.fill(0); World.bmap.fill(-1);
+  const G = World.ground, O = World.obj, N = W * H;
+  G.fill(GND.GRASS); O.fill(0); World.wet.fill(0); World.bmap.fill(-1); World.farm.fill(0); World.cliffD.fill(0);
   World.crops.clear(); World.hp.clear(); World.buildings = []; World.signs.clear();
   const r = mulberry32(424242);
 
-  // Terrain
+  // 1. Cliffs (north + west) and the dense forest (east)
+  const cliff = new Uint8Array(N), forest = new Uint8Array(N);
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const n = fbm(x / 9, y / 9, 3);
-    let g = GND.GRASS;
-    if (y < 27 + Math.round((n - 0.5) * 8)) g = GND.FOREST;
-    if (x > 111 + Math.round((fbm(x / 7, y / 7, 8) - 0.5) * 8) && y < 70 + Math.round((n - 0.5) * 6)) g = GND.ROCKY;
-    const dx = (x - 74) / 27, dy = (y - 87) / 10.5, d = dx * dx + dy * dy + (fbm(x / 5, y / 5, 9) - 0.5) * 0.6;
-    if (d < 1) g = GND.WATER; else if (d < 1.3) g = GND.SAND;
-    G[idx(x, y)] = g;
+    const px = PX0 + (x + 0.5) * PXS, py = PY0 + (y + 0.5) * PXS, i = idx(x, y);
+    if (py < polyAt(MAP_REF.cliffTop, px, 0) || (py <= 1036 && px < polyAt(MAP_REF.cliffLeft, py, 1))) cliff[i] = 1;
+    else if (py <= 1036 && px > polyAt(MAP_REF.forestEast, py, 1)) forest[i] = 1;
   }
-  // River from the northern hills into Moonlake
-  for (let y = 0; y < 84; y++) {
-    const cx = 62 + Math.round(Math.sin(y * 0.13) * 2.2);
-    for (let x = cx; x < cx + 3; x++) G[idx(x, y)] = GND.WATER;
-  }
-  for (let y = FARM.y0; y <= FARM.y1; y++) for (let x = FARM.x0; x <= FARM.x1; x++) G[idx(x, y)] = GND.GRASS;
-  for (let y = VILLAGE.y0; y <= VILLAGE.y1; y++) for (let x = VILLAGE.x0; x <= VILLAGE.x1; x++) if (G[idx(x, y)] !== GND.WATER) G[idx(x, y)] = GND.GRASS;
-  // Plaza
-  for (let y = 44; y <= 58; y++) for (let x = 82; x <= 96; x++) if ((x - 89) ** 2 + (y - 51) ** 2 <= 37) G[idx(x, y)] = GND.PLAZA;
 
-  // Scatter
+  // 2. Coastlines and islands as walls, then flood the sea in from the south edge
+  const wall = new Uint8Array(N), coastWall = new Uint8Array(N);
+  const drawLine = (pts, mark) => {
+    for (let k = 0; k < pts.length - 1; k++) {
+      let [x0, y0] = toTile(pts[k]); const [x1, y1] = toTile(pts[k + 1]);
+      const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+      let err = dx + dy;
+      for (;;) {
+        const cx = clamp(x0, 0, W - 1), cy = clamp(y0, 0, H - 1);
+        wall[idx(cx, cy)] = 1; if (mark) coastWall[idx(cx, cy)] = 1;
+        if (x0 === x1 && y0 === y1) break;
+        const e2 = 2 * err;
+        if (e2 >= dy) { err += dy; x0 += sx; }
+        if (e2 <= dx) { err += dx; y0 += sy; }
+      }
+    }
+  };
+  for (const c of MAP_REF.coasts) drawLine(c, true);
+  for (const c of MAP_REF.islands) drawLine(c, true);
+  for (const c of MAP_REF.plugs) drawLine(c, false);
+  const sea = new Uint8Array(N), q = [];
+  const seed = (x, y) => { const i = idx(x, y); if (!sea[i] && !wall[i] && !cliff[i] && !forest[i]) { sea[i] = 1; q.push(i); } };
+  for (let x = 0; x < W; x++) seed(x, H - 1);
+  for (let y = 80; y < H; y++) { seed(0, y); seed(W - 1, y); }
+  for (let qi = 0; qi < q.length; qi++) {
+    const i = q[qi], x = i % W, y = (i / W) | 0;
+    if (x > 0) seed(x - 1, y); if (x < W - 1) seed(x + 1, y); if (y > 0) seed(x, y - 1); if (y < H - 1) seed(x, y + 1);
+  }
+
+  // 3. Base ground
+  for (let i = 0; i < N; i++) {
+    if (cliff[i]) G[i] = GND.CLIFF;
+    else if (forest[i]) { G[i] = GND.FOREST; O[i] = OB.DENSE; }
+    else if (sea[i]) G[i] = GND.WATER;
+    else if (wall[i]) G[i] = GND.SAND;
+  }
+  // Widen beaches by one tile along the sea
+  const nearSea = i => { const x = i % W, y = (i / W) | 0; return (x > 0 && sea[i - 1]) || (x < W - 1 && sea[i + 1]) || (y > 0 && sea[i - W]) || (y < H - 1 && sea[i + W]); };
+  const beach = [];
+  for (let i = 0; i < N; i++) {
+    if (G[i] !== GND.GRASS) continue;
+    const x = i % W, y = (i / W) | 0;
+    for (const j of [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, y > 0 ? i - W : -1, y < H - 1 ? i + W : -1]) if (j >= 0 && coastWall[j] && nearSea(j)) { beach.push(i); break; }
+  }
+  for (const i of beach) G[i] = GND.SAND;
+
+  // 4. The river
+  for (const rv of MAP_REF.rivers) {
+    let total = 0; for (let k = 0; k < rv.pts.length - 1; k++) total += dist(...rv.pts[k], ...rv.pts[k + 1]);
+    let done = 0;
+    for (let k = 0; k < rv.pts.length - 1; k++) {
+      const [ax, ay] = rv.pts[k], [bx, by] = rv.pts[k + 1], len = dist(ax, ay, bx, by);
+      for (let s = 0; s <= len; s += 2) {
+        const px = ax + (bx - ax) * s / len, py = ay + (by - ay) * s / len, rad = lerp(rv.r0, rv.r1, (done + s) / total);
+        const cx = (px - PX0) / PXS, cy = (py - PY0) / PXS;
+        for (let y = Math.floor(cy - rad - 1); y <= cy + rad + 1; y++) for (let x = Math.floor(cx - rad - 1); x <= cx + rad + 1; x++) {
+          if (!inb(x, y) || cliff[idx(x, y)]) continue;
+          if ((x + 0.5 - cx) ** 2 + (y + 0.5 - cy) ** 2 <= rad * rad) { G[idx(x, y)] = GND.WATER; O[idx(x, y)] = 0; }
+        }
+      }
+      done += len;
+    }
+  }
+  // The waterfall at the river's source, spilling down the northern cliff
+  for (let x = 57; x <= 65; x++) {
+    let yb = -1; for (let y = 0; y < H && G[idx(x, y)] === GND.CLIFF; y++) yb = y;
+    if (yb < 0 || G[idx(x, yb + 1)] !== GND.WATER) continue;
+    for (let k = 0; k <= yb; k++) G[idx(x, yb - k)] = k < 2 ? GND.FALLS : GND.WATER;
+  }
+
+  // 5. Your farm is the land between the two river branches
+  const fq = [idx(SPAWN.x, SPAWN.y)];
+  World.farm[fq[0]] = 1;
+  for (let qi = 0; qi < fq.length; qi++) {
+    const i = fq[qi], x = i % W, y = (i / W) | 0;
+    for (const [nx, ny] of [[x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1]]) {
+      if (!inb(nx, ny)) continue;
+      const j = idx(nx, ny);
+      if (World.farm[j] || G[j] !== GND.GRASS && G[j] !== GND.SAND) continue;
+      World.farm[j] = 1; fq.push(j);
+    }
+  }
+  FARM = { x0: W, y0: H, x1: 0, y1: 0 };
+  for (let i = 0; i < N; i++) if (World.farm[i]) { const x = i % W, y = (i / W) | 0; FARM.x0 = Math.min(FARM.x0, x); FARM.x1 = Math.max(FARM.x1, x); FARM.y0 = Math.min(FARM.y0, y); FARM.y1 = Math.max(FARM.y1, y); }
+
+  // 6. Regions: woods to the north-west, hills to the east, plaza in town
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     const i = idx(x, y);
-    if (G[i] === GND.WATER) continue;
+    if (G[i] !== GND.GRASS || World.farm[i] || inRect(VILLAGE, x, y)) continue;
+    const n = Math.round((fbm(x / 6, y / 6, 17) - 0.5) * 10);
+    if (x < 72 + n && y < 46 + n) G[i] = GND.FOREST;
+    else if (x >= 114 + n && y < 80) G[i] = GND.ROCKY;
+  }
+  for (let y = PLAZA.y - 6; y <= PLAZA.y + 6; y++) for (let x = PLAZA.x - 6; x <= PLAZA.x + 6; x++) if ((x - PLAZA.x) ** 2 + (y - PLAZA.y) ** 2 <= 30 && G[idx(x, y)] === GND.GRASS) G[idx(x, y)] = GND.PLAZA;
+
+  // 7. Cliff depth (for drawing the rock face) and pines on the highlands above
+  for (let x = 0; x < W; x++) for (let y = H - 1; y >= 0; y--) {
+    const i = idx(x, y);
+    if (G[i] !== GND.CLIFF) continue;
+    const below = y < H - 1 ? World.cliffD[i + W] : 0;
+    World.cliffD[i] = Math.min(9, (y < H - 1 && G[i + W] === GND.CLIFF ? below : 0) + 1);
+    if (World.cliffD[i] >= 4 && hash2(x, y, 51) < 0.1 && x > 1 && x < W - 2 && G[i + 1] === GND.CLIFF && G[i + 2] === GND.CLIFF) O[i] = OB.DENSE;
+  }
+
+  // 8. Scatter trees, rocks, weeds and forage
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const i = idx(x, y);
+    if (O[i] || blockedGround(G[i])) continue;
     const g = G[i], h = r();
-    if (inFarm(x, y)) {
+    if (World.farm[i]) {
+      if (g !== GND.GRASS) continue;
       if (h < 0.09) O[i] = OB.WEED; else if (h < 0.13) O[i] = OB.TWIG; else if (h < 0.17) O[i] = OB.ROCK;
       else if (h < 0.185) O[i] = OB.OAK; else if (h < 0.19) O[i] = OB.BOULDER;
       continue;
@@ -123,19 +267,17 @@ function genWorld() {
         else if (h < 0.42) O[i] = OB.BUSH; else if (h < 0.45) O[i] = OB.TWIG; else if (h < 0.48) O[i] = OB.WEED;
       }
     } else if (g === GND.ROCKY) {
-      if (h < 0.1) O[i] = OB.ROCK; else if (h < 0.14) O[i] = OB.ORE; else if (h < 0.16) O[i] = OB.CRYSTAL; else if (h < 0.19) O[i] = OB.BOULDER; else if (h < 0.21) O[i] = OB.PINE;
+      if (h < 0.1) O[i] = OB.ROCK; else if (h < 0.14) O[i] = OB.ORE; else if (h < 0.16) O[i] = OB.CRYSTAL; else if (h < 0.19) O[i] = OB.BOULDER; else if (h < 0.27) O[i] = OB.PINE;
     } else if (g === GND.GRASS) {
-      if (h < 0.06) O[i] = OB.OAK; else if (h < 0.08) O[i] = OB.PINE; else if (h < 0.1) O[i] = OB.BUSH;
-      else if (h < 0.13) O[i] = OB.WEED; else if (h < 0.15) O[i] = OB.DEW; else if (h < 0.16) O[i] = OB.ROCK;
+      const meadow = inRect(PENINSULA, x, y);
+      if (h < (meadow ? 0.03 : 0.06)) O[i] = OB.OAK; else if (h < 0.08) O[i] = OB.PINE; else if (h < 0.1) O[i] = OB.BUSH;
+      else if (h < 0.13) O[i] = OB.WEED; else if (h < (meadow ? 0.2 : 0.15)) O[i] = OB.DEW; else if (h < (meadow ? 0.205 : 0.16)) O[i] = OB.ROCK;
     } else if (g === GND.SAND && h < 0.02) O[i] = OB.ROCK;
   }
-  // Thick tree border around the world edge
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const d = Math.min(x, y, W - 1 - x, H - 1 - y), th = 3 + Math.floor(fbm(x / 4, y / 4, 5) * 4), i = idx(x, y);
-    if (d < th && G[i] !== GND.WATER) { G[i] = GND.FOREST; O[i] = hash2(x, y, 31) < 0.3 ? OB.OAK : OB.PINE; }
-  }
+  // The far southern island hides crystals
+  for (let y = 126; y < 152; y++) for (let x = 76; x < 96; x++) { const i = idx(x, y); if (!O[i] && G[i] === GND.GRASS && hash2(x, y, 61) < 0.12) O[i] = OB.CRYSTAL; }
 
-  const clearRect = (x0, y0, x1, y1) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (inb(x, y) && World.bmap[idx(x, y)] < 0) O[idx(x, y)] = 0; };
+  const clearRect = (x0, y0, x1, y1) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (inb(x, y) && World.bmap[idx(x, y)] < 0 && O[idx(x, y)] !== OB.DENSE) O[idx(x, y)] = 0; };
   const carve = (pts, w = 2) => {
     for (let k = 0; k < pts.length - 1; k++) {
       const [x0, y0] = pts[k], [x1, y1] = pts[k + 1], n = Math.max(1, Math.abs(x1 - x0), Math.abs(y1 - y0));
@@ -145,7 +287,7 @@ function genWorld() {
           const X = x + ox, Y = y + oy;
           if (!inb(X, Y)) continue;
           const i = idx(X, Y);
-          if (World.bmap[i] >= 0) continue;
+          if (World.bmap[i] >= 0 || G[i] === GND.CLIFF || G[i] === GND.FALLS) continue;
           if (G[i] === GND.WATER) G[i] = GND.BRIDGE;
           else if (G[i] !== GND.BRIDGE && G[i] !== GND.PLAZA) G[i] = GND.PATH;
           O[i] = 0;
@@ -154,22 +296,19 @@ function genWorld() {
     }
   };
 
-  // Trails
-  carve([[31, 37], [31, 50], [83, 50]]);                       // farm -> village
-  carve([[31, 44], [19, 44], [19, 24], [30, 16], [44, 15]]);   // farm -> moonwell
-  carve([[46, 15], [72, 18], [73, 17]]);                       // moonwell -> Lumi
-  carve([[89, 45], [89, 26], [80, 20], [76, 18]]);             // village -> woods
-  carve([[95, 51], [112, 51], [118, 45], [124, 36]]);          // village -> hills
-  carve([[88, 57], [88, 75]]);                                 // village -> lake
-  carve([[31, 51], [31, 64], [26, 74]]);                       // farm -> meadow
-  for (let y = 74; y <= 81; y++) for (let x = 88; x <= 89; x++) { const i = idx(x, y); if (G[i] === GND.WATER || G[i] === GND.SAND) G[i] = GND.BRIDGE; O[i] = 0; } // dock
+  // 9. Paths and bridges
+  carve([[91, 60], [91, 62], [66, 62], [52, 58], [41, 58]]);            // farm -> bridge -> town
+  carve([[91, 62], [114, 62], [126, 52], [132, 40]]);                    // farm -> bridge -> Crystal Hills
+  carve([[35, 51], [35, 40], [44, 34], [45, 33]]);                       // town -> woods -> Moonwell
+  carve([[35, 42], [21, 39], [17, 38]]);                                 // woods -> Lumi's house
+  carve([[46, 60], [53, 68], [54, 76], [52, 85], [48, 95], [54, 99], [62, 99]]); // town -> meadow -> bridge -> Fairy Isle
 
-  // Clearings
-  clearRect(24, 31, 40, 42);
-  for (let y = 5; y <= 20; y++) for (let x = 38; x <= 52; x++) if ((x - 45) ** 2 + (y - 12) ** 2 <= 30) O[idx(x, y)] = 0;
-  clearRect(69, 11, 79, 20);
+  // 10. Clearings
+  clearRect(HOUSE_CLEAR.x0, HOUSE_CLEAR.y0, HOUSE_CLEAR.x1, HOUSE_CLEAR.y1);
+  for (let y = 24; y <= 38; y++) for (let x = 38; x <= 52; x++) if ((x - 45) ** 2 + (y - 31) ** 2 <= 30 && G[idx(x, y)] !== GND.WATER) O[idx(x, y)] = 0;
+  clearRect(13, 32, 22, 41);
 
-  // Buildings
+  // 11. Buildings
   for (const def of BUILDING_DEFS) {
     const b = Object.assign({}, def), bi = World.buildings.length;
     b.doorTile = def.door != null ? [b.x + def.door, b.y + b.h - 1] : null;
@@ -181,24 +320,23 @@ function genWorld() {
       if (G[i] === GND.PATH) G[i] = GND.GRASS;
     }
   }
-  // Door connectors
-  carve([[79, 47], [79, 50]]);
-  carve([[95, 46], [94, 47], [93, 48]]);
-  carve([[100, 57], [95, 54]]);
-  carve([[80, 60], [84, 60], [85, 56]]);
-  carve([[94, 61], [91, 61], [91, 57]]);
+  carve([[25, 53], [25, 55], [30, 56]]);   // seed shop
+  carve([[41, 51], [39, 53]]);             // apothecary
+  carve([[24, 63], [30, 61]]);             // elder's house
+  carve([[44, 66], [41, 66], [41, 61], [39, 60]]); // forge
+  carve([[38, 66], [41, 66]]);             // cottage
 
-  // Village details
+  // 12. Details
   for (const [x, y] of Object.values(NPCS).map(n => n.home)) clearRect(x - 1, y - 1, x + 1, y + 1);
-  const putFree = (x, y, o) => { const i = idx(x, y); if (!inb(x, y) || World.bmap[i] >= 0 || G[i] === GND.WATER || G[i] === GND.BRIDGE) return false; O[i] = o; return true; };
-  for (const [x, y] of [[77, 49], [86, 46], [92, 46], [84, 56], [95, 56], [66, 48], [60, 52], [97, 62], [104, 50], [87, 59]]) putFree(x, y, OB.LAMP);
+  const putFree = (x, y, o) => { if (!inb(x, y)) return false; const i = idx(x, y); if (World.bmap[i] >= 0 || blockedGround(G[i]) || G[i] === GND.BRIDGE || G[i] === GND.PATH) return false; O[i] = o; return true; };
+  for (const [x, y] of [[30, 51], [41, 54], [29, 62], [43, 60], [48, 56], [56, 60], [69, 60], [79, 60], [104, 60], [110, 64]]) putFree(x, y, OB.LAMP);
   const sign = (x, y, text) => { if (putFree(x, y, OB.SIGN)) World.signs.set(idx(x, y), text); };
-  sign(34, 48, 'Fernhollow Farm. Founded by your grandmother, long ago.');
-  sign(67, 48, 'West: your farm. East: Fernhollow village.');
-  sign(21, 30, 'North: the Whispering Woods and the Moonwell.');
-  sign(110, 49, 'East: the Crystal Hills. Beware of rock slimes!');
-  sign(91, 73, 'Moonlake. The fish here are said to be very shy.');
-  putFree(35, 36, OB.CRATE);
+  sign(89, 64, "Your farm, between the river's two arms. West: Fernhollow. East: the Crystal Hills.");
+  sign(54, 56, 'Fernhollow. Shops open by day. The Moonwell is north through the woods.');
+  sign(37, 44, 'North: the Whispering Woods, the Moonwell and Lumi\'s house.');
+  sign(116, 64, 'East: the Crystal Hills. Beware of rock slimes!');
+  sign(56, 72, 'South: Sunny Meadow and the bridge to Fairy Isle.');
+  putFree(95, 59, OB.CRATE);
   clearRect(SPAWN.x - 1, SPAWN.y, SPAWN.x + 1, SPAWN.y + 1);
 }
 
@@ -207,29 +345,29 @@ function dailyRespawn() {
   const O = World.obj, G = World.ground, counts = {};
   for (let i = 0; i < O.length; i++) counts[O[i]] = (counts[O[i]] || 0) + 1;
   let farmDebris = 0;
-  for (let y = FARM.y0; y <= FARM.y1; y++) for (let x = FARM.x0; x <= FARM.x1; x++) { const o = O[idx(x, y)]; if (o === OB.WEED || o === OB.TWIG || o === OB.ROCK) farmDebris++; }
+  for (let y = FARM.y0; y <= FARM.y1; y++) for (let x = FARM.x0; x <= FARM.x1; x++) { if (!inFarm(x, y)) continue; const o = O[idx(x, y)]; if (o === OB.WEED || o === OB.TWIG || o === OB.ROCK) farmDebris++; }
   const tryPut = (x, y, o) => {
     if (!inb(x, y)) return false;
     const i = idx(x, y);
     if (O[i] || World.bmap[i] >= 0 || World.crops.has(i)) return false;
     const g = G[i];
-    if (g === GND.WATER || g === GND.TILLED || g === GND.PATH || g === GND.BRIDGE || g === GND.PLAZA) return false;
+    if (blockedGround(g) || g === GND.TILLED || g === GND.PATH || g === GND.BRIDGE || g === GND.PLAZA) return false;
     if (Math.abs(x - SPAWN.x) < 3 && Math.abs(y - SPAWN.y) < 3) return false;
     O[i] = o; return true;
   };
   const rx = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
-  for (let k = 0; k < 8 && farmDebris < 40; k++) {
+  for (let k = 0; k < 12 && farmDebris < 40; k++) {
     const x = rx(FARM.x0, FARM.x1), y = rx(FARM.y0, FARM.y1);
-    if (x >= 24 && x <= 40 && y >= 31 && y <= 42) continue;
+    if (!inFarm(x, y) || inRect(HOUSE_CLEAR, x, y) || G[idx(x, y)] !== GND.GRASS) continue;
     const h = Math.random();
     if (tryPut(x, y, h < 0.6 ? OB.WEED : h < 0.85 ? OB.TWIG : OB.ROCK)) farmDebris++;
   }
-  for (let k = 0; k < 120; k++) {
+  for (let k = 0; k < 160; k++) {
     const x = rx(4, W - 5), y = rx(4, H - 5), g = G[idx(x, y)], z = zoneAt(x, y);
     if (g === GND.FOREST && z === 'woods') {
       if ((counts[OB.CAP] || 0) < 90 && Math.random() < 0.7) { if (tryPut(x, y, OB.CAP)) counts[OB.CAP] = (counts[OB.CAP] || 0) + 1; }
       else if ((counts[OB.GLOW] || 0) < 30) { if (tryPut(x, y, OB.GLOW)) counts[OB.GLOW] = (counts[OB.GLOW] || 0) + 1; }
-    } else if (g === GND.GRASS && (z === 'wild' || z === 'meadow') && (counts[OB.DEW] || 0) < 70) {
+    } else if (g === GND.GRASS && (z === 'wild' || z === 'meadow') && (counts[OB.DEW] || 0) < 80) {
       if (tryPut(x, y, OB.DEW)) counts[OB.DEW] = (counts[OB.DEW] || 0) + 1;
     } else if (g === GND.ROCKY) {
       const h = Math.random(), o = h < 0.55 ? OB.ROCK : h < 0.85 ? OB.ORE : OB.CRYSTAL, cap = { [OB.ROCK]: 110, [OB.ORE]: 45, [OB.CRYSTAL]: 22 }[o];
@@ -241,14 +379,15 @@ function dailyRespawn() {
 // One pixel per tile, used by the map screen.
 function mapImage() {
   const pal = SEASON_PAL[S ? S.season : 0];
-  const col = { [GND.GRASS]: pal.grass, [GND.PATH]: '#c8a070', [GND.WATER]: '#3f7fd0', [GND.SAND]: '#e3cc92', [GND.TILLED]: '#6b4a2e', [GND.PLAZA]: '#b8b0c8', [GND.FOREST]: pal.forest, [GND.ROCKY]: '#8d867a', [GND.BRIDGE]: '#a36f3c' };
+  const col = { [GND.GRASS]: pal.grass, [GND.PATH]: '#c8a070', [GND.WATER]: '#3f7fd0', [GND.SAND]: '#e3cc92', [GND.TILLED]: '#6b4a2e', [GND.PLAZA]: '#b8b0c8', [GND.FOREST]: pal.forest, [GND.ROCKY]: '#8d867a', [GND.BRIDGE]: '#a36f3c', [GND.CLIFF]: '#5a5048', [GND.FALLS]: '#d8f0ff' };
   return mk(W, H, g => {
     const id = g.createImageData(W, H), d = id.data;
     for (let i = 0; i < W * H; i++) {
       let c = col[World.ground[i]];
       const o = World.obj[i];
+      if (World.ground[i] === GND.CLIFF && World.cliffD[i] <= 2) c = '#7d7064';
       if (World.bmap[i] >= 0) c = '#c0503a';
-      else if (o === OB.OAK || o === OB.PINE) c = shade(pal.forest, -0.35);
+      else if (o === OB.OAK || o === OB.PINE || o === OB.DENSE) c = shade(pal.forest, -0.4);
       else if (o === OB.ROCK || o === OB.BOULDER || o === OB.ORE) c = '#6e6a76';
       else if (o === OB.CRYSTAL) c = '#b48cff';
       else if (World.crops.has(i)) c = '#7ac85a';

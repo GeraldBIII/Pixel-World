@@ -34,7 +34,13 @@ Browsers only let a page close its own tab in some cases. When they don't, Exit 
 
 ## What's in it
 
-- A 140×100-tile open world: your farm, Fernhollow village, the Whispering Woods, the Moonwell, the Crystal Hills, Moonlake and Sunny Meadow
+- A 160×156-tile world built from a hand-drawn map (`MAP_REF` in `js/world.js`):
+  - **North:** sheer cliffs, with Moonfall, the waterfall where the river begins.
+  - **West:** more cliffs. **East:** a dense, impassable forest. **South:** the sea.
+  - **Your farm:** sits between the river's two arms, with a bridge on each side.
+  - **Fernhollow:** the town, on the west coast, with the Whispering Woods and the Moonwell to its north.
+  - **Sunny Meadow:** a peninsula south of town, joined to Fairy Isle by a bridge.
+  - **Crystal Hills:** to the east.
 - Farming: till, plant, water, harvest. Six fantasy crops, each with its own seasons (one regrows)
 - Four 14-day seasons with their own colours, rain and snow, and a day/night cycle with lanterns and glowing crops
 - Tools: hoe, watering can, axe, pickaxe and sword. Energy and health

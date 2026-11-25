@@ -51,6 +51,29 @@ function buildSeason(si) {
       R(g, p.snow ? '#ffffff' : shade(p.forest, -0.3), x, y, 2, 1);
     }
   }));
+  // Highland plateau above the cliffs, and the cliff face itself (0 = top lip, 1 = bottom)
+  const hi = p.snow ? '#e4ecf3' : '#8a7f72', lip = p.snow ? '#ffffff' : p.grass;
+  out.plateau = [0, 1].map(v => mk(16, 16, g => {
+    speckle(g, hi, 80 + v, 0.14, 0.1, 0.1, 0.05);
+    R(g, shade(hi, -0.2), Math.floor(hash2(v, 1, 84) * 10), 3 + v * 6, 5, 1);
+    for (let k = 0; k < 3; k++) { const x = Math.floor(hash2(k, v, 81) * 14), y = Math.floor(hash2(v, k, 82) * 14); R(g, p.snow ? '#ffffff' : p.weed, x, y, 2, 1); R(g, p.snow ? '#ffffff' : p.weed, x, y - 1); }
+  }));
+  const face = (g, top) => {
+    R(g, '#7d7064', 0, 0, 16, 16);
+    for (const y of [4, 9, 14]) { R(g, '#655a50', 0, y, 16, 1); R(g, '#968878', 0, y - 1, 16, 1); }
+    for (let k = 0; k < 4; k++) { const x = Math.floor(hash2(k, top ? 1 : 2, 83) * 15); R(g, '#5a5048', x, 1 + k * 4, 1, 3); }
+    if (top) { R(g, lip, 0, 0, 16, 3); R(g, shade(lip, -0.3), 0, 3, 16, 1); for (let x = 1; x < 16; x += 4) R(g, lip, x, 3, 2, 1); }
+    else R(g, 'rgba(30,20,30,.35)', 0, 13, 16, 3);
+  };
+  out.cliff = [mk(16, 16, g => face(g, true)), mk(16, 16, g => face(g, false))];
+  // East-facing wall for the western cliff
+  out.cliffSide = mk(16, 16, g => {
+    R(g, '#7d7064', 0, 0, 16, 16);
+    for (const x of [4, 9, 13]) { R(g, '#655a50', x, 0, 1, 16); R(g, '#968878', x - 1, 0, 1, 16); }
+    for (let k = 0; k < 4; k++) R(g, '#5a5048', 1 + k * 4, Math.floor(hash2(k, 3, 83) * 13), 3, 1);
+    R(g, lip, 0, 0, 3, 16); R(g, shade(lip, -0.3), 3, 0, 1, 16);
+    R(g, 'rgba(30,20,30,.3)', 14, 0, 2, 16);
+  });
   out.oak = oakSprite(p, si);
   out.pine = pineSprite(p);
   out.bush = outlined(mk(16, 16, g => {
@@ -147,6 +170,21 @@ function buildStatic() {
     for (let i = 0; i < 3; i++) {
       const y = (i * 5 + f * 2) % 15 + 1, x = Math.floor(hash2(i, f, 5) * 10);
       R(g, '#79b4ee', x, y, 4, 1); R(g, '#5a98dc', x + 4, y, 2, 1);
+    }
+  }));
+  SPR.waterDeep = [0, 1, 2].map(f => mk(16, 16, g => {
+    R(g, '#2c62b0', 0, 0, 16, 16);
+    for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) if (hash2(x, y, 78) < 0.05) R(g, '#27579e', x, y);
+    for (let i = 0; i < 2; i++) { const y = (i * 7 + f * 2) % 15 + 1, x = Math.floor(hash2(i, f, 6) * 10); R(g, '#4f8ad4', x, y, 5, 1); }
+  }));
+  SPR.falls = [0, 1, 2].map(f => mk(16, 16, g => {
+    R(g, '#8cc4f4', 0, 0, 16, 16);
+    for (let x = 0; x < 16; x++) {
+      const off = Math.floor(hash2(x, 0, 90) * 16);
+      for (let y = 0; y < 16; y++) {
+        const v = (y + off - f * 5 + 48) % 16;
+        if (v < 5) R(g, '#ffffff', x, y); else if (v < 8) R(g, '#c8e6ff', x, y); else if (v > 13) R(g, '#5fa0e0', x, y);
+      }
     }
   }));
   SPR.bridge = mk(16, 16, g => {

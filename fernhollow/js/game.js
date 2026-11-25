@@ -76,7 +76,7 @@ function newGame() {
     "Dear child, welcome to Fernhollow. Your grandmother's farm is yours now. Weeds, stones, and all.",
     'Clear a patch of land, till it with your hoe, plant your seeds, and water them every morning.',
     'Ship your harvest in the Market Crate beside the house. It sells overnight. Your bed is through the front door.',
-    "When you're settled, come find me by the fountain in the village, east along the path. — Oswin",
+    "When you're settled, come find me by the fountain in town. Take the path west, over the bridge. — Oswin",
   ]);
 }
 function serialize() {
@@ -336,7 +336,7 @@ function placeObj(tx, ty, it) {
   const i = idx(tx, ty);
   if (!inb(tx, ty) || World.obj[i] || World.bmap[i] >= 0 || World.crops.has(i)) { Sound.play('error'); UI.toastOnce("You can't place that there."); return; }
   const g = World.ground[i];
-  if (g === GND.WATER || g === GND.BRIDGE) { Sound.play('error'); UI.toastOnce("You can't place that there."); return; }
+  if (blockedGround(g) || g === GND.BRIDGE) { Sound.play('error'); UI.toastOnce("You can't place that there."); return; }
   const l = P.x - 5, r = P.x + 4, t = P.y - 5, b = P.y - 1;
   if (r >= tx * TS && l < tx * TS + TS && b >= ty * TS && t < ty * TS + TS) { Sound.play('error'); UI.toastOnce("You're standing there!"); return; }
   World.obj[i] = PLACE_OBJ[ITEMS[it.id].place];
@@ -783,8 +783,8 @@ function followCamera(dt) {
 }
 function titleCamera() {
   const t = clock * 0.03;
-  cam.x = clamp(60 * TS + Math.sin(t) * 28 * TS - VW / 2, 0, W * TS - VW);
-  cam.y = clamp(48 * TS + Math.sin(t * 1.7) * 8 * TS - VH / 2, 0, H * TS - VH);
+  cam.x = clamp(62 * TS + Math.sin(t) * 30 * TS - VW / 2, 0, W * TS - VW);
+  cam.y = clamp(56 * TS + Math.sin(t * 1.7) * 8 * TS - VH / 2, 0, H * TS - VH);
 }
 
 // ---------- Rendering ----------
@@ -885,7 +885,12 @@ function drawGround(g, tx, ty) {
     case GND.GRASS: img = SEAS.grass[h < 0.06 ? 3 : h < 0.4 ? 0 : h < 0.7 ? 1 : 2]; break;
     case GND.FOREST: img = SEAS.forest[Math.floor(h * 3)]; break;
     case GND.PATH: img = SPR.path[Math.floor(h * 3)]; break;
-    case GND.WATER: img = SPR.water[(Math.floor(clock * 1.5) + ((tx * 7 + ty * 3) % 3)) % 3]; break;
+    case GND.WATER: {
+      const deep = gAt(tx, ty - 3) === GND.WATER && gAt(tx, ty + 3) === GND.WATER && gAt(tx - 3, ty) === GND.WATER && gAt(tx + 3, ty) === GND.WATER;
+      img = (deep ? SPR.waterDeep : SPR.water)[(Math.floor(clock * 1.5) + ((tx * 7 + ty * 3) % 3)) % 3]; break;
+    }
+    case GND.FALLS: img = SPR.falls[Math.floor(clock * 8 + tx) % 3]; break;
+    case GND.CLIFF: { const d = World.cliffD[i]; img = d === 1 ? SEAS.cliff[1] : d === 2 ? SEAS.cliff[0] : SEAS.plateau[h < 0.5 ? 0 : 1]; break; }
     case GND.SAND: img = SPR.sand[Math.floor(h * 2)]; break;
     case GND.TILLED: img = World.wet[i] ? SPR.tilledWet : SPR.tilled; break;
     case GND.PLAZA: img = SPR.plaza; break;
@@ -893,8 +898,10 @@ function drawGround(g, tx, ty) {
     case GND.BRIDGE: img = SPR.bridge; break;
   }
   g.drawImage(img, X, Y);
+  if (gt === GND.CLIFF && World.cliffD[i] > 2 && tx < W - 1 && gAt(tx + 1, ty) !== GND.CLIFF && gAt(tx + 1, ty) !== GND.FALLS) g.drawImage(SEAS.cliffSide, X, Y);
   if (gt === GND.WATER) {
-    const w = (x, y) => gAt(x, y) === GND.WATER || gAt(x, y) === GND.BRIDGE;
+    const w = (x, y) => { const t = gAt(x, y); return t === GND.WATER || t === GND.BRIDGE || t === GND.FALLS; };
+    if (gAt(tx, ty - 1) === GND.FALLS) { g.fillStyle = '#ffffff'; for (let k = 0; k < 6; k++) g.fillRect(X + ((k * 5 + Math.floor(clock * 9)) % 15), Y + ((k * 3 + Math.floor(clock * 6)) % 6), 2, 2); }
     if (!w(tx, ty - 1)) { g.fillStyle = '#2c5a8a'; g.fillRect(X, Y, 16, 2); g.fillStyle = '#a8d4f5'; g.fillRect(X, Y + 2, 16, 1); }
     g.fillStyle = '#a8d4f5';
     if (!w(tx, ty + 1)) g.fillRect(X, Y + 15, 16, 1);
@@ -919,7 +926,7 @@ function drawObj(g, o, tx, ty, i) {
   const sh = shakes.get(i), ox = sh ? Math.round(Math.sin(sh * 70) * 1.5) : 0, X = tx * TS + ox, Y = ty * TS;
   switch (o) {
     case OB.OAK: drawTree(g, SEAS.oak, X - 8, Y - 20, Y + 15); break;
-    case OB.PINE: drawTree(g, SEAS.pine, X - 8, Y - 23, Y + 15); break;
+    case OB.PINE: case OB.DENSE: drawTree(g, SEAS.pine, X - 8, Y - 23, Y + 15); break;
     case OB.STUMP: g.drawImage(SPR.stump, X, Y); break;
     case OB.ROCK: g.drawImage(SPR.rock, X, Y); break;
     case OB.BOULDER: g.drawImage(SPR.boulder, X, Y); break;
