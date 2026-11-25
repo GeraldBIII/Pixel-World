@@ -20,7 +20,7 @@ const UI = {
     });
     this.root.addEventListener('focusin', e => { const s = this.top(); if (s && s.onFocus) s.onFocus(e.target); });
     this.root.addEventListener('input', e => { const s = this.top(); if (s && s.onInput) s.onInput(e.target); });
-    for (const id of ['clock-date', 'clock-time', 'gold', 'en-bar', 'hp-bar', 'task', 'itemname', 'hint', 'tb-act-label', 'tb-use-icon']) this.hud[id] = document.getElementById(id);
+    for (const id of ['clock-date', 'clock-time', 'gold', 'en-bar', 'hp-bar', 'sta-bar', 'xp-bar', 'lv', 'task', 'itemname', 'hint', 'tb-act-label', 'tb-use-icon', 'tb-atk-icon']) this.hud[id] = document.getElementById(id);
     this.buildHotbar();
   },
 
@@ -173,6 +173,12 @@ const UI = {
     const ew = Math.round(S.energy / S.maxEnergy * 100) + '%', hw = Math.round(S.hp / S.maxHp * 100) + '%';
     if (this._hud.en !== ew) { this._hud.en = ew; this.hud['en-bar'].style.width = ew; }
     if (this._hud.hp !== hw) { this._hud.hp = hw; this.hud['hp-bar'].style.width = hw; }
+    const sw = Math.round(S.sta / S.maxSta * 100) + '%', xw = Math.round(S.xp / xpNeed(S.level) * 100) + '%';
+    if (this._hud.sta !== sw) { this._hud.sta = sw; this.hud['sta-bar'].style.width = sw; }
+    if (this._hud.xp !== xw) { this._hud.xp = xw; this.hud['xp-bar'].style.width = xw; }
+    this.setText('lv', `Lv ${S.level}${S.points ? ' ★' : ''}`);
+    const wi = S.equip.weapon ? ICON_URL[S.equip.weapon] : '';
+    if (this._hud.wi !== wi) { this._hud.wi = wi; this.hud['tb-atk-icon'].src = wi || ICON_URL.sword; }
     const q = QUESTS[S.quest];
     this.setText('task', q ? `📜 ${q.title} ${Math.min(q.goal, q.prog(S)).toLocaleString()}/${q.goal.toLocaleString()}` : '📜 All tasks complete!');
     this.setText('tb-act-label', hint ? hint.label : 'Act');
@@ -188,15 +194,21 @@ const UI = {
     } else h.classList.remove('show');
   },
 
+  // Desktop: hotbar at the bottom. Touch, landscape: hotbar at the top between the clock and the
+  // top-right buttons, leaving the bottom for the thumbs. Touch, portrait: above the controls.
   layout() {
-    const touch = document.body.classList.contains('touch-on');
-    const w = innerWidth;
-    let avail = touch ? w - 2 * 205 : Math.min(w - 24, 640);
-    let slot = Math.floor((avail - 32) / 12);
-    const stacked = touch && slot < 28;
-    if (stacked) slot = Math.floor((w - 40) / 12);
-    document.body.classList.toggle('hotbar-up', stacked);
-    document.documentElement.style.setProperty('--slot', clamp(slot, 24, 46) + 'px');
+    const touch = document.body.classList.contains('touch-on'), w = innerWidth, h = innerHeight, root = document.documentElement.style;
+    let slot, top = false, up = false;
+    if (touch && w > h) {
+      const clockR = (document.getElementById('clock').getBoundingClientRect().right || 190) + 8, right = w - 170;
+      slot = Math.floor((right - clockR - 30) / 12);
+      top = true;
+      root.setProperty('--hb-left', Math.round((clockR + right) / 2) + 'px');
+    } else if (touch) { slot = Math.floor((w - 40) / 12); up = true; }
+    else slot = Math.floor((Math.min(w - 24, 640) - 32) / 12);
+    document.body.classList.toggle('hotbar-top', top);
+    document.body.classList.toggle('hotbar-up', up);
+    root.setProperty('--slot', clamp(slot, 20, 46) + 'px');
   },
 
   // ---------- Dialogue ----------
@@ -287,6 +299,7 @@ const UI = {
         <p class="sub">${SEASONS[S.season]} ${S.day}, Year ${S.year} · ${fmtTime(S.time)} · ${S.gold.toLocaleString()}g</p>
         <div class="menu-list two">
           <button data-nav data-act="resume">Resume</button>
+          <button data-nav data-act="hero">Hero</button>
           <button data-nav data-act="inv">Inventory</button>
           <button data-nav data-act="map">Map</button>
           <button data-nav data-act="save">Save Game</button>
@@ -294,13 +307,14 @@ const UI = {
           <button data-nav data-act="controls">Controls</button>
           <button data-nav data-act="unstuck">Unstuck</button>
           <button data-nav data-act="title">Quit to Title</button>
-          <button data-nav data-act="exit" class="danger wide">Exit Game</button>
+          <button data-nav data-act="exit" class="danger">Exit Game</button>
         </div>
       </div>`,
       onBack: () => UI.close(s),
       actions: {
         resume: () => UI.close(s),
         inv: () => UI.openInventory('items'),
+        hero: () => UI.openInventory('hero'),
         map: () => UI.openMap(),
         save: () => { if (saveGame()) UI.toast('Game saved.'); else UI.toast('Could not save. Is browser storage blocked?'); },
         settings: () => UI.openSettings(),
@@ -350,9 +364,9 @@ const UI = {
   // ---------- Controls ----------
   openControls() {
     const tabs = {
-      kb: ['Keyboard & Mouse', [['Move', 'W A S D / Arrow keys'], ['Use tool or item', 'Space, J or Left-click (hold to repeat)'], ['Talk, harvest, open, ship', 'E, Enter, K or Right-click'], ['Pick hotbar slot', '1–9, 0, −, = or mouse wheel'], ['Previous / next slot', '[ and ]'], ['Inventory', 'I or Tab'], ['Map', 'M'], ['Pause', 'Esc or P'], ['In menus', 'Arrows to move, Enter to choose, Esc to go back']]],
-      pad: ['Xbox Controller', [['Move', 'Left stick or D-pad'], ['Use tool or item', 'X or RT (hold to repeat)'], ['Talk, harvest, open, ship', 'A'], ['Previous / next slot', 'LB / RB'], ['Inventory', 'Y'], ['Map', 'View button (⧉)'], ['Pause', 'Menu button (☰)'], ['In menus', 'D-pad / stick to move, A to choose, B to go back, LB / RB to switch tabs']]],
-      touch: ['Touch', [['Move', 'Drag anywhere on the left side of the screen'], ['Use tool or item', 'Big button with your item (hold to repeat)'], ['Talk, harvest, open, ship', 'Act button (it shows what it will do)'], ['Pick item', 'Tap a hotbar slot'], ['Inventory / Map', 'Bag and Map buttons'], ['Pause', '❚❚ button at the top right']]],
+      kb: ['Keyboard & Mouse', [['Move', 'W A S D / Arrow keys'], ['Sprint', 'Hold Shift'], ['Attack', 'F (hold to keep swinging)'], ['Block', 'Hold Q (needs a shield)'], ['Dive roll', 'R'], ['Use tool or item', 'Space, J or Left-click (hold to repeat)'], ['Talk, harvest, open, ship', 'E, Enter, K or Right-click'], ['Hero sheet', 'C'], ['Pick hotbar slot', '1–9, 0, −, = or mouse wheel'], ['Previous / next slot', '[ and ]'], ['Inventory', 'I or Tab'], ['Map', 'M'], ['Pause', 'Esc or P'], ['In menus', 'Arrows to move, Enter to choose, Esc to go back']]],
+      pad: ['Xbox Controller', [['Move', 'Left stick or D-pad'], ['Sprint', 'Click the left stick (toggles on until you stop)'], ['Attack', 'RT (hold to keep swinging)'], ['Block', 'Hold LT (needs a shield)'], ['Dive roll', 'B'], ['Use tool or item', 'X (hold to repeat)'], ['Talk, harvest, open, ship', 'A'], ['Previous / next slot', 'LB / RB'], ['Inventory', 'Y'], ['Map', 'View button (⧉)'], ['Pause', 'Menu button (☰)'], ['In menus', 'D-pad / stick to move, A to choose, B to go back, LB / RB to switch tabs']]],
+      touch: ['Touch', [['Move', 'Drag anywhere on the left side of the screen'], ['Sprint', 'Push the stick all the way to the edge'], ['Attack / Block / Roll', 'Sword, shield and roll buttons (hold Block)'], ['Use tool or item', 'Big button with your item (hold to repeat)'], ['Talk, harvest, open, ship', 'Act button (it shows what it will do)'], ['Pick item', 'Tap a hotbar slot'], ['Inventory / Map', 'Bag and Map buttons'], ['Pause', '❚❚ button at the top right']]],
     };
     let cur = Input.mode === 'pad' ? 'pad' : Input.mode === 'touch' ? 'touch' : 'kb';
     const keys = Object.keys(tabs);
@@ -421,7 +435,7 @@ const UI = {
 
   // ---------- Inventory (Items / Crafting / Friends / Journal) ----------
   openInventory(tab) {
-    const tabs = ['items', 'craft', 'friends', 'journal'], names = { items: 'Items', craft: 'Crafting', friends: 'Friends', journal: 'Journal' };
+    const tabs = ['hero', 'items', 'craft', 'friends', 'journal'], names = { hero: 'Hero', items: 'Items', craft: 'Crafting', friends: 'Friends', journal: 'Journal' };
     let cur = tab || 'items', held = -1;
     let s = null;
     s = this.open({
@@ -449,6 +463,13 @@ const UI = {
           UI.confirm(`Throw away ${ITEMS[it.id].name} ×${it.n}?`, [{ label: 'Throw away', cls: 'danger', run: () => { S.inv[i] = null; held = -1; invChanged(); render(i); } }, { label: 'Cancel', cancel: true }]);
         },
         craft: el => { craft(RECIPES[+el.dataset.i]); render(null, `[data-act="craft"][data-i="${el.dataset.i}"]`); },
+        equip: el => { equipFrom(+el.dataset.i); render(+el.dataset.i); },
+        uneq: el => {
+          const sl = el.dataset.slotName;
+          if (!S.equip[sl]) { UI.toastOnce(`Nothing equipped. Pick ${SLOT_NAMES[sl].toLowerCase()} gear in the Items tab and press Equip.`); return; }
+          unequip(sl); render(null, `[data-act="uneq"][data-slot-name="${sl}"]`);
+        },
+        spend: el => { spendPoint(el.dataset.attr); Sound.play('levelup'); render(null, `[data-act="spend"][data-attr="${el.dataset.attr}"]`); },
       },
       init: x => { s = x; render(S.sel); },
     });
@@ -458,7 +479,7 @@ const UI = {
       const it = S.inv[i];
       if (!it) { box.innerHTML = `<div class="dtext"><p class="muted">${i >= S.invSize ? 'Locked. Buy a Big Backpack from Thistle to unlock.' : 'Empty slot.'}</p></div>`; return; }
       const d = ITEMS[it.id];
-      box.innerHTML = `<img class="px big" src="${ICON_URL[it.id]}" alt=""><div class="dtext"><b>${esc(d.name)}${it.n > 1 ? ` ×${it.n}` : ''}</b><p>${esc(d.desc)}</p>${d.sell ? `<p class="muted">Sells for ${d.sell}g each</p>` : ''}</div>`;
+      box.innerHTML = `<img class="px big" src="${ICON_URL[it.id]}" alt=""><div class="dtext"><b>${esc(d.name)}${it.n > 1 ? ` ×${it.n}` : ''}</b><p>${esc(d.desc)}</p>${d.sell ? `<p class="muted">Sells for ${d.sell}g each</p>` : ''}</div>${isGear(it.id) ? `<button data-nav data-act="equip" data-i="${i}">Equip</button>` : ''}`;
     }
     function render(focusSlot, focusSel) {
       s.el.querySelectorAll('.tabs button[data-tab]').forEach(b => b.classList.toggle('on', b.dataset.tab === cur));
@@ -474,6 +495,26 @@ const UI = {
         const f = body.querySelector(`[data-slot="${focusSlot ?? S.sel}"][data-nav]`) || body.querySelector('[data-nav]');
         if (f) f.focus({ preventScroll: true });
         detail(focusSlot ?? S.sel);
+      } else if (cur === 'hero') {
+        const a = S.attrs, nx = xpNeed(S.level);
+        const statRows = [['Attack', ST.atk], ['Defense', ST.def], ['Max HP', S.maxHp], ['Max Stamina', S.maxSta], ['Max Energy', S.maxEnergy], ['Speed', Math.round(ST.speed * 100) + '%'], ['Crit chance', Math.round(ST.crit * 100) + '%'], ['Block', S.equip.shield ? Math.round(ST.block * 100) + '%' : '—']];
+        body.innerHTML = `<div class="hero">
+          <div class="hero-left">
+            <canvas class="hero-pv px" width="16" height="28"></canvas>
+            <div class="eqslots">${EQUIP_SLOTS.map(sl => { const id = S.equip[sl]; return `<button class="eq" data-nav data-act="uneq" data-slot-name="${sl}">${id ? `<img class="px" src="${ICON_URL[id]}" alt="">` : '<span class="ph"></span>'}<span class="eqtxt"><span class="lbl">${SLOT_NAMES[sl]}</span><span class="nm">${id ? esc(ITEMS[id].name) : 'Empty'}</span></span></button>`; }).join('')}</div>
+            <p class="muted small">Choose a slot to take that piece off.</p>
+          </div>
+          <div class="hero-right">
+            <div class="lvbox"><b>Level ${S.level}</b><span class="muted small">${S.xp} / ${nx} XP</span></div>
+            <div class="qbar"><i style="width:${Math.min(100, S.xp / nx * 100)}%"></i></div>
+            <div class="pts">${S.points ? `<b>${S.points}</b> attribute point${S.points > 1 ? 's' : ''} to spend` : '<span class="muted">Fight, farm, chop and mine to earn XP. Each level gives 3 points.</span>'}</div>
+            ${Object.entries(ATTRS).map(([k, [n, desc]]) => `<div class="attr"><div class="grow"><b>${n}</b> <span class="av">${a[k]}</span><div class="muted small">${desc}</div></div><button data-nav data-act="spend" data-attr="${k}" class="${S.points ? '' : 'off'}" data-why="No points to spend yet. Level up to earn more.">+</button></div>`).join('')}
+            <table class="ctl stats">${statRows.map(([k, v]) => `<tr><th>${k}</th><td>${v}</td></tr>`).join('')}</table>
+          </div></div>`;
+        const pv = body.querySelector('.hero-pv').getContext('2d');
+        pv.drawImage(heroFrames()[0][0], 0, 0);
+        const f = (focusSel && body.querySelector(focusSel)) || body.querySelector('[data-nav]');
+        if (f) f.focus({ preventScroll: true });
       } else if (cur === 'craft') {
         body.innerHTML = `<p class="muted">Craft with materials from your bag.</p><div class="rows">${RECIPES.map((r, i) => {
           const ok = Object.entries(r.need).every(([id, n]) => countItem(id) >= n);
@@ -538,7 +579,7 @@ const UI = {
           const name = e.special ? e.name : ITEMS[e.id].name, desc = e.special ? e.desc : ITEMS[e.id].desc, icon = e.special ? e.icon : e.id;
           const can1 = S.gold >= e.price, can5 = S.gold >= e.price * 5;
           return `<div class="row"><img class="px ico2" src="${ICON_URL[icon]}" alt=""><div class="grow"><b>${esc(name)}</b> <span class="price">${e.price.toLocaleString()}g</span><div class="muted small">${esc(desc)}</div></div>
-            <button data-nav data-act="buy" data-i="${i}" data-n="1" class="${can1 ? '' : 'off'}" data-why="Not enough gold.">Buy</button>${e.special ? '' : `<button data-nav data-act="buy" data-i="${i}" data-n="5" class="${can5 ? '' : 'off'}" data-why="Not enough gold.">×5</button>`}</div>`;
+            <button data-nav data-act="buy" data-i="${i}" data-n="1" class="${can1 ? '' : 'off'}" data-why="Not enough gold.">Buy</button>${e.special || isGear(e.id) ? '' : `<button data-nav data-act="buy" data-i="${i}" data-n="5" class="${can5 ? '' : 'off'}" data-why="Not enough gold.">×5</button>`}</div>`;
         }).join('')}</div>`;
       } else {
         const rows = [];

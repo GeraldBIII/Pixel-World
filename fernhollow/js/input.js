@@ -1,13 +1,15 @@
 'use strict';
 // Unifies keyboard/mouse, touch and gamepad into one queue of actions.
-// Actions: use, interact, menu, back, inventory, map, hotPrev, hotNext, hot0..hot11, up/down/left/right
+// Actions: use, interact, attack, roll, menu, back, inventory, map, hotPrev, hotNext, hot0..hot11, up/down/left/right
+// Held states: useHeld, attackHeld, blockHeld, sprintHeld
 const Input = {
   keys: new Set(), q: [], mode: 'kb',
   moveX: 0, moveY: 0,
   mouse: { x: 0, y: 0, over: false, t: -99, left: false },
   stick: { id: null, ox: 0, oy: 0, x: 0, y: 0 },
   touchUse: false, lastTouch: -1e9,
-  pad: { prev: [], ax: 0, ay: 0, navDir: null, navT: 0, use: false, connected: false },
+  pad: { prev: [], ax: 0, ay: 0, navDir: null, navT: 0, use: false, attack: false, block: false, sprint: false, idleT: 0, connected: false },
+  touchAtk: false, touchBlock: false,
   wheelT: 0,
 
   push(a, src, extra) { this.q.push(Object.assign({ a, src: src || this.mode }, extra)); },
@@ -19,6 +21,10 @@ const Input = {
     updateTouchVisibility();
   },
   useHeld() { return this.keys.has('Space') || this.keys.has('KeyJ') || this.mouse.left || this.touchUse || this.pad.use; },
+  attackHeld() { return this.keys.has('KeyF') || this.touchAtk || this.pad.attack; },
+  blockHeld() { return this.keys.has('KeyQ') || this.touchBlock || this.pad.block; },
+  // Keyboard: hold Shift. Controller: click the left stick to toggle. Touch: push the stick all the way.
+  sprintHeld() { return this.keys.has('ShiftLeft') || this.keys.has('ShiftRight') || this.pad.sprint || (this.stick.id !== null && Math.hypot(this.stick.x, this.stick.y) > 0.96); },
 
   init() {
     document.body.classList.add('mode-' + this.mode);
@@ -28,7 +34,7 @@ const Input = {
       Sound.init();
       this.setMode('kb');
       const c = e.code;
-      const handled = DIRS[c] || HOT.includes(c) || ['Space', 'Enter', 'NumpadEnter', 'Escape', 'Tab', 'KeyE', 'KeyJ', 'KeyK', 'KeyI', 'KeyM', 'KeyP', 'Backspace', 'BracketLeft', 'BracketRight'].includes(c);
+      const handled = DIRS[c] || HOT.includes(c) || ['Space', 'Enter', 'NumpadEnter', 'Escape', 'Tab', 'KeyE', 'KeyJ', 'KeyK', 'KeyI', 'KeyM', 'KeyP', 'Backspace', 'BracketLeft', 'BracketRight', 'KeyF', 'KeyQ', 'KeyR', 'KeyC', 'ShiftLeft', 'ShiftRight'].includes(c);
       if (handled) e.preventDefault();
       if (DIRS[c]) this.push(DIRS[c], 'kb');
       if (e.repeat) return;
@@ -38,6 +44,9 @@ const Input = {
       switch (c) {
         case 'Space': case 'KeyJ': this.push('use', 'kb'); break;
         case 'KeyE': case 'Enter': case 'NumpadEnter': case 'KeyK': this.push('interact', 'kb'); break;
+        case 'KeyF': this.push('attack', 'kb'); break;
+        case 'KeyR': this.push('roll', 'kb'); break;
+        case 'KeyC': this.push('hero', 'kb'); break;
         case 'Escape': case 'KeyP': this.push('menu', 'kb'); break;
         case 'Backspace': this.push('back', 'kb'); break;
         case 'Tab': case 'KeyI': this.push('inventory', 'kb'); break;
@@ -112,12 +121,15 @@ const Input = {
     btn('tb-use', () => { this.touchUse = true; this.push('use', 'touch'); }, () => { this.touchUse = false; });
     btn('tb-act', () => this.push('interact', 'touch'));
     btn('tb-bag', () => this.push('inventory', 'touch'));
+    btn('tb-atk', () => { this.touchAtk = true; this.push('attack', 'touch'); }, () => { this.touchAtk = false; });
+    btn('tb-block', () => { this.touchBlock = true; }, () => { this.touchBlock = false; });
+    btn('tb-roll', () => this.push('roll', 'touch'));
     btn('tb-map', () => this.push('map', 'touch'));
     document.getElementById('btn-pause').addEventListener('click', () => { if (playing && !UI.stack.length) openPause(); });
 
     addEventListener('gamepadconnected', e => { this.pad.connected = true; UI.toast(`Controller connected: ${e.gamepad.id.split('(')[0].trim() || 'Gamepad'}`); });
     addEventListener('gamepaddisconnected', () => {
-      this.pad.connected = false; this.pad.ax = this.pad.ay = 0; this.pad.use = false;
+      this.pad.connected = false; this.pad.ax = this.pad.ay = 0; this.pad.use = this.pad.attack = this.pad.block = this.pad.sprint = false;
       UI.toast('Controller disconnected');
       if (playing && !UI.stack.length) openPause();
     });
@@ -143,7 +155,7 @@ const Input = {
     const pads = navigator.getGamepads ? navigator.getGamepads() : [];
     let gp = null;
     for (const p of pads) if (p && p.connected) { gp = p; break; }
-    if (!gp) { this.pad.ax = this.pad.ay = 0; this.pad.use = false; this.pad.prev = []; return; }
+    if (!gp) { this.pad.ax = this.pad.ay = 0; this.pad.use = this.pad.attack = this.pad.block = this.pad.sprint = false; this.pad.prev = []; return; }
     this.gp = gp;
     const b = gp.buttons.map(x => x.pressed || x.value > 0.5), prev = this.pad.prev;
     const rawX = gp.axes[0] || 0, rawY = gp.axes[1] || 0;
@@ -151,19 +163,22 @@ const Input = {
     const edge = i => b[i] && !prev[i];
     if (edge(0)) this.push('interact', 'pad');
     if (edge(1)) this.push('back', 'pad');
-    if (edge(2) || edge(7)) this.push('use', 'pad');
+    if (edge(2)) this.push('use', 'pad');
+    if (edge(7)) this.push('attack', 'pad');
+    if (edge(10)) this.pad.sprint = !this.pad.sprint;
     if (edge(3)) this.push('inventory', 'pad');
     if (edge(4)) this.push('hotPrev', 'pad');
     if (edge(5)) this.push('hotNext', 'pad');
     if (edge(8)) this.push('map', 'pad');
     if (edge(9)) this.push('menu', 'pad');
-    this.pad.use = !!(b[2] || b[7]);
+    this.pad.use = !!b[2]; this.pad.attack = !!b[7]; this.pad.block = !!b[6];
 
     let ax = rawX, ay = rawY;
     const m = Math.hypot(ax, ay), dz = 0.22;
     if (m < dz) { ax = ay = 0; } else { const k = Math.min(1, (m - dz) / (1 - dz)) / m; ax *= k; ay *= k; }
     if (b[12]) ay = -1; if (b[13]) ay = 1; if (b[14]) ax = -1; if (b[15]) ax = 1;
     this.pad.ax = ax; this.pad.ay = ay;
+    if (Math.hypot(ax, ay) < 0.15) { this.pad.idleT += dt; if (this.pad.idleT > 0.4) this.pad.sprint = false; } else this.pad.idleT = 0;
 
     // Menu navigation with auto-repeat
     let nd = null;

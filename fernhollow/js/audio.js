@@ -63,6 +63,11 @@ const Sound = {
       case 'slime': this.tone(200, 0.12, 'sine', 0.12, 420); break;
       case 'kill': this.noise(0.2, 0.25, 1200); this.tone(500, 0.15, 'square', 0.08, 120); break;
       case 'howl': this.tone(330, 0.5, 'sine', 0.09, 560); this.tone(560, 0.9, 'sine', 0.09, 360, 0.45); break;
+      case 'roll': this.noise(0.22, 0.25, 500, 'lowpass'); this.tone(160, 0.15, 'triangle', 0.08, 90); break;
+      case 'block': this.tone(1100, 0.08, 'square', 0.08, 700); this.noise(0.1, 0.25, 3500, 'highpass'); break;
+      case 'crit': this.tone(260, 0.12, 'sawtooth', 0.18, 90); this.tone(1400, 0.08, 'square', 0.06, null, 0.02); break;
+      case 'equip': this.noise(0.08, 0.2, 2000, 'bandpass'); this.tone(700, 0.06, 'square', 0.05, null, 0.05); break;
+      case 'levelup': [523, 659, 784, 1046, 1318].forEach((f, i) => this.tone(f, 0.25, 'square', 0.08, null, i * 0.08)); break;
       case 'ship': this.noise(0.1, 0.3, 500); this.tone(330, 0.1, 'triangle', 0.15, null, 0.05); break;
     }
   },

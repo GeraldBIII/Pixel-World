@@ -6,7 +6,11 @@ const lightC = document.createElement('canvas'), lctx = lightC.getContext('2d');
 let S = null, playing = false, clock = 0, hint = null;
 let VW = 320, VH = 180, SCALE = 3;
 const cam = { x: 0, y: 0 };
-const P = { x: 0, y: 0, dir: 0, frame: 0, animT: 0, moving: false, toolT: 0, toolDur: 0.3, toolId: null, toolDone: true, hurtT: 0, kx: 0, ky: 0, target: [0, 0], holdT: 0, useCD: 0 };
+const P = {
+  x: 0, y: 0, dir: 0, frame: 0, animT: 0, moving: false, toolT: 0, toolDur: 0.3, toolId: null, toolDone: true, hurtT: 0, kx: 0, ky: 0, target: [0, 0], holdT: 0, useCD: 0,
+  swingT: 0, swingDur: 0.24, swingDone: true, atkHold: 0, rollT: 0, rollDur: 0.34, rollCD: 0, rollVx: 0, rollVy: 0, blocking: false, sprinting: false, staDelay: 0, dustT: 0,
+};
+const ST = { atk: 10, def: 0, crit: 0.05, speed: 1, block: 0, swing: 0.24, reach: 17, knock: 1, toolPow: 1 }; // derived stats
 let npcs = [], enemies = [], parts = [], floats = [], drops = [];
 const shakes = new Map();
 let spawnT = 0, questT = 0, smokeT = 0, ambT = 0;
@@ -55,8 +59,93 @@ function craft(r) {
   if (!canAdd(r.id, r.qty)) { Sound.play('error'); UI.toastOnce('Your bag is full.'); return; }
   for (const [id, n] of Object.entries(r.need)) removeItem(id, n);
   addItem(r.id, r.qty);
+  gainXP(XP.craft);
   Sound.play('harvest');
   UI.toast(`Crafted ${ITEMS[r.id].name}${r.qty > 1 ? ` ×${r.qty}` : ''}!`, r.id);
+}
+
+// ---------- Hero: stats, levels and equipment ----------
+function recalcStats() {
+  const a = S.attrs, g = { atk: 0, def: 0, hp: 0, sta: 0, speed: 0, crit: 0, block: 0 };
+  for (const slot of EQUIP_SLOTS) { const id = S.equip[slot]; if (id && GEAR[id]) for (const [k, v] of Object.entries(GEAR[id].stats)) g[k] += v; }
+  const w = S.equip.weapon && GEAR[S.equip.weapon];
+  ST.atk = g.atk + a.str * 2 + (w ? 0 : 2);
+  ST.def = g.def + Math.floor(a.vit / 2);
+  ST.crit = 0.04 + a.agi * 0.01 + g.crit;
+  ST.speed = 1 + a.agi * 0.015 + g.speed;
+  ST.block = g.block;
+  ST.swing = w ? w.swing : 0.26; ST.reach = w ? w.reach : 13; ST.knock = (w && w.knock) || 1;
+  ST.toolPow = 1 + Math.floor(a.str / 5);
+  S.maxHp = 90 + a.vit * 10 + g.hp + (S.level - 1) * 3;
+  S.maxSta = 90 + a.end * 10 + g.sta;
+  S.maxEnergy = 110 + a.end * 10;
+  S.hp = Math.min(S.hp, S.maxHp); S.sta = Math.min(S.sta, S.maxSta); S.energy = Math.min(S.energy, S.maxEnergy);
+}
+// The hero's sprite is rebuilt from the equipped gear, and cached per outfit.
+const heroCache = new Map();
+function heroLook() {
+  const L = Object.assign({}, LOOKS.player, { acc: [...LOOKS.player.acc] });
+  const e = S ? S.equip : {}, v = id => id && GEAR[id] && GEAR[id].vis;
+  if (v(e.head)) { L.helm = v(e.head); L.acc = L.acc.filter(a => a !== 'strawhat'); }
+  if (v(e.body)) { L.shirt = v(e.body).c; L.armor = v(e.body).kind; }
+  if (v(e.feet)) { L.boots = v(e.feet).c; L.tallBoots = true; }
+  if (v(e.shield)) L.shield = v(e.shield);
+  if (v(e.trinket)) L.amulet = v(e.trinket).c;
+  return L;
+}
+function heroFrames() {
+  const key = S ? EQUIP_SLOTS.map(k => S.equip[k] || '').join('|') : '';
+  if (!heroCache.has(key)) heroCache.set(key, makeCharFrames(heroLook()));
+  return heroCache.get(key);
+}
+function equipFrom(i) {
+  const it = S.inv[i];
+  if (!it || !isGear(it.id)) return;
+  const slot = GEAR[it.id].slot, old = S.equip[slot];
+  S.equip[slot] = it.id;
+  S.inv[i] = old ? { id: old, n: 1 } : null;
+  recalcStats(); invChanged();
+  Sound.play('equip');
+  UI.toast(`Equipped ${ITEMS[it.id].name}.`, it.id);
+}
+function unequip(slot) {
+  const id = S.equip[slot];
+  if (!id) return;
+  if (!canAdd(id)) { Sound.play('error'); UI.toastOnce('Your bag is full.'); return; }
+  S.equip[slot] = null; addItem(id, 1);
+  recalcStats();
+  Sound.play('equip');
+}
+function gainXP(n, x, y) {
+  if (!n) return;
+  S.xp += n;
+  if (x != null) floatText(x, y, `+${n} XP`, '#d8b8ff');
+  while (S.xp >= xpNeed(S.level)) {
+    S.xp -= xpNeed(S.level); S.level++; S.points += 3;
+    recalcStats(); S.hp = S.maxHp; S.sta = S.maxSta;
+    Sound.play('levelup'); burst(P.x, P.y - 14, '#ffe58a', 24); burst(P.x, P.y - 14, '#d8b8ff', 16);
+    floatText(P.x, P.y - 40, 'LEVEL UP!', '#ffe58a');
+    UI.toast(`Level ${S.level}! You have ${S.points} attribute point${S.points > 1 ? 's' : ''} to spend in Bag → Hero.`);
+  }
+}
+function spendPoint(attr) {
+  if (S.points <= 0) return;
+  S.points--; S.attrs[attr]++;
+  const before = S.maxHp, sb = S.maxSta;
+  recalcStats();
+  S.hp += S.maxHp - before; S.sta += S.maxSta - sb;
+}
+// Older saves predate levels and gear.
+function migrateSave() {
+  if (!S.attrs) S.attrs = { str: 1, vit: 1, agi: 1, end: 1 };
+  if (S.level == null) { S.level = 1; S.xp = 0; S.points = 0; }
+  if (!S.equip) {
+    S.equip = { weapon: null, shield: null, head: null, body: null, feet: null, trinket: null };
+    const si = S.inv.findIndex(x => x && x.id === 'sword');
+    if (si >= 0) S.inv[si] = null;
+    S.equip.weapon = 'sword'; S.equip.shield = 'buckler';
+  }
+  if (S.sta == null) S.sta = 100;
 }
 
 // ---------- Game start / save / load ----------
@@ -68,7 +157,9 @@ function newGame() {
     inv: new Array(36).fill(null), invSize: 24, sel: 0, water: 40, canMax: 40, weather: 'sun', tomorrow: 'sun',
     crate: [], friends: freshFriends(), stats: { wood: 0, harvest: 0, shards: 0, shipped: 0, talked: [], pumpkin: 0 }, quest: 0, wellDay: 0,
   };
-  [['hoe', 1], ['can', 1], ['axe', 1], ['pick', 1], ['sword', 1], ['seed_carrot', 15], ['seed_bloom', 4]].forEach(([id, n], i) => { S.inv[i] = { id, n }; });
+  [['hoe', 1], ['can', 1], ['axe', 1], ['pick', 1], ['seed_carrot', 15], ['seed_bloom', 4]].forEach(([id, n], i) => { S.inv[i] = { id, n }; });
+  S.level = 1; S.xp = 0; S.points = 0; S.attrs = { str: 1, vit: 1, agi: 1, end: 1 }; S.sta = 100;
+  S.equip = { weapon: 'sword', shield: 'buckler', head: null, body: null, feet: null, trinket: null };
   placePlayerHome();
   startPlaying();
   saveGame();
@@ -96,6 +187,7 @@ function continueGame() {
   S = d.s;
   S.friends = Object.assign(freshFriends(), S.friends || {});
   S.stats = Object.assign({ wood: 0, harvest: 0, shards: 0, shipped: 0, talked: [], pumpkin: 0 }, S.stats || {});
+  migrateSave();
   P.x = d.p.x; P.y = d.p.y; P.dir = d.p.dir || 0;
   if (!boxFree(P.x, P.y)) placePlayerHome();
   startPlaying();
@@ -106,7 +198,8 @@ function startPlaying() {
   UI.closeAll();
   SEAS = buildSeason(S.season);
   enemies = []; drops = []; parts = []; floats = [];
-  P.toolT = 0; P.hurtT = 0; P.kx = P.ky = 0;
+  P.toolT = 0; P.hurtT = 0; P.kx = P.ky = 0; P.swingT = 0; P.rollT = 0; P.blocking = false;
+  recalcStats();
   spawnNPCs();
   document.getElementById('hud').classList.remove('hidden');
   updateTouchVisibility();
@@ -192,33 +285,90 @@ function update(dt) {
   followCamera(dt);
 }
 
+const ROAD = new Set([GND.PATH, GND.PLAZA, GND.BRIDGE]);
+function spendSta(n) { S.sta = Math.max(0, S.sta - n); P.staDelay = 0.8; }
 function updatePlayer(dt) {
   if (P.hurtT > 0) P.hurtT -= dt;
   if (P.useCD > 0) P.useCD -= dt;
+  if (P.rollCD > 0) P.rollCD -= dt;
+  if (P.staDelay > 0) P.staDelay -= dt;
   if (Math.abs(P.kx) + Math.abs(P.ky) > 4) {
     tryMove(P.kx * dt, P.ky * dt);
     const f = Math.pow(0.002, dt); P.kx *= f; P.ky *= f;
   } else P.kx = P.ky = 0;
+
+  // Dive roll: a quick dash you can't be hurt during
+  if (P.rollT > 0) {
+    P.rollT -= dt;
+    tryMove(P.rollVx * dt, P.rollVy * dt);
+    P.blocking = P.sprinting = false;
+    P.target = computeTarget();
+    return;
+  }
   let mx = Input.moveX, my = Input.moveY;
   if (P.toolT > 0) {
     P.toolT -= dt;
     if (!P.toolDone && P.toolT <= P.toolDur * 0.5) { P.toolDone = true; applyTool(P.toolId); }
     mx = my = 0;
   }
+  let slow = 1;
+  if (P.swingT > 0) {
+    P.swingT -= dt; slow = 0.35;
+    if (!P.swingDone && P.swingT <= P.swingDur * 0.5) { P.swingDone = true; weaponHit(); }
+  }
+  // Block: hold to raise your shield
+  const wantBlock = Input.blockHeld() && P.toolT <= 0 && P.swingT <= 0;
+  if (wantBlock && !S.equip.shield) UI.toastOnce('Equip a shield to block (Bag → Hero).');
+  P.blocking = wantBlock && !!S.equip.shield && S.sta > 0;
+  if (P.blocking) slow = 0.45;
+
   const m = Math.hypot(mx, my);
+  P.sprinting = Input.sprintHeld() && m > 0.3 && !P.blocking && P.swingT <= 0 && S.sta > 0;
   if (m > 0.12) {
-    P.dir = Math.abs(mx) > Math.abs(my) ? (mx < 0 ? 2 : 3) : (my < 0 ? 1 : 0);
-    const sp = 82 * Math.min(1, m);
+    if (!P.blocking || P.swingT > 0) P.dir = Math.abs(mx) > Math.abs(my) ? (mx < 0 ? 2 : 3) : (my < 0 ? 1 : 0);
+    const onRoad = ROAD.has(gAt(Math.floor(P.x / TS), Math.floor((P.y - 3) / TS)));
+    const sp = 82 * ST.speed * Math.min(1, m) * slow * (onRoad ? 1.25 : 1) * (P.sprinting ? 1.6 : 1);
     tryMove(mx / Math.max(m, 1) * sp * dt, my / Math.max(m, 1) * sp * dt);
-    P.moving = true; P.animT += dt * 8 * Math.max(0.6, Math.min(1, m)); P.frame = Math.floor(P.animT) % 4;
+    P.moving = true; P.animT += dt * 8 * Math.max(0.6, Math.min(1, m)) * (P.sprinting ? 1.5 : 1); P.frame = Math.floor(P.animT) % 4;
+    if (P.sprinting) {
+      spendSta(20 * dt); P.staDelay = 0.6;
+      P.dustT -= dt;
+      if (P.dustT <= 0) { P.dustT = 0.09; parts.push({ x: P.x + (Math.random() - 0.5) * 6, y: P.y - 1, vx: -mx * 20, vy: -8, g: 0, life: 0.35, t: 0, c: 'rgba(220,200,160,.8)', s: 2 }); }
+    }
   } else { P.moving = false; P.frame = 0; P.animT = 0; }
-  // Hold-to-repeat
+  // Stamina comes back when you're not spending it
+  if (P.staDelay <= 0 && !P.sprinting && !P.blocking) S.sta = Math.min(S.maxSta, S.sta + 30 * dt);
+
+  // Hold-to-repeat for tools and attacks
   if (Input.useHeld()) {
     P.holdT += dt;
     const it = S.inv[S.sel];
     if (P.holdT > 0.28 && P.toolT <= 0 && P.useCD <= 0 && it && ['tool', 'seed', 'place'].includes(ITEMS[it.id].cat)) useItem();
   } else P.holdT = 0;
+  if (Input.attackHeld()) { P.atkHold += dt; if (P.atkHold > 0.3 && P.swingT <= 0) attack(true); } else P.atkHold = 0;
   P.target = computeTarget();
+}
+
+function attack(quiet) {
+  if (P.swingT > 0 || P.toolT > 0 || P.rollT > 0 || P.blocking) return;
+  if (!S.equip.weapon) { if (!quiet) UI.toastOnce('Equip a weapon in Bag → Hero.'); return; }
+  if (S.sta < 6) { if (!quiet) { Sound.play('error'); UI.toastOnce("You're out of stamina. Catch your breath!"); } return; }
+  spendSta(6);
+  P.swingT = P.swingDur = ST.swing; P.swingDone = false;
+  Sound.play('swing');
+}
+function roll() {
+  if (P.rollT > 0 || P.rollCD > 0 || P.toolT > 0) return;
+  if (S.sta < 18) { Sound.play('error'); UI.toastOnce("You're out of stamina. Catch your breath!"); return; }
+  spendSta(18);
+  let mx = Input.moveX, my = Input.moveY;
+  if (Math.hypot(mx, my) < 0.2) [mx, my] = DIRV[P.dir];
+  const m = Math.hypot(mx, my) || 1;
+  P.rollVx = mx / m * 210; P.rollVy = my / m * 210;
+  P.rollT = P.rollDur = 0.34; P.rollCD = 0.55; P.swingT = 0; P.kx = P.ky = 0;
+  P.dir = Math.abs(mx) > Math.abs(my) ? (mx < 0 ? 2 : 3) : (my < 0 ? 1 : 0);
+  Sound.play('roll');
+  burst(P.x, P.y - 2, 'rgba(220,200,160,.9)', 6);
 }
 
 function computeTarget(useMouse) {
@@ -245,8 +395,11 @@ const Game = {
     switch (e.a) {
       case 'use': if (e.mouse) { P.target = computeTarget(true); faceTile(...P.target); } useItem(); break;
       case 'interact': if (e.mouse) { P.target = computeTarget(true); faceTile(...P.target); hint = getInteract(); } if (hint && P.toolT <= 0) hint.run(); break;
+      case 'attack': attack(); break;
+      case 'roll': case 'back': roll(); break;
       case 'menu': openPause(); break;
       case 'inventory': Sound.play('ok'); UI.openInventory('items'); break;
+      case 'hero': Sound.play('ok'); UI.openInventory('hero'); break;
       case 'map': Sound.play('ok'); UI.openMap(); break;
       case 'hotPrev': selectSlot((S.sel + 11) % 12); break;
       case 'hotNext': selectSlot((S.sel + 1) % 12); break;
@@ -256,15 +409,16 @@ const Game = {
 };
 
 function useItem() {
-  if (P.toolT > 0 || P.useCD > 0) return;
+  if (P.toolT > 0 || P.useCD > 0 || P.rollT > 0 || P.swingT > 0) return;
   const it = S.inv[S.sel];
   if (!it) return;
   const d = ITEMS[it.id], [tx, ty] = P.target;
+  if (d.cat === 'gear') { P.useCD = 0.3; equipFrom(S.sel); return; }
   if (d.cat === 'tool') {
-    const cost = { hoe: 2, can: 1, axe: 2, pick: 2, sword: 0 }[it.id];
+    const cost = { hoe: 2, can: 1, axe: 2, pick: 2 }[it.id];
     if (S.energy < cost) { Sound.play('error'); UI.toastOnce("You're too tired. Eat something or get some sleep."); return; }
     S.energy -= cost;
-    P.toolId = it.id; P.toolT = P.toolDur = it.id === 'sword' ? 0.24 : 0.32; P.toolDone = false;
+    P.toolId = it.id; P.toolT = P.toolDur = 0.32; P.toolDone = false;
     Sound.play('swing');
     return;
   }
@@ -281,7 +435,6 @@ function applyTool(id) {
   const [tx, ty] = P.target;
   if (!inb(tx, ty)) return;
   const i = idx(tx, ty), g = World.ground[i], o = World.obj[i];
-  if (id === 'sword') { swordHit(); if (o === OB.WEED) hitObj(tx, ty, 'sword'); return; }
   if (id === 'can') {
     if (g === GND.WATER) { S.water = S.canMax; Sound.play('water'); floatText(tx * TS + 8, ty * TS, 'Refilled!', '#a8e0ff'); burst(tx * TS + 8, ty * TS + 8, '#7ab8ff', 8); invChanged(); return; }
     if (S.water <= 0) { Sound.play('error'); UI.toastOnce('Your watering can is empty. Refill it at a pond or the river.'); return; }
@@ -307,13 +460,14 @@ function hitObj(tx, ty, tool) {
   if (!inf || inf.forage) return;
   if (!inf.hp) { Sound.play('clink'); return; }
   if (!(inf.tool === tool || (inf.tool === 'any' && tool !== 'can'))) { Sound.play('clink'); shakes.set(i, 0.15); UI.toastOnce(`You need ${TOOL_NAMES[inf.tool]} for that.`); return; }
-  const hp = (World.hp.get(i) ?? inf.hp) - 1;
+  const hp = (World.hp.get(i) ?? inf.hp) - (tool === 'sword' ? 1 : ST.toolPow);
   shakes.set(i, 0.22);
   Sound.play(tool === 'axe' ? 'chop' : tool === 'pick' ? 'pick' : 'swing');
   burst(tx * TS + 8, ty * TS + 8, inf.pc, 5);
   Input.rumble(0.25, 50);
   if (hp > 0) { World.hp.set(i, hp); return; }
   World.hp.delete(i);
+  gainXP({ [OB.OAK]: XP.tree, [OB.PINE]: XP.tree, [OB.STUMP]: XP.stump, [OB.ROCK]: XP.rock, [OB.ORE]: XP.ore, [OB.CRYSTAL]: XP.crystal, [OB.BOULDER]: XP.boulder, [OB.BUSH]: XP.bush, [OB.TWIG]: XP.twig, [OB.WEED]: XP.weed }[o] || 0);
   World.obj[i] = inf.becomes || 0;
   if (inf.give) dropItem(inf.give, 1, tx * TS + 8, ty * TS + 8);
   for (const [id, a, b] of inf.drops || []) { const n = ri(a, b); if (n > 0) dropItem(id, n, tx * TS + 8, ty * TS + 8); }
@@ -374,7 +528,7 @@ function getInteract() {
   for (const n of npcs) { if (!n.visible) continue; const d = dist(fx, fy, n.x, n.y - 8); if (d < bd) { bd = d; best = n; } }
   if (best) {
     const it = S.inv[S.sel], f = S.friends[best.id];
-    const gift = it && !isTool(it.id) && f.met && !f.gifted;
+    const gift = it && !isTool(it.id) && !isGear(it.id) && f.met && !f.gifted;
     const n = best;
     return { label: gift ? `Give ${ITEMS[it.id].name}` : 'Talk', x: n.x, y: n.y - 30, run: () => talkTo(n, gift) };
   }
@@ -410,6 +564,7 @@ function pickForage(tx, ty) {
   if (!canAdd(id)) { Sound.play('error'); UI.toastOnce('Your bag is full.'); return; }
   World.obj[i] = 0;
   addItem(id, 1);
+  gainXP(XP.forage);
   Sound.play('pickup');
   floatText(tx * TS + 8, ty * TS, `+1 ${ITEMS[id].name}`, '#fff3d0');
 }
@@ -419,6 +574,7 @@ function harvest(tx, ty) {
   if (!canAdd(c.id, n)) { Sound.play('error'); UI.toastOnce('Your bag is full.'); return; }
   addItem(c.id, n);
   S.stats.harvest++;
+  gainXP(2 + Math.round(cr.sell / 25), tx * TS + 8, ty * TS - 10);
   if (c.id === 'pumpkin') S.stats.pumpkin++;
   if (cr.regrow) { c.ready = false; c.age = cr.days - cr.regrow; } else World.crops.delete(i);
   Sound.play('harvest');
@@ -505,6 +661,7 @@ function checkQuests() {
     if (q.prog(S) < q.goal) break;
     S.quest++;
     if (q.reward.gold) S.gold += q.reward.gold;
+    gainXP(30 * S.quest);
     for (const [id, n] of q.reward.items || []) giveItem(id, n);
     Sound.play('quest');
     UI.toast(`Task complete: ${q.title}! Reward: ${rewardText(q.reward)}`);
@@ -657,7 +814,7 @@ function updateEnemies(dt) {
         if (d < 9 * TS && Math.random() < 0.3) Sound.play('slime');
       }
     }
-    if (d < 11 && P.hurtT <= 0 && e.fade > 0.5) hurtPlayer(t.dmg, e);
+    if (d < 11 && P.hurtT <= 0 && P.rollT <= 0 && e.fade > 0.5) hurtPlayer(t.dmg, e);
   }
   enemies = enemies.filter(e => !e.dead);
 }
@@ -686,34 +843,51 @@ function updateWolf(e, d, dt) {
   e.run = Math.abs(vx) + Math.abs(vy) > 1;
 }
 
-function swordHit() {
-  const [dx, dy] = DIRV[P.dir], hx = P.x + dx * 12, hy = P.y - 7 + dy * 12;
+function weaponHit() {
+  const [dx, dy] = DIRV[P.dir], r = ST.reach, hx = P.x + dx * (r - 4), hy = P.y - 7 + dy * (r - 4);
+  // Weapons also cut grass tufts in front of you
+  const [tx, ty] = P.target;
+  if (oAt(tx, ty) === OB.WEED) hitObj(tx, ty, 'sword');
   for (const e of enemies) {
-    if (e.dead || dist(hx, hy, e.x, e.y - 6) > 17) continue;
-    e.hp -= ri(10, 14); e.flash = 0.15;
+    if (e.dead || dist(hx, hy, e.x, e.y - 6) > r) continue;
+    const crit = Math.random() < ST.crit;
+    const dmg = Math.max(1, Math.round(ST.atk * (0.9 + Math.random() * 0.2) * (crit ? 1.75 : 1)));
+    e.hp -= dmg; e.flash = 0.15;
     const k = dist(e.x, e.y, P.x, P.y) || 1;
-    e.kx = (e.x - P.x) / k * 170; e.ky = (e.y - P.y) / k * 170;
+    e.kx = (e.x - P.x) / k * 170 * ST.knock; e.ky = (e.y - P.y) / k * 170 * ST.knock;
     e.hop = 0; e.lunge = 0; e.cd = 0.8;
-    Sound.play('hit'); Input.rumble(0.4, 70);
-    burst(e.x, e.y - 6, { wisp: '#b8a4ff', rockslime: '#7aa0d8', wolf: '#c8ccd6' }[e.kind] || '#6ac24a', 6);
+    Sound.play(crit ? 'crit' : 'hit'); Input.rumble(crit ? 0.6 : 0.4, 70);
+    floatText(e.x, e.y - 22, crit ? `${dmg}!` : `${dmg}`, crit ? '#ffe58a' : '#ffffff');
+    burst(e.x, e.y - 6, { wisp: '#b8a4ff', rockslime: '#7aa0d8', wolf: '#c8ccd6' }[e.kind] || '#6ac24a', crit ? 12 : 6);
     if (e.hp <= 0) {
       e.dead = true; Sound.play('kill');
       burst(e.x, e.y - 6, '#ffffff', 10);
       for (const [id, p] of ENEMY[e.kind].drops) if (Math.random() < p) dropItem(id, 1, e.x, e.y - 4);
+      gainXP(XP[e.kind] || 5, e.x, e.y - 30);
     }
   }
 }
-function hurtPlayer(dmg, e) {
-  S.hp -= dmg; P.hurtT = 1.0;
+function hurtPlayer(raw, e) {
+  // Armor soaks part of every hit; a raised shield stops much more but costs stamina
+  let dmg = raw * (1 - ST.def / (ST.def + 20));
   const k = dist(e.x, e.y, P.x, P.y) || 1;
-  P.kx = (P.x - e.x) / k * 190; P.ky = (P.y - e.y) / k * 190;
-  Sound.play('hurt'); Input.rumble(0.8, 160);
-  floatText(P.x, P.y - 30, `-${dmg}`, '#ff6a6a');
+  let push = 190;
+  if (P.blocking) {
+    dmg *= 1 - ST.block; push = 90;
+    spendSta(8 + raw);
+    Sound.play('block'); Input.rumble(0.4, 90);
+    burst(P.x + DIRV[P.dir][0] * 8, P.y - 12 + DIRV[P.dir][1] * 6, '#ffe8a0', 8);
+    if (S.sta <= 0) { P.blocking = false; P.staDelay = 1.4; UI.toastOnce('Guard broken!'); }
+  } else { Sound.play('hurt'); Input.rumble(0.8, 160); }
+  dmg = Math.max(P.blocking ? 0 : 1, Math.round(dmg));
+  S.hp -= dmg; P.hurtT = P.blocking ? 0.5 : 1.0;
+  P.kx = (P.x - e.x) / k * push; P.ky = (P.y - e.y) / k * push;
+  floatText(P.x, P.y - 30, dmg ? `-${dmg}` : 'Blocked!', dmg ? '#ff6a6a' : '#ffe8a0');
   if (S.hp <= 0) faint();
 }
 function faint() {
   const lost = Math.min(1000, Math.floor(S.gold * 0.1));
-  S.gold -= lost; S.hp = Math.round(S.maxHp * 0.5); S.energy = Math.round(S.maxEnergy * 0.5);
+  S.gold -= lost; S.hp = Math.round(S.maxHp * 0.5); S.energy = Math.round(S.maxEnergy * 0.5); S.sta = S.maxSta;
   S.time = Math.min(S.time + 120, DAY_END - 30);
   enemies = []; P.kx = P.ky = 0;
   placePlayerHome(); snapCamera();
@@ -764,7 +938,7 @@ function endDay(passedOut) {
   for (const f of Object.values(S.friends)) { f.talked = false; f.gifted = false; }
   S.time = DAY_START;
   S.energy = passedOut ? Math.round(S.maxEnergy * 0.6) : S.maxEnergy;
-  S.hp = S.maxHp;
+  S.hp = S.maxHp; S.sta = S.maxSta;
   enemies = []; P.toolT = 0; P.kx = P.ky = 0;
   placePlayerHome(); spawnNPCs(); snapCamera();
   saveGame();
@@ -979,23 +1153,36 @@ function drawObj(g, o, tx, ty, i) {
   }
 }
 function drawPlayer(g) {
-  const x = Math.round(P.x), y = Math.round(P.y);
+  const x = Math.round(P.x), y = Math.round(P.y), frames = heroFrames();
   g.drawImage(SPR.shadow, x - 6, y - 2);
-  const blink = P.hurtT > 0 && Math.floor(P.hurtT * 14) % 2;
-  const tool = P.toolT > 0 ? ICONS[P.toolId] : null;
-  const drawTool = () => {
-    if (!tool) return;
-    const pr = 1 - P.toolT / P.toolDur, [dx, dy] = DIRV[P.dir];
+  const blink = P.hurtT > 0 && !P.blocking && Math.floor(P.hurtT * 14) % 2;
+  // Dive roll: tumble the whole sprite
+  if (P.rollT > 0) {
+    const pr = 1 - P.rollT / P.rollDur, spin = (P.rollVx < 0 || (P.rollVx === 0 && P.dir === 2) ? -1 : 1) * pr * Math.PI * 2;
+    g.save(); g.translate(x, y - 10); g.rotate(spin); g.drawImage(frames[P.dir][1], -8, -17); g.restore();
+    return;
+  }
+  // Swinging a tool or weapon
+  const swing = P.toolT > 0 ? [ICONS[P.toolId], P.toolT, P.toolDur] : P.swingT > 0 && S.equip.weapon ? [ICONS[S.equip.weapon], P.swingT, P.swingDur] : null;
+  const drawSwing = () => {
+    if (!swing) return;
+    const [icon, t, dur] = swing, pr = 1 - t / dur, [dx, dy] = DIRV[P.dir];
     const base = [Math.PI / 2, -Math.PI / 2, Math.PI, 0][P.dir], a = base + (P.dir === 2 ? -1 : 1) * (pr * 2.0 - 1.2);
     g.save();
     g.translate(x + dx * 3, y - 12 + dy * 2);
     g.rotate(a + Math.PI / 4);
-    g.drawImage(tool, -2, -14);
+    g.drawImage(icon, -2, -14);
     g.restore();
   };
-  if (P.dir === 1) drawTool();
-  if (!blink) g.drawImage(CHAR.player[P.dir][P.toolT > 0 ? 0 : P.frame], x - 8, y - 27);
-  if (P.dir !== 1) drawTool();
+  // Raised shield while blocking
+  const drawShield = () => {
+    if (!P.blocking || !S.equip.shield) return;
+    const [dx, dy] = DIRV[P.dir];
+    g.drawImage(ICONS[S.equip.shield], x - 8 + dx * 8, y - 22 + dy * 5);
+  };
+  if (P.dir === 1) { drawSwing(); drawShield(); }
+  if (!blink) g.drawImage(frames[P.dir][P.toolT > 0 || P.swingT > 0 || P.blocking ? 0 : P.frame], x - 8, y - 27);
+  if (P.dir !== 1) { drawShield(); drawSwing(); }
 }
 function drawEnemy(g, e) {
   const t = ENEMY[e.kind];

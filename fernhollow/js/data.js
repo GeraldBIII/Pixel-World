@@ -30,7 +30,6 @@ const ITEMS = {
   can: { name: 'Watering Can', cat: 'tool', desc: 'Water tilled soil. Refill it at any pond or river.' },
   axe: { name: 'Axe', cat: 'tool', desc: 'Chop branches, stumps, bushes and trees for wood.' },
   pick: { name: 'Pickaxe', cat: 'tool', desc: 'Breaks rocks, crystals and ore. Also picks up placed items and un-tills empty soil.' },
-  sword: { name: 'Thornblade', cat: 'tool', desc: 'An old fae-forged blade. Cuts weeds and fends off monsters.' },
   wood: { name: 'Wood', cat: 'mat', sell: 2, desc: 'Sturdy timber for crafting.' },
   stone: { name: 'Stone', cat: 'mat', sell: 2, desc: 'A common stone. Useful for crafting.' },
   fiber: { name: 'Fiber', cat: 'mat', sell: 1, desc: 'Tough plant fiber from weeds.' },
@@ -57,10 +56,57 @@ for (const [k, c] of Object.entries(CROPS)) {
     desc: `Plant in tilled soil and water daily. Ready in ${c.days} days${c.regrow ? `, then every ${c.regrow} days` : ''}. Grows in ${when}.`,
   };
 }
+// ---------- Gear (equipment) ----------
+// stats: atk (weapon damage), def, hp, sta (stamina), speed (+%), crit (+%), block (% of damage stopped)
+// vis: how the piece looks on the hero
+const EQUIP_SLOTS = ['weapon', 'shield', 'head', 'body', 'feet', 'trinket'];
+const SLOT_NAMES = { weapon: 'Weapon', shield: 'Shield', head: 'Head', body: 'Body', feet: 'Feet', trinket: 'Trinket' };
+const GEAR = {
+  sword: { name: 'Thornblade', slot: 'weapon', sell: 20, swing: 0.24, reach: 17, stats: { atk: 10 }, desc: 'An old fae-forged blade. Reliable and quick.' },
+  dagger: { name: 'Wolfbite Dagger', slot: 'weapon', sell: 200, swing: 0.15, reach: 14, stats: { atk: 8, crit: 0.1 }, desc: 'Short and wickedly fast. Lands critical hits often.' },
+  ironsword: { name: 'Star-Iron Sword', slot: 'weapon', sell: 600, swing: 0.24, reach: 18, stats: { atk: 18 }, desc: 'A well-balanced blade forged by Bram.' },
+  hammer: { name: 'Stoneheart Hammer', slot: 'weapon', sell: 900, swing: 0.4, reach: 20, knock: 1.9, stats: { atk: 27 }, desc: 'Slow, heavy, and sends monsters flying.' },
+  moonblade: { name: 'Moonsteel Blade', slot: 'weapon', sell: 1500, swing: 0.22, reach: 20, stats: { atk: 32, crit: 0.06 }, desc: 'Forged from Aether Shards. It hums in moonlight.' },
+  buckler: { name: 'Wooden Buckler', slot: 'shield', sell: 40, stats: { def: 1, block: 0.5 }, vis: { c: '#a8743e', rim: '#6b4429' }, desc: 'A round plank shield. Better than nothing.' },
+  kite: { name: 'Iron Kite Shield', slot: 'shield', sell: 600, stats: { def: 3, block: 0.7 }, vis: { c: '#c0404a', rim: '#9aa2b4' }, desc: 'Tall iron shield with a crimson face.' },
+  aegis: { name: 'Moon Aegis', slot: 'shield', sell: 1400, stats: { def: 5, block: 0.85 }, vis: { c: '#cfe0ff', rim: '#6a4aa8' }, desc: 'Shimmering shield that drinks blows like moonlight.' },
+  leathercap: { name: 'Leather Cap', slot: 'head', sell: 100, stats: { def: 1 }, vis: { kind: 'cap', c: '#8a5a34' }, desc: 'Keeps the rain and the sticks off.' },
+  wolfhood: { name: 'Wolf Hood', slot: 'head', sell: 300, stats: { def: 2, crit: 0.04 }, vis: { kind: 'hood', c: '#8a8f9e' }, desc: 'Made from wolf pelts, ears and all. Sharpens your senses.' },
+  ironhelm: { name: 'Iron Helm', slot: 'head', sell: 450, stats: { def: 3 }, vis: { kind: 'helm', c: '#9aa2b4' }, desc: 'A sturdy helmet with a nose guard.' },
+  tunic: { name: 'Padded Tunic', slot: 'body', sell: 100, stats: { def: 2 }, vis: { kind: 'tunic', c: '#7a5a8a' }, desc: 'Quilted cloth that softens blows.' },
+  wolfcoat: { name: 'Wolfhide Coat', slot: 'body', sell: 400, stats: { def: 3, hp: 15 }, vis: { kind: 'coat', c: '#6e7383' }, desc: 'Warm, tough and smells faintly of forest.' },
+  mail: { name: 'Star-Iron Mail', slot: 'body', sell: 1000, stats: { def: 6 }, vis: { kind: 'mail', c: '#a8b0c0' }, desc: 'Interlocking rings of starry iron.' },
+  boots: { name: 'Leather Boots', slot: 'feet', sell: 80, stats: { def: 1, speed: 0.05 }, vis: { c: '#6b4429' }, desc: 'Comfortable boots for long walks.' },
+  swiftboots: { name: 'Swiftstep Boots', slot: 'feet', sell: 500, stats: { def: 1, speed: 0.12 }, vis: { c: '#3fae9a' }, desc: 'Enchanted by Mirabel. Your feet feel light.' },
+  greaves: { name: 'Iron Greaves', slot: 'feet', sell: 380, stats: { def: 3 }, vis: { c: '#9aa2b4' }, desc: 'Heavy iron boots.' },
+  charm: { name: 'Clover Charm', slot: 'trinket', sell: 250, stats: { crit: 0.06 }, vis: { c: '#5fbf4a' }, desc: 'A four-leaf clover sealed in amber.' },
+  amulet: { name: 'Vigor Amulet', slot: 'trinket', sell: 380, stats: { sta: 30 }, vis: { c: '#e7b85a' }, desc: 'You could run all day.' },
+  pendant: { name: 'Heart Pendant', slot: 'trinket', sell: 420, stats: { hp: 25 }, vis: { c: '#e0406a' }, desc: 'Warm against your chest.' },
+};
+const STAT_LABELS = { atk: ['Attack', v => v], def: ['Defense', v => v], hp: ['Max HP', v => '+' + v], sta: ['Stamina', v => '+' + v], speed: ['Speed', v => '+' + Math.round(v * 100) + '%'], crit: ['Crit', v => '+' + Math.round(v * 100) + '%'], block: ['Block', v => Math.round(v * 100) + '%'] };
+const gearStatsText = id => Object.entries(GEAR[id].stats).map(([k, v]) => `${STAT_LABELS[k][0]} ${STAT_LABELS[k][1](v)}`).join(' · ');
+for (const [k, g] of Object.entries(GEAR)) ITEMS[k] = { name: g.name, cat: 'gear', slot: g.slot, sell: g.sell, desc: `${g.desc} (${SLOT_NAMES[g.slot]}: ${gearStatsText(k)})` };
+
 const isTool = id => ITEMS[id] && ITEMS[id].cat === 'tool';
-const maxStack = id => (isTool(id) ? 1 : 999);
+const isGear = id => ITEMS[id] && ITEMS[id].cat === 'gear';
+const maxStack = id => (isTool(id) || isGear(id) ? 1 : 999);
+
+// ---------- Levels and attributes ----------
+const ATTRS = {
+  str: ['Strength', 'Attack +2 each. Every 5 points also makes tools hit harder.'],
+  vit: ['Vitality', 'Max HP +10 each. Every 2 points add 1 Defense.'],
+  agi: ['Agility', 'Speed +1.5% and Crit +1% each.'],
+  end: ['Endurance', 'Max Stamina +10 and Max Energy +10 each.'],
+};
+const xpNeed = L => Math.round(40 + 25 * L + 8 * L * L);
+const XP = { tree: 5, stump: 2, rock: 1, ore: 3, crystal: 6, boulder: 4, bush: 2, twig: 1, weed: 1, forage: 2, craft: 3, slime: 8, rockslime: 12, wisp: 10, wolf: 18 };
 
 const RECIPES = [
+  { id: 'buckler', qty: 1, need: { wood: 10 } },
+  { id: 'wolfhood', qty: 1, need: { pelt: 3, fiber: 4 } },
+  { id: 'wolfcoat', qty: 1, need: { pelt: 5, fiber: 6 } },
+  { id: 'moonblade', qty: 1, need: { shard: 4, ore: 8, glowcap: 2 } },
+  { id: 'aegis', qty: 1, need: { shard: 5, ore: 10, stone: 10 } },
   { id: 'fence', qty: 4, need: { wood: 2 } },
   { id: 'lantern', qty: 1, need: { wood: 5, shard: 1 } },
   { id: 'sprinkler', qty: 1, need: { ore: 4, stone: 6, shard: 1 } },
@@ -210,13 +256,18 @@ const SHOPS = {
   },
   apothecary: {
     name: "Mirabel's Apothecary", owner: 'mirabel', greet: 'Potions, lanterns, and things you should not touch.',
-    stock: () => [{ id: 'tonic', price: 150 }, { id: 'lantern', price: 250 }, { id: 'seed_bloom', price: 60 }],
+    stock: () => [{ id: 'tonic', price: 150 }, { id: 'lantern', price: 250 }, { id: 'seed_bloom', price: 60 }, { id: 'charm', price: 600 }, { id: 'amulet', price: 900 }, { id: 'pendant', price: 1000 }, { id: 'swiftboots', price: 1200 }],
   },
   forge: {
     name: "Bram's Forge", owner: 'bram', greet: 'Hrm. Buying or browsing?',
     stock: () => [
       { id: 'fence', price: 12 },
       { id: 'sprinkler', price: 700 },
+      { id: 'dagger', price: 450 }, { id: 'ironsword', price: 1400 }, { id: 'hammer', price: 2200 },
+      { id: 'buckler', price: 120 }, { id: 'kite', price: 1500 },
+      { id: 'leathercap', price: 250 }, { id: 'ironhelm', price: 1100 },
+      { id: 'tunic', price: 250 }, { id: 'mail', price: 2400 },
+      { id: 'boots', price: 200 }, { id: 'greaves', price: 900 },
       { special: 'can', name: 'Copper Watering Can', desc: 'Holds 100 water instead of 40.', price: 1200, icon: 'can', avail: () => S.canMax < 100 },
     ],
   },
