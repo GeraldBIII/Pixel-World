@@ -10,7 +10,8 @@ Open `index.html` in a browser, or turn on GitHub Pages (Settings → Pages → 
 
 | Action | Keys |
 | --- | --- |
-| Move | WASD / Arrow keys |
+| Walk forward / back | W S / ↑ ↓ |
+| Turn (the world rotates with you) | A D / ← → |
 | Attack | Left click |
 | Talk, open chests | E / Enter |
 | Drink potion | Q |
