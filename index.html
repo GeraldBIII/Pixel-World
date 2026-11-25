@@ -188,9 +188,7 @@ table.rec img{width:24px;height:24px;image-rendering:pixelated;vertical-align:mi
   <section id="camui" aria-label="Camera">
     <h3>Camera</h3>
     <label>Tilt <input type="range" id="cTilt" min="5" max="86" step="1"><output id="oTilt"></output></label>
-    <label>Orbit <input type="range" id="cOrbit" min="-180" max="180" step="1"><output id="oOrbit"></output></label>
     <label>Zoom <input type="range" id="cZoom" min="60" max="320" step="5"><output id="oZoom"></output></label>
-    <label class="chk"><input type="checkbox" id="cFollow"> Turn with hero</label>
     <label>View <select id="cView"><option value="auto">Auto</option><option value="4">128 tiles</option><option value="6">192 tiles</option><option value="8">256 tiles</option><option value="10">320 tiles</option><option value="12">384 tiles</option><option value="14">448 tiles</option><option value="16">512 tiles</option></select><output id="oView"></output></label>
     <button id="cReset" type="button">Reset</button>
   </section>
@@ -837,7 +835,7 @@ addEventListener('mouseup',e=>{if(e.button===0)keys.Mouse0=false});
 let camDrag=null;
 ov.addEventListener('mousedown',e=>{if(e.button===2){e.preventDefault();camDrag=[e.clientX,e.clientY]}});
 addEventListener('mousemove',e=>{if(!camDrag)return;const dx=e.clientX-camDrag[0],dy=e.clientY-camDrag[1];camDrag=[e.clientX,e.clientY];
-  CAM1.orbit=((CAM1.orbit-dx*.4+540)%360)-180;CAM1.tilt=clamp(CAM1.tilt+dy*.3,5,86);camUI()});
+  const p1=PLAYERS[0];if(p1)p1.h+=dx*.006;CAM1.tilt=clamp(CAM1.tilt+dy*.3,5,86);camUI()});
 addEventListener('mouseup',e=>{if(e.button===2&&camDrag){camDrag=null;saveCam()}});
 frame.addEventListener('contextmenu',e=>e.preventDefault());
 frame.addEventListener('wheel',e=>{if(!running||uiOpen(PLAYERS[0]))return;e.preventDefault();CAM1.zoom=clamp(CAM1.zoom*Math.exp(-e.deltaY*.0012),.6,3.2);camUI();saveCam()},{passive:false});
@@ -851,7 +849,7 @@ const JOY={x:0,y:0,id:null};{const j=$('joy'),k=$('joyk');const set=e=>{const r=
   for(const ev of['pointerup','pointercancel'])j.addEventListener(ev,e=>{if(e.pointerId===JOY.id){JOY.id=null;JOY.x=JOY.y=0;k.style.transform=''}})}
 const TP=new Map();let pinch0=0;
 ov.addEventListener('pointerdown',e=>{if(e.pointerType!=='touch')return;TP.set(e.pointerId,[e.clientX,e.clientY]);ov.setPointerCapture(e.pointerId);if(TP.size===2){const[a,b]=[...TP.values()];pinch0=Math.hypot(a[0]-b[0],a[1]-b[1])}});
-ov.addEventListener('pointermove',e=>{if(!TP.has(e.pointerId))return;const o=TP.get(e.pointerId);if(TP.size===1){CAM1.orbit=((CAM1.orbit-(e.clientX-o[0])*.4+540)%360)-180;CAM1.tilt=clamp(CAM1.tilt+(e.clientY-o[1])*.3,5,86)}
+ov.addEventListener('pointermove',e=>{if(!TP.has(e.pointerId))return;const o=TP.get(e.pointerId);if(TP.size===1){if(PLAYERS[0])PLAYERS[0].h+=(e.clientX-o[0])*.008;CAM1.tilt=clamp(CAM1.tilt+(e.clientY-o[1])*.3,5,86)}
   TP.set(e.pointerId,[e.clientX,e.clientY]);if(TP.size===2){const[a,b]=[...TP.values()],d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(pinch0)CAM1.zoom=clamp(CAM1.zoom*d/pinch0,.5,3.2);pinch0=d}});
 for(const ev of['pointerup','pointercancel'])ov.addEventListener(ev,e=>{if(TP.delete(e.pointerId)){pinch0=0;saveCam();camUI()}});
 let runToggle=false;$('tRun').addEventListener('pointerdown',e=>{e.preventDefault();runToggle=!runToggle;$('tRun').setAttribute('aria-pressed',runToggle)});
@@ -919,7 +917,7 @@ function heroHTML(){const xpN=need(P.lv),red=Math.round(reduction()*100);
     <dt>Defense</dt><dd>${P.defV} (blocks ${red}% of damage)</dd><dt>Stamina</dt><dd>${Math.floor(P.sta)} / ${P.maxSta}</dd><dt>Critical chance</dt><dd>${Math.round(critCh()*100)}%</dd><dt>Speed</dt><dd>${Math.round(P.spdV*100)}% · sprint ${Math.round(P.spdV*sprintMul()*100)}%</dd><dt>Bag</dt><dd>${bagSize()} slots</dd><dt>Shop prices</dt><dd>buy ×${buyMul().toFixed(2)} · sell ×${sellMul().toFixed(2)}</dd><dt>Gold</dt><dd>${P.gold}</dd>${bf.length?`<dt>Effects</dt><dd>${bf.join(', ')}</dd>`:''}</dl></div>
     <div><h4>Equipment</h4><div class="eqgrid">${e}</div><h4 style="margin-top:14px">Details</h4><div class="detail" id="det">${detailHTML()}</div></div></div>`}
 function recordsHTML(){const st=P.stats;let rows='',tot=0;for(const k in ENAMES){const n=st.kills[k]||0;tot+=n;rows+=`<tr><td><img alt="" src="${ESPR[k][0].toDataURL()}">${ENAMES[k]}</td><td>${n}</td></tr>`}
-  const miles=st.dist/6400,exp=EXP.reduce((a,b)=>a+b,0),land=Math.round(exp/(EXW*EXW)*100),pt=Math.floor(st.play),day=Math.floor((time/DAY*24+8)/24)+1;
+  const miles=st.dist/6400,exp=EXP.reduce((a,b)=>a+b,0),land=Math.round(exp/(EXW*EXW)*100),pt=Math.floor(st.play),day=dayNum()+1;
   const R=[['Distance walked',miles.toFixed(2)+' miles'],['…of it sprinting',(st.sprint/6400).toFixed(2)+' miles'],['Map explored',land+'%'],['Days in Emberwild',day],['Time adventuring',Math.floor(pt/3600)+'h '+String(Math.floor(pt%3600/60)).padStart(2,'0')+'m'],['Gold earned',st.gold],['Gold spent',st.spent],['Items looted',st.looted],['Items sold',st.sold],['Items bought',st.bought],['Chests opened',st.chests],['Potions and food used',st.potions],['Damage dealt',st.dealt],['Hardest hit',st.best],['Damage taken',st.taken],['Blows blocked',st.blocked],['Times fallen',st.deaths],['Dungeons entered',st.dungeons],['Items stolen',st.stolen+' (worth '+st.stolenV+'g)'],['Townsfolk struck down',st.folk],['Guards struck down',st.guards],['Bounties paid',st.bounties+'g'],['Highest bounty',Math.ceil(st.peak)+'g'],['Shrines woken',Q.shrines.size+' / 3'],['Quests completed',st.quests]];
   return`<div class="pcols"><div><h4>Monsters slain</h4><table class="rec">${rows}<tr><th>Total</th><td>${tot}</td></tr></table></div><div><h4>Journey</h4><table class="rec">${R.map(([a,b])=>`<tr><td>${a}</td><td>${b}</td></tr>`).join('')}</table></div></div>`}
 function mapHTML(){return`<canvas id="wmap" width="512" height="512" aria-label="World map"></canvas><p class="ty" id="mapNote" style="text-align:center"></p><p class="ty" style="text-align:center">${P.god?'God mode: click anywhere on the map to teleport there.':''}</p><div class="maplegend"><span><i style="background:#fff"></i>You</span><span><i style="background:#c0463c"></i>Towns</span><span><i style="background:#b060d0"></i>Dungeons</span><span><i style="background:#7fdcff"></i>Sleeping shrine</span><span><i style="background:#ffd34d"></i>Awake shrine</span><span><i style="background:#e6c36a"></i>Roads</span><span><i style="background:#1a1410"></i>Unexplored</span></div>`}
@@ -979,9 +977,12 @@ function hud(){$('stab').style.width=(100*P.sta/P.maxSta)+'%';$('stab').classLis
   let h='';for(let i=0;i<Math.ceil(P.maxHp/2);i++){const v=P.hp-i*2;h+='<img alt="" src="'+(v>=2?HIMG.f:v===1?HIMG.h:HIMG.e)+'">'}$('hearts').innerHTML=h;$('hearts').setAttribute('aria-label','Health '+P.hp+' of '+P.maxHp);
   $('lv').textContent='Lv '+P.lv;$('godline').hidden=!P.god;if(P.god){const tx=Math.floor(P.x/16),ty=Math.floor(P.y/16),t=P.realm==='w'?tT(tx,ty):-1;$('godline').textContent='GOD · your PL '+plOf()+(P.realm==='w'?' · '+(BIONAME[t]||'')+' PL '+regionPL(tx,ty,t):INSIDE&&INSIDE.dun?' · dungeon PL '+INT.pl:'')}$('xpb').style.width=(100*P.xp/need(P.lv))+'%';$('gold').textContent=P.gold;$('pots').textContent=pots;$('atkdef').textContent='ATK '+P.atkV+' DEF '+P.defV;$('quest').textContent=questText()}
 const need=l=>10+l*8;
-const hour=()=>(time/DAY*24+8)%24;
+const DAYF=.82,DOFF=.2373,MIDN=DAYF+(4/9)*(1-DAYF);
+const cyc=()=>((time/DAY+DOFF)%1+1)%1;
+const hour=()=>{const c=cyc();return c<DAYF?5+c/DAYF*15:(20+(c-DAYF)/(1-DAYF)*9)%24};
+const timeUntil=h=>{const tc=h>=5&&h<20?(h-5)/15*DAYF:DAYF+((h-20+24)%24)/9*(1-DAYF);return(((tc-cyc())%1)+1)%1||1};
 const darkness=()=>clamp((Math.abs(hour()-12)-5.5)/1.5,0,1)*.8;
-function clockText(){const h=hour(),day=Math.floor((time/DAY*24+8)/24)+1;const p=h<5?'Night':h<8?'Dawn':h<12?'Morning':h<17?'Afternoon':h<20?'Dusk':'Night';const hh=Math.floor(h),mm=Math.floor((h-hh)*6)*10;return'Day '+day+' · '+p+' '+String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0')}
+function clockText(){const h=hour(),day=dayNum()+1;const p=h<5?'Night':h<8?'Dawn':h<12?'Morning':h<17?'Afternoon':h<20?'Dusk':'Night';const hh=Math.floor(h),mm=Math.floor((h-hh)*6)*10;return'Day '+day+' · '+p+' '+String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0')}
 
 
 // ---------- monsters: each kind keeps to its own biomes; strength follows the hidden power level ----------
@@ -997,7 +998,7 @@ const wpick=L=>{let s=0;for(const[,w]of L)s+=w;let r=Math.random()*s;for(const[k
 function mkEnemy(k,x,y,pl,realm='w',boss=0){const b=EN[k],hp=Math.round((4+pl*1.4)*b.hp*(boss?3:1));
   return{k,x,y,pl,realm,boss,hp,max:hp,dmg:Math.max(1,Math.round((1+pl*.11)*b.dmg*(boss?1.3:1))),spd:b.spd,xp:Math.round((2+pl*.9)*(b.hp+b.dmg)/2*(boss?4:1)),aggro:b.aggro,fly:b.fly,t:Math.random()*9,wx:0,wy:0,wt:0,kb:0,kbx:0,kby:0,flash:0,fade:k==='ghost'&&realm==='w'?0:1,sc:boss?1.5:1}}
 function spawn(){const outs=PLAYERS.filter(p=>p.realm==='w'&&!p.deadT);if(!outs.length)return;const p=pick(outs);
-  const night=darkness()>.4,cap=8+(night?3:0)+outs.length*2;if(enemies.filter(e=>e.realm==='w').length>=cap)return;
+  const night=darkness()>.4,cap=night?11+outs.length*2:4+outs.length;if(enemies.filter(e=>e.realm==='w').length>=cap)return;
   for(let tries=0;tries<8;tries++){const a=Math.random()*Math.PI*2,r=(14+Math.random()*7)*16,x=p.x+Math.cos(a)*r,y=p.y+Math.sin(a)*r,tx=Math.floor(x/16),ty=Math.floor(y/16);
     if(TOWNS.some(t=>Math.hypot(tx-t.x,ty-t.y)<t.R+45))continue;const t=tT(tx,ty);if(t===WATER||t===DEEP||outdoorSolid(x,y))continue;
     const k=night&&Math.random()<.2?'ghost':night&&Math.random()<.15?'skeleton':wpick(BIOSPAWN[t]||BIOSPAWN[GRASS]);
@@ -1106,7 +1107,7 @@ const gateS=g=>{if(g.s!==undefined)return g.s;let best=0,bd=1e9;for(let s=0;s<g.
 // ---------- townsfolk ----------
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 const T=(x,y)=>[x*16+8,y*16+8];
-const dayNum=()=>Math.floor((time/DAY*24+8)/24);
+const dayNum=()=>Math.floor(time/DAY+DOFF+(1-MIDN));
 function placeTile(n,place){const t=n.town;navOf(t);
   if(place==='home')return nearestWalk(t,...n.home.front);
   if(place==='post')return n.post;
@@ -1326,7 +1327,7 @@ function npcTalk(n){const N=n.name;
   if(n.role==='elder')return elderTalk();
   if(n.role==='shop'){if(n.sleeping||asleep(n))return talk(N,'Zzz… mmh… come back in the morning…',[['Tiptoe away']]);
     if(n.shop==='temple'){const prayed=P.lastPray===dayNum();return talk(N,'Welcome, child. The Old Light watches over all who rest here.',[['Pray for healing',()=>{P.lastPray=dayNum();P.hp=P.maxHp;P.sta=P.maxSta;toast('A warm light washes over you. Health restored.');arp([392,523,659,784]);burst(P.x,P.y-8,'#fff6c4',18,60)},prayed||P.hp>=P.maxHp],['Ask about the shrines',()=>talk(N,'Three shrines once kept the dark at bay, far out at the edges of the land. Roads lead to each of them. Elder Maren in Emberhold knows more.',[['Thank you']])],['Farewell']])}
-    if(n.shop==='inn')return talk(N,'Welcome to '+n.home.name+'! A warm bed and a hot meal.',[['Rest until morning — '+Math.round(12*buyMul())+'g',()=>{const c=Math.round(12*buyMul());P.gold-=c;P.stats.spent+=c;const h=hour();time+=((7-h+24)%24||24)/24*DAY;for(const p of PLAYERS){p.hp=p.maxHp;p.sta=p.maxSta}enemies=enemies.filter(e=>e.realm!=='w');NPCS.forEach(m=>m.act=null);toast('You sleep soundly. Morning comes.');arp([392,494,587]);save()},P.gold<Math.round(12*buyMul())],['Trade',()=>openPanel('buy','inn')],['Any news?',()=>talk(N,pick(RUMORS),[['Thanks']])],['Farewell']]);
+    if(n.shop==='inn')return talk(N,'Welcome to '+n.home.name+'! A warm bed and a hot meal.',[['Rest until morning — '+Math.round(12*buyMul())+'g',()=>{const c=Math.round(12*buyMul());P.gold-=c;P.stats.spent+=c;time+=timeUntil(7)*DAY;for(const p of PLAYERS){p.hp=p.maxHp;p.sta=p.maxSta}enemies=enemies.filter(e=>e.realm!=='w');NPCS.forEach(m=>m.act=null);toast('You sleep soundly. Morning comes.');arp([392,494,587]);save()},P.gold<Math.round(12*buyMul())],['Trade',()=>openPanel('buy','inn')],['Any news?',()=>talk(N,pick(RUMORS),[['Thanks']])],['Farewell']]);
     const greet={smith:'The forge is hot and the steel is sharp. What\'ll it be?',armor:'Armor\'s cheaper than a funeral. Have a look.',potion:'Remedies, tonics and elixirs. I also buy gel and ectoplasm.',trade:'Fine wares for a fine adventurer! I pay well for trinkets and gems.'}[n.shop];
     return talk(N,greet,[['Trade',()=>openPanel('buy',n.shop)],['Any news?',()=>talk(N,pick(RUMORS),[['Thanks']])],['Farewell']])}
   if(n.sleeping)return talk(N,'Zzz…',[['Let them sleep']]);
@@ -1365,7 +1366,7 @@ function updateWorld(dt){time+=dt;
     if(tp&&d<11*e.sc&&e.fade>.5)withP(tp,()=>hurtPlayer(e.dmg,e.x,e.y));
     if(e.realm==='w'&&(!tp||d>40*16||(e.k==='ghost'&&!night&&e.fade<=0)))e.dead=1}
   enemies=enemies.filter(e=>!e.dead);
-  spawnT-=dt;if(spawnT<=0){spawnT=1.1;spawn()}
+  spawnT-=dt;if(spawnT<=0){spawnT=darkness()>.4?1.1:2.6;spawn()}// monsters gather more slowly by day
   for(const p of pickups){p.t+=dt;p.vy+=260*dt;p.z=Math.min(0,p.z+p.vy*dt);if(p.z===0)p.vy=0;if(p.t>(p.k==='item'?90:30))p.dead=1}
   pickups=pickups.filter(p=>!p.dead);
   updateFx(dt);saveT-=dt;if(saveT<=0){saveT=6;save()}}
@@ -1428,7 +1429,7 @@ const CAM1=Object.assign({},CAM_DEF);try{const c=JSON.parse(localStorage.getItem
 let CAM=CAM1;
 const saveCam=()=>{try{localStorage.setItem(CAMKEY,JSON.stringify(CAM1))}catch(e){}};
 let YAW=0;
-const camYaw=()=>(CAM.follow?P.h:-Math.PI/2)+CAM.orbit*Math.PI/180;
+const camYaw=()=>P.h;// locked behind the hero
 const camAng=()=>-Math.PI/2-YAW;
 const renderer=new THREE.WebGLRenderer({canvas:cv,antialias:false,powerPreference:'high-performance'});
 renderer.setPixelRatio(1);renderer.autoClear=true;
@@ -1689,7 +1690,7 @@ function buildInp(p){const I={fwd:0,turn:0,run:false,att:false,pr:new Set()};
   if(gp){const ax=gp.axes,dz=v=>Math.abs(v||0)<.18?0:v,b=padBtns(gp),prev=p.prev||[],edge=i=>b[i]&&!prev[i];
     I.fwd+=-dz(ax[1])+(b[12]?1:0)-(b[13]?1:0);I.turn+=dz(ax[0])+(b[15]?1:0)-(b[14]?1:0);I.run=I.run||b[6]||b[4]||b[10];I.att=I.att||b[2]||b[7];
     if(edge(0))I.pr.add('act');if(edge(3))I.pr.add('potion');if(edge(9))I.pr.add('bag');if(edge(8))I.pr.add('map');if(edge(5))I.pr.add('hero');if(edge(11))I.pr.add('camreset');
-    const rx=dz(ax[2]),ry=dz(ax[3]);if(rx||ry){p.cam.orbit=((p.cam.orbit-rx*140*dtLast+540)%360)-180;p.cam.tilt=clamp(p.cam.tilt+ry*70*dtLast,22,86)}p.prev=b}
+    const rx=dz(ax[2]),ry=dz(ax[3]);I.turn+=rx;if(ry)p.cam.tilt=clamp(p.cam.tilt+ry*70*dtLast,5,86);p.prev=b}
   I.fwd=clamp(I.fwd,-1,1);I.turn=clamp(I.turn,-1,1);p.inp=I}
 // controllers drive their own player's menus: d-pad/stick moves the cursor, A presses, X opens item options, B backs out, LB/RB switch tabs
 function menuNav(p){p.inp={fwd:0,turn:0,run:false,att:false,pr:new Set()};const gp=p.pad!=null&&navigator.getGamepads()[p.pad];if(!gp)return;const b=padBtns(gp),prev=p.prev||[],edge=i=>b[i]&&!prev[i];p.prev=b;
@@ -1758,13 +1759,13 @@ function begin(cont){try{AC=AC||new (window.AudioContext||window.webkitAudioCont
   initTowns();for(const p of PLAYERS){usePlayer(p);P.lastCell=-1;explore();if(p.insideB>=0&&BLD[p.insideB]){p.realm='w';doEnter(BLD[p.insideB])}}usePlayer(PLAYERS[0]);layoutChanged();
   $('start').hidden=true;running=true;hudSig='';drawMini();padUI();
   toast(Q.stage===0?'Welcome to Emberhold. Find Elder Maren by the fountain':'Welcome back, '+P.name,2.8);frame.tabIndex=-1;refocus();arp([392,523,659])}
-function camUI(){$('cTilt').value=Math.round(CAM1.tilt);$('oTilt').textContent=Math.round(CAM1.tilt)+'°';$('cOrbit').value=Math.round(CAM1.orbit);$('oOrbit').textContent=Math.round(CAM1.orbit)+'°';
-  $('cZoom').value=Math.round(CAM1.zoom*100);$('oZoom').textContent=Math.round(CAM1.zoom*100)+'%';$('cFollow').checked=CAM1.follow;$('cView').value=CAM1.view;viewUI()}
+function camUI(){$('cTilt').value=Math.round(CAM1.tilt);$('oTilt').textContent=Math.round(CAM1.tilt)+'°';
+  $('cZoom').value=Math.round(CAM1.zoom*100);$('oZoom').textContent=Math.round(CAM1.zoom*100)+'%';$('cView').value=CAM1.view;viewUI()}
 camUI();
-$('cTilt').oninput=e=>{CAM1.tilt=+e.target.value;camUI();saveCam()};$('cOrbit').oninput=e=>{CAM1.orbit=+e.target.value;camUI();saveCam()};
-$('cZoom').oninput=e=>{CAM1.zoom=e.target.value/100;camUI();saveCam()};$('cFollow').onchange=e=>{CAM1.follow=e.target.checked;saveCam();refocus()};
+$('cTilt').oninput=e=>{CAM1.tilt=+e.target.value;camUI();saveCam()};
+$('cZoom').oninput=e=>{CAM1.zoom=e.target.value/100;camUI();saveCam()};
 $('cView').onchange=e=>{CAM1.view=e.target.value;if(CAM1.view!=='auto')VR=+CAM1.view;saveCam();viewUI();refocus()};
-['cTilt','cOrbit','cZoom'].forEach(id=>$(id).addEventListener('change',refocus));
+['cTilt','cZoom'].forEach(id=>$(id).addEventListener('change',refocus));
 $('cReset').onclick=()=>{Object.assign(CAM1,CAM_DEF);camUI();saveCam();refocus()};
 // ---------- game settings: god mode, split screen, fullscreen ----------
 $('cGod').onchange=()=>{if(!running){$('cGod').checked=false;return}const me=P;usePlayer(PLAYERS[0]);toggleGod();usePlayer(me);refocus()};
