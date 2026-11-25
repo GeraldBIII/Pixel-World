@@ -21,13 +21,13 @@ Open `index.html` in a browser, or turn on GitHub Pages (Settings → Pages → 
 | World map | M |
 | Close a menu | Esc |
 | Toggle sound | N |
-| Orbit and tilt camera (third person by default) | Right-drag |
+| Turn (drag sideways) and look up or down; the camera stays locked behind you | Right-drag |
 | Zoom | Scroll wheel |
 | Reset camera | R |
 | Fullscreen | F |
 | God mode (for testing) | G |
 
-On touch screens a joystick and buttons appear automatically (Run toggles sprinting); drag the screen to turn the camera and pinch to zoom. The ⛶ button goes fullscreen. The Camera panel under the game sets tilt, orbit, zoom, whether the camera turns with the hero, and the view distance. View distance is Auto by default: it grows as far as your device can draw while holding a smooth frame rate.
+On touch screens a joystick and buttons appear automatically (Run toggles sprinting); drag the screen to turn and look up or down, and pinch to zoom. The ⛶ button goes fullscreen. The camera is locked behind your hero. The Camera panel under the game sets tilt, zoom and view distance. View distance is Auto by default: it grows as far as your device can draw while holding a smooth frame rate.
 
 ## Xbox controller and split screen
 
@@ -36,7 +36,7 @@ Any standard controller (Xbox, or others the browser maps the same way) works:
 | Action | Button |
 | --- | --- |
 | Walk / turn | Left stick or D-pad |
-| Camera | Right stick |
+| Turn (sideways) and look up or down | Right stick |
 | Attack | X or RT |
 | Talk, trade, open, search | A |
 | Potion | Y |
@@ -65,5 +65,5 @@ Press **Menu** on a second controller (or use **Add player 2** under the game) t
 - A 30-slot bag (more with Strength), 8 equipment slots and over 50 items with Worn to Legendary qualities
 - A character sheet and records: monsters slain by type, miles walked, dungeons entered, items stolen and more
 - A north-up minimap and a fog-of-war world map with towns, dungeons and shrines
-- Day/night cycle with lamplight, lit windows and torch-carrying guards
+- Day/night cycle with short nights (about a fifth of each day), lamplight, lit windows and torch-carrying guards. Fewer monsters roam by day; more come out at night
 - Quest line from Elder Maren, plus a skeleton and draugr bounty
