@@ -20,7 +20,7 @@ Open `index.html` in a browser, or turn on GitHub Pages (Settings → Pages → 
 | Bag (inventory): point at an item for its stats, click gear to equip it, right-click for more options | I |
 | Character sheet | C |
 | World map | M |
-| Close a menu | Esc |
+| Pause menu: resume, Unstuck me, camera, sound, god mode, fullscreen, player 2, save, Save & exit (closes a menu if one is open) | Esc |
 | Toggle sound | N |
 | Turn (drag sideways) and look up or down; the camera stays locked behind you | Right-drag |
 | Zoom | Scroll wheel |
@@ -28,7 +28,7 @@ Open `index.html` in a browser, or turn on GitHub Pages (Settings → Pages → 
 | Fullscreen | F |
 | God mode (for testing) | G |
 
-On touch screens a joystick and buttons appear automatically (Run toggles sprinting, Roll dodges); drag the screen to turn and look up or down, and pinch to zoom. The ⛶ button goes fullscreen. The camera is locked behind your hero. Whenever a wall, roof or tree comes between the camera and your hero, a wide see-through circle opens around the hero so you can always see yourself. The Camera panel under the game sets tilt, zoom and view distance. View distance is Auto by default: it grows as far as your device can draw while holding a smooth frame rate.
+On touch screens a joystick and buttons appear automatically (Run toggles sprinting, Roll dodges); drag the screen to turn and look up or down, and pinch to zoom. The ⛶ button goes fullscreen. The camera is locked behind your hero. Whenever a wall, roof or tree comes between the camera and your hero, a wide see-through circle opens around the hero so you can always see yourself. People and animals never fade out. If your hero ever gets stuck, open the pause menu (Esc, the Menu button, or Menu on a controller) and choose **Unstuck me**. The Camera panel under the game sets tilt, zoom and view distance. View distance is Auto by default: it grows as far as your device can draw while holding a smooth frame rate.
 
 ## Xbox controller and split screen
 
@@ -43,7 +43,7 @@ Any standard controller (Xbox, or others the browser maps the same way) works:
 | Talk, trade, open, search | A |
 | Potion | Y |
 | Sprint | LT, LB or click the left stick |
-| Bag / map / character sheet | Menu / View / RB |
+| Pause menu (with Bag, Hero, Records and Map tabs; LB/RB switch tabs) / map / character sheet | Menu / View / RB |
 | Menus | D-pad to move, A to choose (A on gear equips it), X for item options, B to back out, LB/RB for tabs |
 
 Press **Menu** on a second controller (or use **Add player 2** under the game) to start two-player split screen. The screen splits side by side on wide screens and top/bottom on tall ones. Split screen always fills the whole screen, including in fullscreen. Each player has their own hero, bag, gold, bounty, camera and menus: a menu opens over that player's half of the screen and only pauses that player, while the other keeps playing. The world, quests and time of day are shared.
@@ -59,9 +59,16 @@ Press **Menu** on a second controller (or use **Add player 2** under the game) t
 - **God mode** for playtesting: invincible, fast (very fast when sprinting), walks through anything outdoors, one-hit kills, infinite stamina, shows power levels, and teleports by clicking the world map
 - **Two-player split screen** with Xbox controller support, and controller navigation for every menu
 - **Realistic proportions**: houses stand about four to five times your height under steep roofs, trees are 8–10 m tall, lampposts about twice your height, and barrels and crates waist high
+- **A solid 3D pixel world**: trees, rocks, hedges, fences, wells, stalls, carts, barrels and crates are built from pixel-textured blocks fixed in the world, so they no longer turn to face the camera. Every tree is its own size, some woods turn autumn-orange, and meadows drift between lush green, golden and russet patches carpeted with grass tufts and wildflowers. Far away, objects switch to lighter sprites to keep the frame rate up
+- **Houses with character**: fewer, more varied town houses, from one-room cottages and narrow three-storey townhouses to long halls and large family homes, with jettied upper floors, timber framing, shutters, porches, dormers, and gabled, cross-gabled or hipped roofs
+- **Rooms inside**: bigger buildings are divided into rooms joined by doorways: halls, kitchens with hearths, bedrooms, dining rooms, studies, storerooms behind the shops, guest rooms at the inn and an armory in the guardhouse
+- **Manors with their own grounds**: every town has a manor (the capital has two) outside its walls, with a hedged garden, lamplit drive, columned porch and corner towers. The lord or lady and their steward live there. Manor chests and strongboxes hold richer loot, and the doors are locked at night
+- **Farmsteads**: fenced farms around each town, each with a farmhouse, a big red barn you can enter, crop fields, hay and chickens, and a farming family working the land
+- **Homesteads in the wilds**: log cabins scattered across the island far from any town, each with a garden, a woodpile and one or two settlers who tend their clearing by day and bar the door at night
 - **Mobile friendly**: virtual joystick, touch camera and pinch zoom, and a fullscreen mode
 - **Lively towns**: crates, barrels, hay bales, carts, benches, woodpiles, flower pots and wells, plus cats, dogs and chickens (you can pet them)
 - Every building can be entered, furnished, and searched; taking things is theft if anyone sees you
+- A pause menu with game options, an Unstuck button and Save & exit to the title screen
 - Townsfolk with daily routines, guards on day and night shifts at the gates, on the walls and in the streets
 - Attack townsfolk and the guards fight back; children always outrun you; pay bounties to any guard
 - Sprinting and a dodge roll you can't be hit during, both using stamina; Strength, Dexterity, Constitution, Wisdom and Charisma with 3 points to spend each level
