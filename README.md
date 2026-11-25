@@ -28,7 +28,7 @@ Open `index.html` in a browser, or turn on GitHub Pages (Settings → Pages → 
 | Fullscreen | F |
 | God mode (for testing) | G |
 
-On touch screens a joystick and buttons appear automatically (Run toggles sprinting, Roll dodges); drag the screen to turn and look up or down, and pinch to zoom. The ⛶ button goes fullscreen. The camera is locked behind your hero. The Camera panel under the game sets tilt, zoom and view distance. View distance is Auto by default: it grows as far as your device can draw while holding a smooth frame rate.
+On touch screens a joystick and buttons appear automatically (Run toggles sprinting, Roll dodges); drag the screen to turn and look up or down, and pinch to zoom. The ⛶ button goes fullscreen. The camera is locked behind your hero. Whenever a wall, roof or tree comes between the camera and your hero, a wide see-through circle opens around the hero so you can always see yourself. The Camera panel under the game sets tilt, zoom and view distance. View distance is Auto by default: it grows as far as your device can draw while holding a smooth frame rate.
 
 ## Xbox controller and split screen
 
@@ -58,6 +58,7 @@ Press **Menu** on a second controller (or use **Add player 2** under the game) t
 - **Monsters in their own biomes**: slimes, ember slimes, skeletons, ghosts, wolf packs, goblins, giant spiders, bears, trolls, scorpions, bandits on the roads and draugr in the barrows
 - **God mode** for playtesting: invincible, fast (very fast when sprinting), walks through anything outdoors, one-hit kills, infinite stamina, shows power levels, and teleports by clicking the world map
 - **Two-player split screen** with Xbox controller support, and controller navigation for every menu
+- **Realistic proportions**: houses stand about four to five times your height under steep roofs, trees are 8–10 m tall, lampposts about twice your height, and barrels and crates waist high
 - **Mobile friendly**: virtual joystick, touch camera and pinch zoom, and a fullscreen mode
 - **Lively towns**: crates, barrels, hay bales, carts, benches, woodpiles, flower pots and wells, plus cats, dogs and chickens (you can pet them)
 - Every building can be entered, furnished, and searched; taking things is theft if anyone sees you
