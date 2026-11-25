@@ -35,11 +35,11 @@ main{max-width:1240px;margin:0 auto;padding:0 max(4vw,14px) 32px}
 #clock{font:9px/1.4 "Press Start 2P",monospace;text-shadow:2px 2px 0 #000;background:rgba(14,20,13,.62);padding:6px 8px;border-radius:4px}
 #toast{position:absolute;left:50%;top:18%;transform:translateX(-50%);font:12px/1.5 "Press Start 2P",monospace;color:#fff3c4;text-shadow:2px 2px 0 #000,0 0 12px rgba(242,181,68,.6);text-align:center;pointer-events:none;opacity:0;transition:opacity .3s;width:90%}
 #toast.on{opacity:1}
-#dlg{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);width:min(660px,94%);background:rgba(27,20,13,.96);border:3px solid var(--gold);border-radius:6px;padding:14px 16px 12px;box-shadow:0 0 0 3px #1a0f07}
-#dlg[hidden]{display:none}
-#dlgName{font:10px "Press Start 2P",monospace;color:var(--gold);margin-bottom:8px}
-#dlgText{margin:0 0 12px;font-size:18px;line-height:1.45}
-#dlgOpts{display:flex;flex-wrap:wrap;gap:8px}
+.dlg{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);width:min(660px,94%);background:rgba(27,20,13,.96);border:3px solid var(--gold);border-radius:6px;padding:14px 16px 12px;box-shadow:0 0 0 3px #1a0f07}
+.dlg[hidden]{display:none}
+.dlgName{font:10px "Press Start 2P",monospace;color:var(--gold);margin-bottom:8px}
+.dlgText{margin:0 0 12px;font-size:18px;line-height:1.45}
+.dlgOpts{display:flex;flex-wrap:wrap;gap:8px}
 button{font:10px/1.3 "Press Start 2P",monospace;min-height:44px;padding:10px 14px;background:#6b4426;color:var(--ink);border:2px solid var(--gold);border-radius:4px;box-shadow:0 4px 0 #2a1a0e;cursor:pointer}
 button:hover{background:#7d5230}button:active{transform:translateY(2px);box-shadow:0 2px 0 #2a1a0e}
 button:focus-visible{outline:3px solid #fff;outline-offset:2px}
@@ -51,7 +51,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 #start .btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
 #touch{display:none}
 .coarse #touch{display:block}
-.coarse #panel:not([hidden])~#touch{display:none}
+.coarse .panel:not([hidden])~#touch{display:none}
 .tb{position:absolute;width:54px;height:54px;padding:0;font-size:12px;background:rgba(60,40,22,.7);opacity:.9}
 #tU{left:70px;bottom:128px}#tD{left:70px;bottom:16px}#tL{left:14px;bottom:72px}#tR{left:126px;bottom:72px}
 #tA{right:16px;bottom:40px;width:66px;height:66px;border-radius:50%}#tB{right:94px;bottom:16px;border-radius:50%}#tP{right:94px;bottom:96px;border-radius:50%}
@@ -72,17 +72,17 @@ kbd{font:9px "Press Start 2P",monospace;color:var(--ink);background:#2a2216;bord
 #hud .stat{color:#e9dcc0}
 #nameTag{position:absolute;pointer-events:none}
 /* panels: bag, hero, records, map, shop */
-#panel{position:absolute;inset:10px;max-width:880px;margin:auto;display:flex;flex-direction:column;background:rgba(24,17,11,.97);border:3px solid var(--gold);border-radius:6px;box-shadow:0 0 0 3px #1a0f07,0 20px 50px rgba(0,0,0,.6);overflow:hidden}
-#panel[hidden]{display:none}
+.panel{position:absolute;inset:10px;max-width:880px;margin:auto;display:flex;flex-direction:column;background:rgba(24,17,11,.97);border:3px solid var(--gold);border-radius:6px;box-shadow:0 0 0 3px #1a0f07,0 20px 50px rgba(0,0,0,.6);overflow:hidden}
+.panel[hidden]{display:none}
 .ptop{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:2px solid #4a3520;background:#21170e;flex-wrap:wrap}
-#pTabs{display:flex;gap:6px;flex-wrap:wrap;flex:1}
-#pTabs button{min-height:36px;padding:8px 11px;font-size:9px;background:#3a2716;box-shadow:none}
-#pTabs button[aria-selected=true]{background:#7d5230;color:#fff3c4}
-#pGold{font:9px "Press Start 2P",monospace;color:var(--gold);display:flex;align-items:center;gap:6px}
-#pClose{min-height:36px;padding:8px 12px}
-#pBody{flex:1;overflow:auto;padding:14px;font-size:16px}
+.pTabs{display:flex;gap:6px;flex-wrap:wrap;flex:1}
+.pTabs button{min-height:36px;padding:8px 11px;font-size:9px;background:#3a2716;box-shadow:none}
+.pTabs button[aria-selected=true]{background:#7d5230;color:#fff3c4}
+.pGold{font:9px "Press Start 2P",monospace;color:var(--gold);display:flex;align-items:center;gap:6px}
+.pClose{min-height:36px;padding:8px 12px}
+.pBody{flex:1;overflow:auto;padding:14px;font-size:16px}
 .pcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:16px}
-#panel h4{margin:0 0 8px;font:600 19px/1.2 "Pixelify Sans";color:var(--gold)}
+.panel h4{margin:0 0 8px;font:600 19px/1.2 "Pixelify Sans";color:var(--gold)}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,52px);gap:6px}
 .slot{width:52px;height:52px;min-height:0;padding:0;position:relative;background:#2c2014;border:2px solid #5a4329;border-radius:4px;box-shadow:inset 0 0 0 2px #1a120a;display:grid;place-items:center}
 .slot img{width:40px;height:40px;image-rendering:pixelated}
@@ -143,8 +143,11 @@ table.rec img{width:24px;height:24px;image-rendering:pixelated;vertical-align:mi
 @media(max-width:700px){#hud{padding:6px 7px;gap:5px}.sta{width:90px}#menu button{padding:5px;font-size:7px}#side{gap:4px}}
 @media(max-height:500px){#frame{height:calc(100dvh - 8px)}header,.legend,.note{display:none}}
 .note{margin-top:18px;color:#8e9a83;font-size:15px}
-@media(max-width:600px){#mini{width:96px;height:96px}#hud{font-size:8px;max-width:64%}#quest{font-size:8px}#hearts img{width:14px;height:12px}#clock{font-size:7px}#panel{inset:4px}.grid{grid-template-columns:repeat(auto-fill,46px)}.slot{width:46px;height:46px}.slot img{width:34px;height:34px}}
+@media(max-width:600px){#mini{width:96px;height:96px}#hud{font-size:8px;max-width:64%}#quest{font-size:8px}#hearts img{width:14px;height:12px}#clock{font-size:7px}.panel{inset:4px}.grid{grid-template-columns:repeat(auto-fill,46px)}.slot{width:46px;height:46px}.slot img{width:34px;height:34px}}
 @media(prefers-reduced-motion:reduce){#toast{transition:none}}
+.gpcur{outline:3px solid #7dde6a!important;outline-offset:2px;box-shadow:0 0 0 6px rgba(125,222,106,.25)!important}
+.split .panel .pcols{grid-template-columns:1fr}.split .panel .pBody{padding:8px}.split .panel .grid{grid-template-columns:repeat(auto-fill,44px)}.split .panel .slot{width:44px;height:44px}.split .panel .slot img{width:32px;height:32px}
+.split .dlg{transform:translateX(-50%)}
 </style>
 </head>
 <body>
@@ -167,8 +170,8 @@ table.rec img{width:24px;height:24px;image-rendering:pixelated;vertical-align:mi
     <div id="side"><canvas id="mini" width="80" height="80"></canvas><div id="clock"></div>
       <div id="menu"><button id="mBag" type="button">Bag</button><button id="mHero" type="button">Hero</button><button id="mMap" type="button">Map</button><button id="mFull" type="button" aria-label="Fullscreen">⛶</button></div></div>
     <div id="toast" role="status" aria-live="polite"></div>
-    <div id="dlg" hidden><div id="dlgName"></div><p id="dlgText"></p><div id="dlgOpts"></div></div>
-    <div id="panel" hidden role="dialog" aria-modal="true" aria-label="Menu"><div class="ptop"><div id="pTabs" role="tablist"></div><span id="pGold"></span><button id="pClose" type="button" aria-label="Close">✕</button></div><div id="pBody"></div></div>
+    <div id="dlg" class="dlg" hidden><div id="dlgName" class="dlgName"></div><p id="dlgText" class="dlgText"></p><div id="dlgOpts" class="dlgOpts"></div></div>
+    <div id="panel" class="panel" hidden role="dialog" aria-label="Menu"><div class="ptop"><div id="pTabs" class="pTabs" role="tablist"></div><span id="pGold" class="pGold"></span><button id="pClose" class="pClose" type="button" aria-label="Close">✕</button></div><div id="pBody" class="pBody"></div></div>
     <div id="touch">
       <div id="joy" aria-label="Movement joystick"><div id="joyk"></div></div>
       <button class="tb" id="tA" aria-label="Attack">A</button><button class="tb" id="tB" aria-label="Talk or open">B</button><button class="tb" id="tP" aria-label="Drink potion">P</button><button class="tb" id="tRun" aria-label="Sprint" aria-pressed="false">Run</button>
@@ -184,9 +187,9 @@ table.rec img{width:24px;height:24px;image-rendering:pixelated;vertical-align:mi
   </div>
   <section id="camui" aria-label="Camera">
     <h3>Camera</h3>
-    <label>Tilt <input type="range" id="cTilt" min="25" max="90" step="1"><output id="oTilt"></output></label>
+    <label>Tilt <input type="range" id="cTilt" min="5" max="86" step="1"><output id="oTilt"></output></label>
     <label>Orbit <input type="range" id="cOrbit" min="-180" max="180" step="1"><output id="oOrbit"></output></label>
-    <label>Zoom <input type="range" id="cZoom" min="60" max="220" step="5"><output id="oZoom"></output></label>
+    <label>Zoom <input type="range" id="cZoom" min="60" max="320" step="5"><output id="oZoom"></output></label>
     <label class="chk"><input type="checkbox" id="cFollow"> Turn with hero</label>
     <label>View <select id="cView"><option value="auto">Auto</option><option value="4">128 tiles</option><option value="6">192 tiles</option><option value="8">256 tiles</option><option value="10">320 tiles</option><option value="12">384 tiles</option><option value="14">448 tiles</option><option value="16">512 tiles</option></select><output id="oView"></output></label>
     <button id="cReset" type="button">Reset</button>
@@ -205,7 +208,7 @@ table.rec img{width:24px;height:24px;image-rendering:pixelated;vertical-align:mi
       <li><kbd>Q</kbd> drink a healing potion</li></ul></div>
     <div><h3>Explore</h3><ul>
       <li><kbd>E</kbd><kbd>Enter</kbd> talk, trade, open doors, search</li>
-      <li><kbd>I</kbd> bag · <kbd>C</kbd> character sheet</li>
+      <li><kbd>I</kbd> bag (click gear to equip) · <kbd>C</kbd> character sheet</li>
       <li><kbd>M</kbd> world map · <kbd>N</kbd> sound</li>
       <li><kbd>Esc</kbd> close a menu · <kbd>F</kbd> fullscreen</li>
       <li><kbd>G</kbd> god mode, for testing</li></ul></div>
@@ -215,7 +218,7 @@ table.rec img{width:24px;height:24px;image-rendering:pixelated;vertical-align:mi
       <li><kbd>LT</kbd><kbd>LB</kbd> sprint · <kbd>Menu</kbd> bag · <kbd>View</kbd> map · <kbd>RB</kbd> hero</li>
       <li>Press <kbd>Menu</kbd> on a second controller for split screen</li></ul></div>
     <div><h3>Camera</h3><ul>
-      <li><kbd>Right-drag</kbd> orbit and tilt</li>
+      <li><kbd>Right-drag</kbd> orbit and tilt (third person by default)</li>
       <li><kbd>Scroll</kbd> zoom in or out</li>
       <li><kbd>R</kbd> reset the camera</li></ul></div>
     <div><h3>Tips</h3><ul>
@@ -757,7 +760,7 @@ function mkPlayer(name,idx){return{idx,name:name||(idx?'Player 2':'Ash'),x:SPAWN
     bag:[{id:'potion',n:2},{id:'bread',n:3}],eq:{weapon:{id:'rusty',q:1,n:1},body:{id:'gamb',q:0,n:1}},buff:{atk:0,def:0,ta:0,td:0},lastPray:-1,
     atk:0,atkCd:0,inv:0,kb:0,kbx:0,kby:0,hits:new Set(),stats:newStats(),cam:null,useKb:idx===0,pad:null,inp:{},prev:[],_in:null,_int:null}}
 // switch which player the rest of the code is talking about
-function usePlayer(p){if(P){P._in=INSIDE;P._int=INT}P=p;INSIDE=p._in||null;INT=p._int||null;if(p.cam)CAM=p.cam}
+function usePlayer(p){if(P){P._in=INSIDE;P._int=INT;saveUI(P)}P=p;INSIDE=p._in||null;INT=p._int||null;if(p.cam)CAM=p.cam;loadUI(p)}
 function syncPlayer(){if(P){P._in=INSIDE;P._int=INT}}
 function fresh(name){Q={stage:0,kills:0,skel:0,shrines:new Set(),chests:new Set(),conts:{},dead:{},dun:{}};time=60;enemies=[];pickups=[];EXP=new Uint8Array(EXW*EXW);
   P=null;INSIDE=null;INT=null;PLAYERS=[mkPlayer(name,0)];PLAYERS[0].cam=CAM1;usePlayer(PLAYERS[0]);
@@ -810,25 +813,37 @@ if(matchMedia('(pointer:coarse)').matches)document.body.classList.add('coarse');
 // ---------- input ----------
 const keys={};const pressed=new Set();
 const GAMEKEYS=new Set(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','KeyW','KeyA','KeyS','KeyD','KeyE','KeyQ','KeyM','KeyN','KeyR','KeyI','KeyC','Enter','ShiftLeft','ShiftRight','KeyG']);
-const panelOpen=()=>!$('panel').hidden;let UIOWNER=null;
-addEventListener('keydown',e=>{if(!running)return;if(e.target.tagName==='INPUT'&&e.target.type!=='range')return;if(e.target.tagName==='INPUT'&&e.code.startsWith('Arrow'))return;
+// each player has their own menu and dialog windows, drawn over their half of the screen
+const UIS=[0,1].map(i=>{let panel=$('panel'),dlg=$('dlg');if(i){panel=panel.cloneNode(true);dlg=dlg.cloneNode(true);for(const el of[panel,dlg]){el.removeAttribute('id');el.querySelectorAll('[id]').forEach(x=>x.removeAttribute('id'));el.hidden=true;frame.appendChild(el)}}
+  return{i,panel,dlg,tabs:panel.querySelector('.pTabs'),body:panel.querySelector('.pBody'),gold:panel.querySelector('.pGold'),close:panel.querySelector('.pClose'),dlgName:dlg.querySelector('.dlgName'),dlgText:dlg.querySelector('.dlgText'),dlgOpts:dlg.querySelector('.dlgOpts'),cur:null}});
+let UI=UIS[0];
+const uiOpen=p=>{const u=UIS[p.idx]||UIS[0];return!u.panel.hidden||!u.dlg.hidden};
+const panelOpen=()=>!UI.panel.hidden;
+function placeUI(u){const V=VIEWS[u.i]||VIEWS[0];if(PLAYERS.length<2){u.panel.style.cssText='';u.dlg.style.cssText='';return}
+  u.panel.style.cssText=`inset:auto;left:${V.x*SC+6}px;top:${V.y*SC+6}px;width:${V.w*SC-12}px;height:${V.h*SC-12}px;max-width:none;margin:0`;
+  u.dlg.style.cssText=`left:${(V.x+V.w/2)*SC}px;bottom:${(FH-V.y-V.h)*SC+12}px;width:${Math.min(660,V.w*SC*.94)}px`}
+function saveUI(p){p.uis={pTab,pShop,pCont,sel,dropArm,hoverSel}}
+function loadUI(p){const s_=p.uis||{};pTab=s_.pTab||'bag';pShop=s_.pShop||null;pCont=s_.pCont||null;sel=s_.sel||null;dropArm=!!s_.dropArm;hoverSel=s_.hoverSel||null;UI=UIS[p.idx]||UIS[0]}
+// the keyboard and mouse always belong to player 1
+addEventListener('keydown',e=>{if(!running)return;withP(PLAYERS[0],()=>kbHandle(e))});
+function kbHandle(e){if(e.target.tagName==='INPUT'&&e.target.type!=='range')return;if(e.target.tagName==='INPUT'&&e.code.startsWith('Arrow'))return;
   if(panelOpen()){if(e.code==='Escape'){closePanel();e.preventDefault()}else if(e.code==='KeyI')togglePanel('bag');else if(e.code==='KeyC')togglePanel('hero');else if(e.code==='KeyM')togglePanel('map');return}
   if(GAMEKEYS.has(e.code)&&e.target.tagName!=='BUTTON')e.preventDefault();
-  if(!$('dlg').hidden){const n=parseInt(e.key);const bs=$('dlgOpts').querySelectorAll('button');if(n>=1&&n<=bs.length)bs[n-1].click();else if(e.code==='Escape')closeDlg();else if((e.code==='KeyE'||e.code==='Enter'||e.code==='Space')&&e.target.tagName!=='BUTTON'){bs[bs.length-1]&&bs[bs.length-1].click()}return}
-  if(!keys[e.code])pressed.add(e.code);keys[e.code]=true});
+  if(!UI.dlg.hidden){const n=parseInt(e.key);const bs=UI.dlgOpts.querySelectorAll('button');if(n>=1&&n<=bs.length)bs[n-1].click();else if(e.code==='Escape')closeDlg();else if((e.code==='KeyE'||e.code==='Enter'||e.code==='Space')&&e.target.tagName!=='BUTTON'){bs[bs.length-1]&&bs[bs.length-1].click()}return}
+  if(!keys[e.code])pressed.add(e.code);keys[e.code]=true}
 addEventListener('keyup',e=>{keys[e.code]=false});
-ov.addEventListener('mousedown',e=>{if(!running||e.button!==0||!$('dlg').hidden||panelOpen())return;e.preventDefault();keys.Mouse0=true});
+ov.addEventListener('mousedown',e=>{if(!running||e.button!==0||uiOpen(PLAYERS[0]))return;e.preventDefault();keys.Mouse0=true});
 addEventListener('mouseup',e=>{if(e.button===0)keys.Mouse0=false});
 let camDrag=null;
 ov.addEventListener('mousedown',e=>{if(e.button===2){e.preventDefault();camDrag=[e.clientX,e.clientY]}});
 addEventListener('mousemove',e=>{if(!camDrag)return;const dx=e.clientX-camDrag[0],dy=e.clientY-camDrag[1];camDrag=[e.clientX,e.clientY];
-  CAM.orbit=((CAM.orbit-dx*.4+540)%360)-180;CAM.tilt=clamp(CAM.tilt+dy*.3,25,90);camUI()});
+  CAM1.orbit=((CAM1.orbit-dx*.4+540)%360)-180;CAM1.tilt=clamp(CAM1.tilt+dy*.3,5,86);camUI()});
 addEventListener('mouseup',e=>{if(e.button===2&&camDrag){camDrag=null;saveCam()}});
 frame.addEventListener('contextmenu',e=>e.preventDefault());
-frame.addEventListener('wheel',e=>{if(!running||panelOpen())return;e.preventDefault();CAM.zoom=clamp(CAM.zoom*Math.exp(-e.deltaY*.0012),.6,2.2);camUI();saveCam()},{passive:false});
+frame.addEventListener('wheel',e=>{if(!running||uiOpen(PLAYERS[0]))return;e.preventDefault();CAM1.zoom=clamp(CAM1.zoom*Math.exp(-e.deltaY*.0012),.6,3.2);camUI();saveCam()},{passive:false});
 addEventListener('blur',()=>{for(const k in keys)keys[k]=false});
 [['tA','Mouse0'],['tB','KeyE'],['tP','KeyQ']].forEach(([id,code])=>{const b=$(id);
-  b.addEventListener('pointerdown',e=>{e.preventDefault();if(!$('dlg').hidden&&code==='KeyE'){const bs=$('dlgOpts').querySelectorAll('button');bs[bs.length-1]&&bs[bs.length-1].click();return}keys[code]=true;pressed.add(code)});
+  b.addEventListener('pointerdown',e=>{e.preventDefault();if(!UIS[0].dlg.hidden&&code==='KeyE'){const bs=UIS[0].dlgOpts.querySelectorAll('button');bs[bs.length-1]&&bs[bs.length-1].click();return}keys[code]=true;pressed.add(code)});
   ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>{keys[code]=false}))});
 // touch: a virtual joystick on the left, drag anywhere else to turn the camera, pinch to zoom
 const JOY={x:0,y:0,id:null};{const j=$('joy'),k=$('joyk');const set=e=>{const r=j.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,R_=r.width/2;let dx=(e.clientX-cx)/R_,dy=(e.clientY-cy)/R_;const l=Math.hypot(dx,dy);if(l>1){dx/=l;dy/=l}JOY.x=dx;JOY.y=dy;k.style.transform=`translate(${dx*R_*.55}px,${dy*R_*.55}px)`};
@@ -836,18 +851,20 @@ const JOY={x:0,y:0,id:null};{const j=$('joy'),k=$('joyk');const set=e=>{const r=
   for(const ev of['pointerup','pointercancel'])j.addEventListener(ev,e=>{if(e.pointerId===JOY.id){JOY.id=null;JOY.x=JOY.y=0;k.style.transform=''}})}
 const TP=new Map();let pinch0=0;
 ov.addEventListener('pointerdown',e=>{if(e.pointerType!=='touch')return;TP.set(e.pointerId,[e.clientX,e.clientY]);ov.setPointerCapture(e.pointerId);if(TP.size===2){const[a,b]=[...TP.values()];pinch0=Math.hypot(a[0]-b[0],a[1]-b[1])}});
-ov.addEventListener('pointermove',e=>{if(!TP.has(e.pointerId))return;const o=TP.get(e.pointerId);if(TP.size===1){CAM1.orbit=((CAM1.orbit-(e.clientX-o[0])*.4+540)%360)-180;CAM1.tilt=clamp(CAM1.tilt+(e.clientY-o[1])*.3,22,86)}
-  TP.set(e.pointerId,[e.clientX,e.clientY]);if(TP.size===2){const[a,b]=[...TP.values()],d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(pinch0)CAM1.zoom=clamp(CAM1.zoom*d/pinch0,.5,2.4);pinch0=d}});
+ov.addEventListener('pointermove',e=>{if(!TP.has(e.pointerId))return;const o=TP.get(e.pointerId);if(TP.size===1){CAM1.orbit=((CAM1.orbit-(e.clientX-o[0])*.4+540)%360)-180;CAM1.tilt=clamp(CAM1.tilt+(e.clientY-o[1])*.3,5,86)}
+  TP.set(e.pointerId,[e.clientX,e.clientY]);if(TP.size===2){const[a,b]=[...TP.values()],d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(pinch0)CAM1.zoom=clamp(CAM1.zoom*d/pinch0,.5,3.2);pinch0=d}});
 for(const ev of['pointerup','pointercancel'])ov.addEventListener(ev,e=>{if(TP.delete(e.pointerId)){pinch0=0;saveCam();camUI()}});
 let runToggle=false;$('tRun').addEventListener('pointerdown',e=>{e.preventDefault();runToggle=!runToggle;$('tRun').setAttribute('aria-pressed',runToggle)});
 
 // ---------- dialog ----------
 let toastT=0;function toast(msg,t=2.4){const el=$('toast');el.textContent=msg;el.classList.add('on');toastT=t}
 const refocus=()=>frame.focus({preventScroll:true});
-function closeDlg(){$('dlg').hidden=true;paused=panelOpen();refocus()}
-function talk(name,text,opts){paused=true;UIOWNER=P;const d=$('dlg');d.hidden=false;$('dlgName').textContent=name;$('dlgText').textContent=text;const o=$('dlgOpts');o.innerHTML='';
-  opts.forEach(([label,fn,dis],i)=>{const b=document.createElement('button');b.textContent=(opts.length>1?(i+1)+'. ':'')+label;b.disabled=!!dis;b.onclick=()=>{closeDlg();fn&&fn()};o.appendChild(b)});
-  const f=o.querySelector('button:not(:disabled)');f&&f.focus({preventScroll:true})}
+function closeDlg(){UI.dlg.hidden=true;setCur(UI,null);refocus()}
+function talk(name,text,opts){const u=UI,who=P;placeUI(u);u.dlg.hidden=false;u.dlgName.textContent=name;u.dlgText.textContent=text;const o=u.dlgOpts;o.innerHTML='';
+  opts.forEach(([label,fn,dis],i)=>{const b=document.createElement('button');b.textContent=(opts.length>1?(i+1)+'. ':'')+label;b.disabled=!!dis;b.onclick=()=>withP(who,()=>{closeDlg();fn&&fn()});o.appendChild(b)});
+  const f=o.querySelector('button:not(:disabled)');if(P.pad!=null)setCur(u,f);else f&&f.focus({preventScroll:true})}
+// the controller cursor: a highlight of its own, so two players can browse menus at once
+function setCur(u,el){if(u.cur)u.cur.classList.remove('gpcur');u.cur=el;if(el){el.classList.add('gpcur');el.scrollIntoView({block:'nearest'});if(el.classList.contains('slot'))hoverFrom(el)}}
 
 // ---------- inventory operations ----------
 function addItem(it,quiet){const id=it.id;
@@ -865,25 +882,27 @@ function useAt(i){const it=P.bag[i],d=ITEMS[it.id];
 function quickHeal(){for(const id of['potion','gpotion','bread']){const i=P.bag.findIndex(b=>b.id===id);if(i>=0){useAt(i);return}}toast('No potions. Wren sells them in the market square',1.6)}
 
 // ---------- panels: bag, hero, records, map, shop ----------
-let pTab='bag',pShop=null,sel=null,dropArm=false;
+let pTab='bag',pShop=null,sel=null,dropArm=false,hoverSel=null;
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let pCont=null;
-function openPanel(tab,shop,cont){UIOWNER=P;pTab=tab;pShop=shop||null;pCont=cont||null;sel=null;dropArm=false;$('panel').hidden=false;paused=true;renderPanel();$('pTabs').querySelector('[aria-selected=true]')?.focus({preventScroll:true})}
-function closePanel(){$('panel').hidden=true;pShop=null;pCont=null;paused=!$('dlg').hidden;hudSig='';refocus()}
+function openPanel(tab,shop,cont){pTab=tab;pShop=shop||null;pCont=cont||null;sel=null;hoverSel=null;dropArm=false;placeUI(UI);UI.panel.hidden=false;renderPanel();if(P.pad!=null)setCur(UI,UI.body.querySelector('.slot')||UI.tabs.querySelector('[aria-selected=true]'));else UI.tabs.querySelector('[aria-selected=true]')?.focus({preventScroll:true})}
+function closePanel(){UI.panel.hidden=true;pShop=null;pCont=null;hudSig='';setCur(UI,null);refocus()}
 function togglePanel(tab){if(panelOpen()&&pTab===tab&&!pShop)closePanel();else openPanel(tab)}
-$('pClose').onclick=closePanel;$('mBag').onclick=()=>running&&togglePanel('bag');$('mHero').onclick=()=>running&&togglePanel('hero');$('mMap').onclick=()=>running&&togglePanel('map');
+for(const u of UIS)u.close.onclick=()=>withP(PLAYERS[u.i]||PLAYERS[0],closePanel);
+$('mBag').onclick=()=>running&&withP(PLAYERS[0],()=>togglePanel('bag'));$('mHero').onclick=()=>running&&withP(PLAYERS[0],()=>togglePanel('hero'));$('mMap').onclick=()=>running&&withP(PLAYERS[0],()=>togglePanel('map'));
 function slotHTML(it,attrs,extra=''){if(!it)return`<button class="slot" ${attrs}>${extra}</button>`;const d=ITEMS[it.id],q=isGear(it.id)?qOf(it):1;
   return`<button class="slot q${q}" ${attrs} title="${esc(itemName(it))}"><img alt="${esc(itemName(it))}" src="${iconFor(d).url}">${it.n>1?`<span class="n">${it.n}</span>`:''}${extra}</button>`}
 function statLines(it,cmp){const s=itemStats(it),c=cmp?itemStats(cmp):{},L=[];const diff=(k,v,lab,fmt=x=>x)=>{let t=lab+' '+fmt(v);if(cmp!==undefined){const dv=+(v-(c[k]||0)).toFixed(2);if(dv)t+=` <span class="${(k==='cd'?-dv:dv)>0?'up':'down'}">(${dv>0?'+':''}${fmt(dv)})</span>`}L.push(t)};
   if(s.atk)diff('atk',s.atk,'Attack');if(s.cd)diff('cd',s.cd,'Swing time',x=>x+'s');if(s.reach)diff('reach',s.reach,'Reach');if(s.def)diff('def',s.def,'Defense');if(s.hp)diff('hp',s.hp,'Max health');if(s.spd)diff('spd',s.spd,'Speed',x=>'+'+Math.round(x*100)+'%');
   const d=ITEMS[it.id];if(d.heal)L.push('Heals '+d.heal);return L}
-function detailHTML(){if(!sel)return`<p class="empty">Select an item to see its details.</p>`;
-  const it=sel.where==='bag'?P.bag[sel.i]:P.eq[sel.slot];if(!it)return`<p class="empty">Select an item to see its details.</p>`;const d=ITEMS[it.id],q=isGear(it.id)?qOf(it):1;
+function detailHTML(s_=sel,acts=true){const tip=`<p class="empty">Point at an item to see its stats. Click gear to equip it; right-click (or X on a controller) for more options.</p>`;if(!s_)return tip;
+  const it=s_.where==='bag'?P.bag[s_.i]:P.eq[s_.slot];if(!it)return tip;const d=ITEMS[it.id],q=isGear(it.id)?qOf(it):1,sel=s_;
   const cmp=sel.where==='bag'&&isGear(it.id)?(P.eq[d.t]||null):undefined;
   const type={weapon:'Weapon',shield:'Shield',head:'Helmet',body:'Body armor',hands:'Gloves',feet:'Boots',ring:'Ring',amulet:'Amulet',use:'Consumable',loot:'Loot'}[d.t];
   let a='';if(pShop&&sel.where==='bag'){const p=sellPrice(it,pShop);a+=`<button data-act="sell">Sell for ${p}g</button>`;if(it.n>1)a+=`<button data-act="sellall">Sell all ${it.n} for ${p*it.n}g</button>`}
   else if(sel.where==='bag'){if(isGear(it.id))a+=`<button data-act="equip">Equip</button>`;if(d.t==='use')a+=`<button data-act="use">Use</button>`;a+=`<button data-act="drop">${dropArm?'Really drop?':'Drop'}</button>`}
   else a+=`<button data-act="unequip">Unequip</button>`;
+  if(!acts)a=sel.where==='bag'&&isGear(it.id)&&!pShop?'<span class="ty">Click to equip</span>':sel.where==='eq'&&!pShop?'<span class="ty">Click to unequip</span>':'';
   return`<div class="nm c${q}">${esc(itemName(it))}${it.n>1?' ×'+it.n:''}</div><div class="ty">${isGear(it.id)?QL[q]+' ':''}${type}${cmp===null?' · nothing equipped':''}</div>
     <ul>${statLines(it,cmp).map(l=>'<li>'+l+'</li>').join('')}<li>Worth ${itemValue(it)}g</li></ul><div>${esc(d.d)}</div><div class="acts">${a}</div>`}
 function bagHTML(){let g='';for(let i=0;i<bagSize();i++)g+=slotHTML(P.bag[i],`data-bag="${i}" ${sel&&sel.where==='bag'&&sel.i===i?'aria-pressed="true"':''}`);
@@ -920,16 +939,24 @@ function lootHTML(){const c=pCont,items=c.items;const own=c.owner?`<p class="${c
   return`<div class="pcols"><div><h4>${esc(c.name)}</h4>${own}${items.length?`<div class="shoplist">${items.map((it,i)=>`<div class="srow"><img alt="" src="${iconFor(ITEMS[it.id]).url}"><div><div class="c${isGear(it.id)?qOf(it):1}">${esc(itemName(it))}${it.n>1?' ×'+it.n:''}</div><div class="meta">Worth ${itemValue(it)*it.n}g</div></div><button data-take="${i}">Take</button></div>`).join('')}</div><div class="acts" style="margin-top:10px"><button data-take="all">Take all</button></div>`:'<p class="empty">Empty.</p>'}</div>
     <div><h4>Your bag · ${P.bag.length}/${bagSize()}</h4><div class="grid">${Array.from({length:bagSize()},(_,i)=>slotHTML(P.bag[i],`data-bag="${i}"`)).join('')}</div></div></div>`}
 function renderPanel(){const tabs=pCont?[['loot','Search']]:pShop?[['buy','Buy'],['sell','Sell']]:[['bag','Bag (I)'],['hero','Hero (C)'],['records','Records'],['map','Map (M)']];
-  $('pTabs').innerHTML=(pShop?`<h4 style="margin:0 8px 0 0;align-self:center">${esc(SHOPS[pShop].name)}</h4>`:'')+tabs.map(([k,l])=>`<button role="tab" data-tab="${k}" aria-selected="${pTab===k}">${l}</button>`).join('');
-  $('pGold').innerHTML=`<img class="ico" alt="" src="${S.coin.toDataURL()}"> ${P.gold}`;
-  const body=$('pBody');body.innerHTML=pCont?lootHTML():pShop?shopHTML():pTab==='bag'?bagHTML():pTab==='hero'?heroHTML():pTab==='records'?recordsHTML():mapHTML();
+  UI.tabs.innerHTML=(pShop?`<h4 style="margin:0 8px 0 0;align-self:center">${esc(SHOPS[pShop].name)}</h4>`:'')+tabs.map(([k,l])=>`<button role="tab" data-tab="${k}" aria-selected="${pTab===k}">${l}</button>`).join('');
+  UI.gold.innerHTML=`<img class="ico" alt="" src="${S.coin.toDataURL()}"> ${P.gold}`;
+  const body=UI.body;body.innerHTML=pCont?lootHTML():pShop?shopHTML():pTab==='bag'?bagHTML():pTab==='hero'?heroHTML():pTab==='records'?recordsHTML():mapHTML();
   if(pTab==='map')drawWorldMap();
-  const pc=$('portrait');if(pc){const g=pc.getContext('2d');g.drawImage(P.HERO[0][2],0,0)}
+  const pc=UI.body.querySelector('#portrait');if(pc){const g=pc.getContext('2d');g.drawImage(P.HERO[0][2],0,0)}
   body.querySelectorAll('.slot').forEach(b=>{if(sel&&((sel.where==='bag'&&+b.dataset.bag===sel.i&&b.dataset.bag!==undefined)||(sel.where==='eq'&&b.dataset.eq===sel.slot)))b.classList.add('sel')})}
-$('pTabs').addEventListener('click',e=>{const t=e.target.closest('[data-tab]');if(!t)return;pTab=t.dataset.tab;sel=null;renderPanel();$('pTabs').querySelector(`[data-tab="${pTab}"]`)?.focus({preventScroll:true})});
-$('pBody').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
-  if(b.dataset.bag!==undefined){const i=+b.dataset.bag;sel=P.bag[i]?{where:'bag',i}:null;dropArm=false}
-  else if(b.dataset.eq!==undefined){sel=P.eq[b.dataset.eq]?{where:'eq',slot:b.dataset.eq}:null}
+function tabsClick(e){const t=e.target.closest('[data-tab]');if(!t)return;pTab=t.dataset.tab;sel=null;hoverSel=null;renderPanel();const nt=UI.tabs.querySelector(`[data-tab="${pTab}"]`);if(P.pad!=null)setCur(UI,nt);else nt?.focus({preventScroll:true})}
+function hoverFrom(b){let hs=null;if(b&&b.dataset.bag!==undefined&&P.bag[+b.dataset.bag])hs={where:'bag',i:+b.dataset.bag};else if(b&&b.dataset.eq&&P.eq[b.dataset.eq])hs={where:'eq',slot:b.dataset.eq};
+  if(JSON.stringify(hs)===JSON.stringify(hoverSel))return;hoverSel=hs;const det=UI.body.querySelector('#det');if(det)det.innerHTML=hs?detailHTML(hs,false):detailHTML()}
+function selectSlot(b){if(b.dataset.bag!==undefined){const i=+b.dataset.bag;sel=P.bag[i]?{where:'bag',i}:null}else if(b.dataset.eq!==undefined)sel=P.eq[b.dataset.eq]?{where:'eq',slot:b.dataset.eq}:null;dropArm=false;hoverSel=null;renderPanel();const k=b.dataset.bag!==undefined?`[data-bag="${b.dataset.bag}"]`:`[data-eq="${b.dataset.eq}"]`,el=UI.body.querySelector(k);if(P.pad!=null)setCur(UI,el);else el&&el.focus({preventScroll:true})}
+for(const u of UIS){const own=()=>PLAYERS[u.i]||PLAYERS[0];
+  u.tabs.addEventListener('click',e=>withP(own(),()=>tabsClick(e)));u.body.addEventListener('click',e=>withP(own(),()=>bodyClick(e)));
+  u.body.addEventListener('contextmenu',e=>{const b=e.target.closest('.slot');if(!b)return;e.preventDefault();withP(own(),()=>selectSlot(b))});
+  u.body.addEventListener('pointerover',e=>withP(own(),()=>hoverFrom(e.target.closest('.slot'))))}
+// one click equips gear (or unequips it); everything else is selected so you can use, sell or drop it
+function bodyClick(e){const b=e.target.closest('button');if(!b)return;const trade=pShop||pCont;
+  if(b.dataset.bag!==undefined){const i=+b.dataset.bag,it=P.bag[i];if(it&&isGear(it.id)&&!trade){equipAt(i);sel={where:'eq',slot:ITEMS[it.id].t};hoverSel=null}else{sel=it?{where:'bag',i}:null;dropArm=false}}
+  else if(b.dataset.eq!==undefined){const sl=b.dataset.eq;if(P.eq[sl]&&!trade){unequip(sl);sel=null;hoverSel=null}else sel=P.eq[sl]?{where:'eq',slot:sl}:null}
   else if(b.dataset.attr){if(P.pts>0){P.attr[b.dataset.attr]++;P.pts--;recalc();sfx(660,.08)}}
   else if(b.dataset.take!==undefined){takeFrom(pCont,b.dataset.take)}
   else if(b.dataset.buy){const it={id:b.dataset.buy,q:1,n:1},p=buyPrice(it);if(P.gold<p)return;if(!addItem(it))return;P.gold-=p;P.stats.spent+=p;P.stats.bought++;sfx(880,.1);}
@@ -939,8 +966,7 @@ $('pBody').addEventListener('click',e=>{const b=e.target.closest('button');if(!b
     else if(a==='sell'||a==='sellall'){const it=P.bag[sel.i],n=a==='sell'?1:it.n,p=sellPrice(it,pShop)*n;P.gold+=p;P.stats.gold+=p;P.stats.sold+=n;removeAt(sel.i,n);if(!P.bag[sel.i])sel=null;sfx(1320,.06,'square',.03,1.3)}}
   else return;
   hudSig='';const fid=b.id||null,key=b.dataset.attr?`[data-attr="${b.dataset.attr}"]`:b.dataset.bag!==undefined?`[data-bag="${b.dataset.bag}"]`:b.dataset.eq?`[data-eq="${b.dataset.eq}"]`:b.dataset.buy?`[data-buy="${b.dataset.buy}"]`:null;
-  renderPanel();const again=(key&&$('pBody').querySelector(key))||$('pBody').querySelector('.detail button')||$('pBody').querySelector('button');again&&again.focus({preventScroll:true})});
-$('pBody').addEventListener('dblclick',e=>{const b=e.target.closest('[data-bag]');if(!b||pShop)return;const i=+b.dataset.bag,it=P.bag[i];if(!it)return;if(isGear(it.id))equipAt(i);else if(ITEMS[it.id].t==='use')useAt(i);sel=null;renderPanel()});
+  renderPanel();const again=(key&&UI.body.querySelector(key))||UI.body.querySelector('.detail button')||UI.body.querySelector('button');if(P.pad!=null)setCur(UI,again);else again&&again.focus({preventScroll:true})}
 
 // ---------- HUD ----------
 let hudSig='';
@@ -1396,7 +1422,8 @@ function toggleGod(){P.god=!P.god;recalc();toast((PLAYERS.length>1?P.name+': ':'
 // one viewport per player for split screen
 // three.js axes: X = world x, Y = height, Z = world y
 // =====================================================================
-const CAM_DEF={tilt:42,orbit:0,zoom:1.1,follow:true,view:'auto'},CAMKEY='emberwild-cam3';
+// third person: a low camera just behind the hero, looking ahead
+const CAM_DEF={tilt:14,orbit:0,zoom:2.2,follow:true,view:'auto'},CAMKEY='emberwild-cam4';
 const CAM1=Object.assign({},CAM_DEF);try{const c=JSON.parse(localStorage.getItem(CAMKEY));if(c)Object.assign(CAM1,c)}catch(e){}
 let CAM=CAM1;
 const saveCam=()=>{try{localStorage.setItem(CAMKEY,JSON.stringify(CAM1))}catch(e){}};
@@ -1412,10 +1439,10 @@ scene.fog=new THREE.Fog(0xcfe6ef,800,3000);
 let FW=320,FH=200,VIEWS=[{x:0,y:0,w:320,h:200}];
 // split the screen: side by side when wide, stacked when tall
 function layoutChanged(){FW=VW0;FH=VH0;const n=PLAYERS.length;VIEWS=n<2?[{x:0,y:0,w:FW,h:FH}]:FW>=FH*1.2?[{x:0,y:0,w:Math.floor(FW/2)-1,h:FH},{x:Math.ceil(FW/2)+1,y:0,w:Math.floor(FW/2)-1,h:FH}]:[{x:0,y:0,w:FW,h:Math.floor(FH/2)-1},{x:0,y:Math.ceil(FH/2)+1,w:FW,h:Math.floor(FH/2)-1}];
-  document.body.classList.toggle('split',n>1)}
+  document.body.classList.toggle('split',n>1);for(const u of UIS)if(!u.panel.hidden||!u.dlg.hidden)placeUI(u)}
 let VW0=320,VH0=200;
 function onResize(){VW0=VW;VH0=VH;renderer.setSize(VW,VH,false);layoutChanged()}
-resize();
+resize();ro.observe(frame);// keep the canvas matched to the frame, including fullscreen and window changes
 // ---------- texture atlases ----------
 const texOf=(c,rep)=>{const t=new THREE.CanvasTexture(c);t.magFilter=t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;t.colorSpace=THREE.SRGBColorSpace;if(rep){t.wrapS=t.wrapT=THREE.RepeatWrapping}else t.flipY=false;return t};
 // terrain atlas: one 16px cell per tile variant
@@ -1570,12 +1597,12 @@ function heroDir(p=P){let r=(p.h-YAW)%(Math.PI*2);if(r>Math.PI)r-=Math.PI*2;if(r
 const gH=(x,y)=>hAt(x,y);
 function clearView(tx,ty,tz,t,dist){const cx=tx-Math.cos(YAW)*Math.cos(t)*dist,cy=ty-Math.sin(YAW)*Math.cos(t)*dist,cz=tz+Math.sin(t)*dist;for(let f=.08;f<=1;f+=.04){const x=tx+(cx-tx)*f,y=ty+(cy-ty)*f,z=tz+(cz-tz)*f,b=bldAt(x/16,y/16,.4);const nt=nearAnyTown(x/16,y/16,1.3);if((b&&z<b.h0+b.d*16*.42+44)||z<gH(x,y)+5||(nt&&wallDist(x/16,y/16,nt)<1.6&&z<gH(x,y)+WALLTOP+10))return f-.04}return 1}
 function renderView(dt,vi){const V_=VIEWS[vi];VW=V_.w;VH=V_.h;if(!P.camObj)P.camObj=new THREE.PerspectiveCamera(42,1.6,2,6000);camera=P.camObj;camera.aspect=VW/VH;
-  heroSprites();YAW=camYaw();const inside=!!INSIDE,dun=inside&&INSIDE.dun,dist=(dun?170:inside?170:250)/CAM.zoom,ph=gH(P.x,P.y);let tilt=clamp(CAM.tilt,dun?58:inside?40:22,86)*Math.PI/180;
-  const tx=P.x,ty=P.y,tz=ph+14;
+  heroSprites();YAW=camYaw();const inside=!!INSIDE,dun=inside&&INSIDE.dun,dist=(dun?170:inside?170:250)/CAM.zoom,ph=gH(P.x,P.y);let tilt=clamp(CAM.tilt,dun?50:inside?28:5,86)*Math.PI/180;
+  const tx=P.x,ty=P.y,tz=ph+18;
   if(!inside){let best=clearView(tx,ty,tz,tilt,dist);if(best<.6)for(let t=tilt+.15;t<1.45;t+=.15){const c=clearView(tx,ty,tz,t,dist);if(c>best+.05){P.camT=lerp(P.camT??tilt,t,.15);break}}if(best>=.6)P.camT=lerp(P.camT??tilt,tilt,.1);tilt=P.camT??tilt}
   const cx=tx-Math.cos(YAW)*Math.cos(tilt)*dist,cy=ty-Math.sin(YAW)*Math.cos(tilt)*dist;let cz=tz+Math.sin(tilt)*dist;
   let fx=cx,fy=cy,fz=cz;if(!inside){const k=Math.max(.12,clearView(tx,ty,tz,tilt,dist));fx=tx+(cx-tx)*k;fy=ty+(cy-ty)*k;fz=Math.max(tz+(cz-tz)*k,gH(tx+(cx-tx)*k,ty+(cy-ty)*k)+8)}
-  camera.position.set(fx+(Math.random()-.5)*shake,fz,fy+(Math.random()-.5)*shake);camera.lookAt(tx,tz,ty);
+  camera.position.set(fx+(Math.random()-.5)*shake,fz,fy+(Math.random()-.5)*shake);const look=46*(1-Math.sin(tilt));camera.lookAt(tx+Math.cos(YAW)*look,tz+look*.1,ty+Math.sin(YAW)*look);
   if(!inside){lighting();water.position.set(P.x,SEA-1.5,P.y);const s=camera.far*2.2;water.scale.set(s,s,1);wtex.repeat.set(s/64,s/64);wtex.offset.set(time*.01,time*.006)}
   else{const dk=darkness()/.8;P.sceneI.userData.amb.intensity=dun?1:1.1-dk*.4;billMat.uniforms.tint.value.setRGB(dun?.8:1,dun?.78:1,dun?.75:1);billMat.uniforms.fogNear.value=5000;billMat.uniforms.fogFar.value=6000;camera.far=3000;camera.updateProjectionMatrix();
     for(const w of P.intWalls){const[nx,ny,x,y]=w.userData.n;w.visible=(fx-x)*nx+(fy-y)*ny<0}}
@@ -1620,7 +1647,7 @@ function overlay(lights,ph){
     if(P.god){ctx.font='6px "Press Start 2P",monospace';ctx.fillStyle='#ffd34d';ctx.fillText('PL'+e.pl,q[0],q[1]-3);ctx.font='8px "Press Start 2P",monospace'}}
   for(const n of NPCS){if(n.dead||!n.town.active||(n.hp>=n.maxHp&&!P.god)||n.role==='kid')continue;const ins=INSIDE&&n.inside&&n.home===INSIDE,out=P.realm==='w'&&!n.inside;if(!ins&&!out)continue;const nx=ins?n.ix:n.x,ny=ins?n.iy:n.y;if(Math.hypot(nx-P.x,ny-P.y)>400)continue;const q=toScreen(nx,ny,(ins?0:gH(n.x,n.y))+22);if(!q)continue;
     if(n.hp<n.maxHp){ctx.fillStyle='#000';ctx.fillRect(q[0]-8,q[1],16,3);ctx.fillStyle='#e0a036';ctx.fillRect(q[0]-7,q[1]+1,14*Math.max(0,n.hp)/n.maxHp,1)}if(P.god){ctx.font='6px "Press Start 2P",monospace';ctx.fillStyle='#ffd34d';ctx.fillText('PL'+n.pl,q[0],q[1]-3);ctx.font='8px "Press Start 2P",monospace'}}
-  if(running&&!paused&&P.deadT<=0){const it=nearInteract();if(it){const z=INSIDE?0:gH(it.x,it.y),q=toScreen(it.x,it.y,z+(it.type==='npc'?28:18));if(q){const bx=Math.round(q[0]),by=Math.round(q[1]+Math.sin(time*5));
+  if(running&&!uiOpen(P)&&P.deadT<=0){const it=nearInteract();if(it){const z=INSIDE?0:gH(it.x,it.y),q=toScreen(it.x,it.y,z+(it.type==='npc'?28:18));if(q){const bx=Math.round(q[0]),by=Math.round(q[1]+Math.sin(time*5));
     ctx.fillStyle='#1b140d';ctx.fillRect(bx-6,by-8,12,11);ctx.fillStyle='#f2b544';ctx.fillRect(bx-5,by-7,10,9);ctx.fillStyle='#1b140d';ctx.fillText(P.pad!=null?'A':document.body.classList.contains('coarse')?'B':'E',bx+.5,by+1);
     const lab=it.type==='npc'?it.n.name:it.label;if(lab){ctx.font='6px "Press Start 2P",monospace';const w=ctx.measureText(lab).width;ctx.fillStyle='rgba(20,14,8,.8)';ctx.fillRect(bx-w/2-3,by-19,w+6,9);ctx.fillStyle='#f2dc7a';ctx.fillText(lab,bx,by-12);ctx.font='8px "Press Start 2P",monospace'}}}}
   const dun=INSIDE&&INSIDE.dun,dk=dun?.6:INSIDE?.25+darkness()*.55:darkness();
@@ -1664,17 +1691,19 @@ function buildInp(p){const I={fwd:0,turn:0,run:false,att:false,pr:new Set()};
     if(edge(0))I.pr.add('act');if(edge(3))I.pr.add('potion');if(edge(9))I.pr.add('bag');if(edge(8))I.pr.add('map');if(edge(5))I.pr.add('hero');if(edge(11))I.pr.add('camreset');
     const rx=dz(ax[2]),ry=dz(ax[3]);if(rx||ry){p.cam.orbit=((p.cam.orbit-rx*140*dtLast+540)%360)-180;p.cam.tilt=clamp(p.cam.tilt+ry*70*dtLast,22,86)}p.prev=b}
   I.fwd=clamp(I.fwd,-1,1);I.turn=clamp(I.turn,-1,1);p.inp=I}
-// controllers can drive menus: d-pad moves focus, A presses, B backs out, LB/RB switch tabs
-function menuNav(){const p=UIOWNER||PLAYERS[0],gp=p&&p.pad!=null&&navigator.getGamepads()[p.pad];if(!gp)return;const b=padBtns(gp),prev=p.prev||[],edge=i=>b[i]&&!prev[i];p.prev=b;
-  const root=panelOpen()?$('panel'):$('dlg'),items=[...root.querySelectorAll('button:not(:disabled)')].filter(e=>e.offsetParent);if(!items.length)return;
-  let cur=document.activeElement;if(!items.includes(cur)){cur=items[0];cur.focus()}
-  const dir=edge(12)||(-gp.axes[1]>.6&&!(p.navT>0))?[0,-1]:edge(13)||(gp.axes[1]>.6&&!(p.navT>0))?[0,1]:edge(14)||(gp.axes[0]<-.6&&!(p.navT>0))?[-1,0]:edge(15)||(gp.axes[0]>.6&&!(p.navT>0))?[1,0]:null;p.navT=Math.max(0,(p.navT||0)-dtLast);
+// controllers drive their own player's menus: d-pad/stick moves the cursor, A presses, X opens item options, B backs out, LB/RB switch tabs
+function menuNav(p){p.inp={fwd:0,turn:0,run:false,att:false,pr:new Set()};const gp=p.pad!=null&&navigator.getGamepads()[p.pad];if(!gp)return;const b=padBtns(gp),prev=p.prev||[],edge=i=>b[i]&&!prev[i];p.prev=b;
+  const u=UI,root=!u.dlg.hidden?u.dlg:u.panel,items=[...root.querySelectorAll('button:not(:disabled)')].filter(e=>e.offsetParent);if(!items.length)return;
+  let cur=u.cur&&items.includes(u.cur)?u.cur:null;if(!cur){cur=items.find(e=>e.classList.contains('slot'))||items[0];setCur(u,cur)}
+  p.navT=Math.max(0,(p.navT||0)-dtLast);const ax=gp.axes[0]||0,ay=gp.axes[1]||0,held=p.navT<=0;
+  const dir=edge(12)||(ay<-.6&&held)?[0,-1]:edge(13)||(ay>.6&&held)?[0,1]:edge(14)||(ax<-.6&&held)?[-1,0]:edge(15)||(ax>.6&&held)?[1,0]:null;
   if(dir){p.navT=.22;const r=cur.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;let best=null,bs=1e9;
     for(const e of items){if(e===cur)continue;const q=e.getBoundingClientRect(),dx=q.left+q.width/2-cx,dy=q.top+q.height/2-cy,along=dx*dir[0]+dy*dir[1],across=Math.abs(dx*dir[1]-dy*dir[0]);if(along<=4)continue;const sc=along+across*2.5;if(sc<bs){bs=sc;best=e}}
-    if(best){best.focus();best.scrollIntoView({block:'nearest'})}}
+    if(best)setCur(u,best)}
   if(edge(0))cur.click();
-  if(edge(1)){if(panelOpen())closePanel();else closeDlg()}
-  if(panelOpen()&&(edge(4)||edge(5))){const tabs=[...$('pTabs').querySelectorAll('[data-tab]')],i=tabs.findIndex(t=>t.getAttribute('aria-selected')==='true');const n=tabs[(i+(edge(5)?1:tabs.length-1))%tabs.length];n&&n.click()}}
+  if(edge(2)&&cur.classList.contains('slot'))selectSlot(cur);
+  if(edge(1)){if(!u.dlg.hidden)closeDlg();else closePanel()}
+  if(!u.panel.hidden&&u.dlg.hidden&&(edge(4)||edge(5))){const tabs=[...u.tabs.querySelectorAll('[data-tab]')],i=tabs.findIndex(t=>t.getAttribute('aria-selected')==='true');const n=tabs[(i+(edge(5)?1:tabs.length-1))%tabs.length];n&&n.click()}}
 
 // ---------- minimap (north is always up) and world map ----------
 const MCA={};for(const k in MCOL){const c=MCOL[k].clone().convertLinearToSRGB();MCA[k]=[c.r*255|0,c.g*255|0,c.b*255|0]}
@@ -1698,8 +1727,8 @@ function stepWorldMap(){if(wmRow>=512)return;const end=Math.min(512,wmRow+4),d=w
     const r=roadAt(tx,ty);if(r&&r.d<r.w/2+2.5&&h>=SEA)col=r.town?[150,140,128]:[230,195,106];
     const nt=nearAnyTown(tx,ty,1.2);if(nt){if(bldAt(tx,ty,1.5))col=[192,70,60];else if(wallDist(tx,ty,nt)<3)col=[70,68,64]}
     const sh=h>=SEA?clamp(1+(h-hs)*.03,.65,1.35):1,i=(y*512+x)*4;d[i]=col[0]*sh;d[i+1]=col[1]*sh;d[i+2]=col[2]*sh;d[i+3]=255}
-  wmRow=end;if(wmRow>=512){wmg.putImageData(wmData,0,0);if(panelOpen()&&pTab==='map')drawWorldMap()}}
-function drawWorldMap(){const c=$('wmap');if(!c)return;const g=c.getContext('2d');$('mapNote').textContent=wmRow<512?'Charting the land… '+Math.round(wmRow/5.12)+'%':'';
+  wmRow=end;if(wmRow>=512){wmg.putImageData(wmData,0,0);for(const p of PLAYERS)withP(p,()=>{if(panelOpen()&&pTab==='map')drawWorldMap()})}}
+function drawWorldMap(){const c=UI.body.querySelector('#wmap');if(!c)return;const g=c.getContext('2d');UI.body.querySelector('#mapNote').textContent=wmRow<512?'Charting the land… '+Math.round(wmRow/5.12)+'%':'';
   if(wmRow<512)wmg.putImageData(wmData,0,0);g.drawImage(WM,0,0);
   g.fillStyle='#1a1410';for(let y=0;y<EXW;y++)for(let x=0;x<EXW;x++)if(!EXP[y*EXW+x])g.fillRect(x*2,y*2,2,2);
   const M_=(tx,ty)=>[(tx+HW)/8,(ty+HW)/8],seen=(tx,ty)=>EXP[Math.floor((ty+HW)/EXC)*EXW+Math.floor((tx+HW)/EXC)];
@@ -1714,9 +1743,11 @@ function drawWorldMap(){const c=$('wmap');if(!c)return;const g=c.getContext('2d'
 // ---------- loop ----------
 let last=performance.now();
 function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;dtLast=dt;
-  if(running){claimPads();if(!paused){for(const p of PLAYERS){usePlayer(p);buildInp(p)}pressed.clear();usePlayer(PLAYERS[0]);updateWorld(dt);for(const p of PLAYERS){if(paused)break;usePlayer(p);updatePlayer(dt)}}else menuNav()}
+  // a menu only freezes the player who opened it; the world pauses only when every player is in a menu
+  if(running){claimPads();for(const p of PLAYERS){usePlayer(p);if(uiOpen(p))menuNav(p);else buildInp(p)}pressed.clear();paused=PLAYERS.every(uiOpen);
+    if(!paused){usePlayer(PLAYERS[0]);updateWorld(dt);for(const p of PLAYERS){if(uiOpen(p))continue;usePlayer(p);updatePlayer(dt)}}}
   else{time+=dt*.2;P.h+=dt*.05}
-  render(dt);usePlayer(paused&&UIOWNER&&PLAYERS.includes(UIOWNER)?UIOWNER:PLAYERS[0]);
+  render(dt);usePlayer(PLAYERS[0]);
   if(running){hud();miniT-=dt;if(miniT<=0){miniT=.1;drawMini()}$('clock').textContent=clockText()}
   stepWorldMap();requestAnimationFrame(loop)}
 function viewUI(){$('oView').textContent=(CAM1.view==='auto'?'auto · ':'')+VR*CH+' tiles'}
@@ -1747,7 +1778,7 @@ function toggleFull(){const fs=document.fullscreenElement||document.webkitFullsc
   if(req)Promise.resolve(req.call(frame,{navigationUI:'hide'})).then(()=>{try{screen.orientation.lock('landscape').catch(()=>{})}catch(e){}}).catch(()=>document.body.classList.add('pseudofs'));
   else document.body.classList.add('pseudofs')}
 $('mFull').onclick=toggleFull;$('bFull').onclick=toggleFull;
-addEventListener('keydown',e=>{if(e.code==='KeyF'&&running&&!panelOpen()&&$('dlg').hidden&&e.target.tagName!=='INPUT')toggleFull()});
+addEventListener('keydown',e=>{if(e.code==='KeyF'&&running&&!uiOpen(PLAYERS[0])&&e.target.tagName!=='INPUT')toggleFull()});
 $('bNew').onclick=()=>begin(false);$('bCont').onclick=()=>begin(true);
 $('hName').addEventListener('keydown',e=>{if(e.key==='Enter')begin(false)});
 addEventListener('pagehide',()=>{if(running)save()});

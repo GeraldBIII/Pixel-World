@@ -16,12 +16,12 @@ Open `index.html` in a browser, or turn on GitHub Pages (Settings → Pages → 
 | Attack | Left click |
 | Talk, trade, enter buildings, search, open chests | E / Enter |
 | Drink potion | Q |
-| Bag (inventory) | I |
+| Bag (inventory): point at an item for its stats, click gear to equip it, right-click for more options | I |
 | Character sheet | C |
 | World map | M |
 | Close a menu | Esc |
 | Toggle sound | N |
-| Orbit and tilt camera | Right-drag |
+| Orbit and tilt camera (third person by default) | Right-drag |
 | Zoom | Scroll wheel |
 | Reset camera | R |
 | Fullscreen | F |
@@ -42,9 +42,9 @@ Any standard controller (Xbox, or others the browser maps the same way) works:
 | Potion | Y |
 | Sprint | LT, LB or click the left stick |
 | Bag / map / character sheet | Menu / View / RB |
-| Menus | D-pad to move, A to choose, B to back out, LB/RB for tabs |
+| Menus | D-pad to move, A to choose (A on gear equips it), X for item options, B to back out, LB/RB for tabs |
 
-Press **Menu** on a second controller (or use **Add player 2** under the game) to start two-player split screen. The screen splits side by side on wide screens and top/bottom on tall ones. Each player has their own hero, bag, gold, bounty and camera; the world, quests and time of day are shared.
+Press **Menu** on a second controller (or use **Add player 2** under the game) to start two-player split screen. The screen splits side by side on wide screens and top/bottom on tall ones. Split screen always fills the whole screen, including in fullscreen. Each player has their own hero, bag, gold, bounty, camera and menus: a menu opens over that player's half of the screen and only pauses that player, while the other keeps playing. The world, quests and time of day are shared.
 
 ## Features
 
