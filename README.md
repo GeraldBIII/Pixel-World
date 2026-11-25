@@ -11,7 +11,7 @@ Open `index.html` in a browser, or turn on GitHub Pages (Settings → Pages → 
 | Action | Keys |
 | --- | --- |
 | Move | WASD / Arrow keys |
-| Attack | Space / J |
+| Attack | Left click |
 | Talk, open chests | E / Enter |
 | Drink potion | Q |
 | Toggle map | M |
