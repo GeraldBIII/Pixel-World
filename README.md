@@ -68,6 +68,17 @@ Press **Menu** on a second controller (or use **Add player 2** under the game) t
 - **Highways between the towns**: cobbled roads lined with lampposts on alternating sides, crossing rivers on arched stone bridges with parapets and lamps at each end
 - **Road wardens and trader caravans**: pairs of wardens patrol every highway from town to town. Four traders drive covered wagons between the towns with two guards each; a caravan camps outside a town's gates for part of a day selling a fresh stock of gear, potions and gems, then sets off for the next town. Wardens and caravan guards (PL 75) fight off monsters, and go after anyone with a bounty
 - **Swimming**: wade or swim into any river, lake or the sea (slowly, and you can't sprint, roll or fight while swimming). Swim too far from the island and the water turns black: turn back quickly, or a leviathan rises from the deep and drags you under
+- **Terraced uplands and cliffs**: hills and highlands step up in grassy plateaus walled by layered stone cliffs, with winding dirt trails that climb through them, so there is always a way up
+- **Places worth finding** between the towns, each marked on your map once discovered (and greyed out once cleared):
+  - **Goblin camps** behind sharpened palisades, with hide tents, a campfire, totems and a treasure chest, guarded by a pack of goblins
+  - **Goblin warrens**: big fortified villages with huts and a goblin chief, and two chests
+  - **Graveyards** with tombstones behind a wooden fence, haunted by skeletons, and by ghosts after dark
+  - **Ruins** of old stone halls with broken walls and pillars, held by skeletons, bandits, spiders or scorpions depending on the land
+  - **Bandit hideouts** with tents and stolen supplies
+  - **Standing stones**: rune-carved circles around an altar. Touch it for three minutes of extra strength and warding (once a day per circle)
+  - **Wayshrines** beside the highways: pray to heal fully and save your game
+  - Clear a camp, warren, graveyard, ruin or hideout to earn bonus experience; its monsters return after three days
+- **The Elderwoods**: two vast forests of giant trees (the Elderwood and Silverleaf Grove), some with treehouses in their branches, glowing blue mushrooms and fairies. Greet a fairy for a blessing that heals you (once a day each). At the heart of each wood is an elven village with elves to talk to and an elven merchant selling potions, charms and gems
 - **Homesteads in the wilds**: log cabins scattered across the island far from any town, each with a garden, a woodpile and one or two settlers who tend their clearing by day and bar the door at night
 - **Mobile friendly**: virtual joystick, touch camera and pinch zoom, and a fullscreen mode
 - **Lively towns**: crates, barrels, hay bales, carts, benches, woodpiles, flower pots and wells, plus cats, dogs and chickens (you can pet them)

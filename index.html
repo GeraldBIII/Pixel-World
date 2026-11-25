@@ -176,7 +176,7 @@ table.rec img{width:24px;height:24px;image-rendering:pixelated;vertical-align:mi
     <div id="panel" class="panel" hidden role="dialog" aria-label="Menu"><div class="ptop"><div id="pTabs" class="pTabs" role="tablist"></div><span id="pGold" class="pGold"></span><button id="pClose" class="pClose" type="button" aria-label="Close">✕</button></div><div id="pBody" class="pBody"></div></div>
     <div id="touch">
       <div id="joy" aria-label="Movement joystick"><div id="joyk"></div></div>
-      <button class="tb" id="tA" aria-label="Attack">A</button><button class="tb" id="tB" aria-label="Talk or open">B</button><button class="tb" id="tP" aria-label="Drink potion">P</button><button class="tb" id="tRun" aria-label="Sprint" aria-pressed="false">Run</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button>
+      <button class="tb" id="tA" aria-label="Attack">A</button><button class="tb" id="tB" aria-label="Talk or open">B</button><button class="tb" id="tP" aria-label="Drink potion">P</button><button class="tb" id="tRun" aria-label="Sprint" aria-pressed="false">Run</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button>
     </div>
     <div id="start">
       <div>
@@ -262,6 +262,8 @@ const ridged=(x,y,s,o=4)=>{let a=0,amp=.5,f=1,n=0,w=1;for(let i=0;i<o;i++){let v
 const sstep=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t)};
 const lerp=(a,b,t)=>a+(b-a)*t;
 const mmask=(wx,wy)=>sstep(.5,.7,fbmN(wx*.0006+40,wy*.0006-20,9,3));
+// cliffs: where the land steps up in terraces, and the winding trails that stay smooth so there is always a way up
+function cliffInfo(wx,wy,h){const cm=sstep(.44,.6,fbmN(wx*.0035+50,wy*.0035-30,61,2))*sstep(10,30,h);if(cm<=0)return[0,0,1];const raw=Math.abs(fbmN(wx*.008+7,wy*.008-3,63,2)-.5);return[cm,1-sstep(.022,.055,raw),raw]}
 function warp(x,y){return[x+(fbmN(x*.0008,y*.0008,21,3)-.5)*600,y+(fbmN(x*.0008+7,y*.0008+3,23,3)-.5)*600]}
 // a warped continent, mountain ranges of ridged noise, and two networks of rivers carved along noise valleys
 function baseH(x,y){
@@ -271,6 +273,7 @@ function baseH(x,y){
   let h=(land-.5)*360;if(h<=0)return Math.max(h,-90);
   const mm=mmask(wx,wy);
   h=h*.45+4+mm*Math.pow(ridged(wx*.0028,wy*.0028,5,5),1.3)*620*sstep(0,50,h)+(fbmN(wx*.012,wy*.012,4,3)-.5)*32+(fbmN(wx*.045,wy*.045,44,2)-.5)*8;
+  {const[cm,pm]=cliffInfo(wx,wy,h);if(cm>0){const S=26,t=h/S,f=t-Math.floor(t),ht=(Math.floor(t)+sstep(.7,1,f))*S;h=lerp(h,ht,cm*(1-pm))}}
   for(const[f,s,w]of[[.0011,31,.03],[.0024,37,.02]]){const rv=Math.abs(fbmN(wx*f+100,wy*f,s,4)-.5),k=(1-sstep(.003,w,rv))*(1-sstep(.15,.5,mm))*sstep(3,14,h);h=lerp(h,-10,k*k*(3-2*k))}
   return h}
 // climate: colder to the north and up high, hotter to the south; a volcanic region where the ash falls
@@ -443,6 +446,7 @@ function dunCell(ci,cj){const k=ci+','+cj;if(DUNS.has(k))return DUNS.get(k);let 
 function vertexH(x,y){let h=townFlat(x,y,baseH(x,y));
   for(const[sx,sy]of SHR){const d=Math.hypot(x-sx,y-sy);if(d<14){const b=townFlat(sx,sy,baseH(sx,sy));h=lerp(h,Math.max(b,8),1-sstep(4,14,d))}}
   const r=roadAt(x,y);if(r&&r.d<r.w/2+4&&!bridgeOf(r)){h=lerp(h,r.h,1-sstep(r.w/2,r.w/2+4,r.d))}
+  {const p=poiAt(x,y,4);if(p){h=lerp(h,p.h0,1-sstep(p.R+.5,p.R+4,Math.hypot(x-p.x,y-p.y)))}}
   {const b=bldAt(x,y,1.2);if(b){if(b.h0===undefined)b.h0=Math.min(...obbCorners(b,.5).map(([cx,cy])=>townFlat(cx,cy,baseH(cx,cy))));h=lerp(h,b.h0,.85)}}
   return h}
 
@@ -450,9 +454,10 @@ function vertexH(x,y){let h=townFlat(x,y,baseH(x,y));
 const DEEP=0,WATER=1,SAND=2,GRASS=3,FOREST=4,HILL=5,ROCK=6,PATH=7,PLAZA=8,HOUSE=9,STREET=10,FARM=11,TWALL=12,SNOW=13,CLIFF=14,TUNDRA=15,PINEF=16,TAIGA=17,MARSH=18,DESERT=19,ASH=20;
 Object.assign(BIOPL,{[GRASS]:0,[FOREST]:4,[PINEF]:8,[TAIGA]:14,[TUNDRA]:12,[MARSH]:6,[DESERT]:10,[ASH]:22,[HILL]:8,[ROCK]:14,[SNOW]:20,[SAND]:0,[CLIFF]:14});
 const BIONAME={[GRASS]:'Plains',[FOREST]:'Woodland',[PINEF]:'Pine forest',[TAIGA]:'Snow forest',[TUNDRA]:'Tundra',[MARSH]:'Marsh',[DESERT]:'Desert',[ASH]:'Ashlands',[HILL]:'Highlands',[ROCK]:'Mountains',[SNOW]:'Peaks',[SAND]:'Coast',[CLIFF]:'Cliffs',[PATH]:'Road',[FARM]:'Farmland',[STREET]:'Town',[PLAZA]:'Town',[WATER]:'Shallows'};
-const O={none:0,tree:1,pine:2,bush:3,flower:4,boulder:5,chest:6,shrine:7,lamp:8,fountain:9,stall:10,crop:11,barrel:12,spine:13,reed:14,cactus:15,deadtree:16,mushroom:17,lavarock:18,deadbush:19,crate:20,hay:21,cart:22,bench:23,woodpile:24,fpot:25,well:26,dungeon:27,birch:28,hedge:29,fence:30,stone:31};
+const O={none:0,tree:1,pine:2,bush:3,flower:4,boulder:5,chest:6,shrine:7,lamp:8,fountain:9,stall:10,crop:11,barrel:12,spine:13,reed:14,cactus:15,deadtree:16,mushroom:17,lavarock:18,deadbush:19,crate:20,hay:21,cart:22,bench:23,woodpile:24,fpot:25,well:26,dungeon:27,birch:28,hedge:29,fence:30,stone:31,
+  palisade:32,tent:33,hut:34,campfire:35,totem:36,tomb:37,pillar:38,ruinwall:39,menhir:40,altar:41,wshrine:42,gtree:43,gshroom:44,bones:45};
 const SOLIDT=new Set([TWALL,CLIFF]);
-const SOLIDO=new Set([O.tree,O.pine,O.boulder,O.chest,O.shrine,O.lamp,O.fountain,O.stall,O.barrel,O.spine,O.cactus,O.deadtree,O.lavarock,O.crate,O.hay,O.cart,O.woodpile,O.well,O.birch,O.dungeon,O.hedge,O.fence]);
+const SOLIDO=new Set([O.tree,O.pine,O.boulder,O.chest,O.shrine,O.lamp,O.fountain,O.stall,O.barrel,O.spine,O.cactus,O.deadtree,O.lavarock,O.crate,O.hay,O.cart,O.woodpile,O.well,O.birch,O.dungeon,O.hedge,O.fence,O.palisade,O.tent,O.hut,O.campfire,O.totem,O.tomb,O.pillar,O.ruinwall,O.menhir,O.altar,O.wshrine,O.gtree]);
 function biomeTile(x,y,hc,sl){const tp=tempAt(x,y,hc),m=moistAt(x,y);
   if(sl>26)return CLIFF;if(hc>420)return SNOW;if(hc>300||sl>16)return ROCK;
   if(volcAt(x,y)>.66&&tp>.4)return ASH;
@@ -468,7 +473,7 @@ function genChunk(cx,cy){const x0=cx*CH,y0=cy*CH,V=CH+1,hv=new Float32Array(V*V)
   const NT=nearAnyTown(x0+16,y0+16,1.7)||TOWNS.find(t=>Math.hypot(x0+16-t.x,y0+16-t.y)<t.R*1.5+40)||null;
   const dl=[];for(const[ci,cj]of[[Math.floor(x0/DUNC),Math.floor(y0/DUNC)],[Math.floor((x0+CH)/DUNC),Math.floor(y0/DUNC)],[Math.floor(x0/DUNC),Math.floor((y0+CH)/DUNC)],[Math.floor((x0+CH)/DUNC),Math.floor((y0+CH)/DUNC)]]){const d=dunCell(ci,cj);if(d&&d.x>=x0&&d.x<x0+CH&&d.y>=y0&&d.y<y0+CH&&!dl.includes(d))dl.push(d)}
   for(let j=0;j<CH;j++)for(let i=0;i<CH;i++){const x=x0+i,y=y0+j,k=j*CH+i,a=hv[j*V+i],b=hv[j*V+i+1],c=hv[(j+1)*V+i],d=hv[(j+1)*V+i+1],hc=(a+b+c+d)/4,sl=Math.max(a,b,c,d)-Math.min(a,b,c,d),hh=hash(x,y,3);
-    v[k]=Math.floor(hash(x,y,11)*3);let T=GRASS,ob=0,es=null;
+    v[k]=Math.floor(hash(x,y,11)*3);let T=GRASS,ob=0,es=null,pz=null;
     const cx_=x+.5,cy_=y+.5,tw=NT,td=tw?Math.hypot(cx_-tw.x,cy_-tw.y):1e9,inT=tw&&td<tw.R*1.5,nearW=inT&&Math.abs(td-wallR(tw,Math.atan2(cy_-tw.y,cx_-tw.x)))<3;
     if(hc<SEA-12)T=DEEP;else if(hc<SEA)T=WATER;
     else{const r=roadAt(cx_,cy_);
@@ -480,6 +485,7 @@ function genChunk(cx,cy){const x0=cx*CH,y0=cy*CH,V=CH+1,hv=new Float32Array(V*V)
         else if(r.town&&r.d>r.w/2-.8&&hash(Math.round(r.t*20),r.i,r.ri)<.08&&hh<.2&&!r.ring)ob=O.lamp;else if(r.town&&r.d>r.w/2-.6&&hh>.985)ob=O.cart}
       else if((es=estateAt(cx_,cy_))){const[u,v]=estLoc(es,cx_,cy_),au=Math.abs(u),k_=es.kind,hb=es.house;
         if(bldAt(cx_,cy_,.2))T=HOUSE;
+        else if(k_==='elves'){T=FOREST;if(au<1.2&&v<0)T=PATH;else ob=hh>.9?O.flower:hh>.86?O.gshroom:hh>.84?O.bush:0;if(Math.abs(au-2)<.5&&Math.abs(v+5)<.5)ob=O.lamp}
         else if(k_==='home'){const bt=es.t.bt;T=sl>26?CLIFF:[FOREST,PINEF,TAIGA,TUNDRA,DESERT].includes(bt)?bt:GRASS;
           if(v>3.4&&v<6.2&&au<3.6){T=FARM;ob=Math.floor(u+10)%2?O.crop:0}else if(au<1&&v<-2.4)T=PATH;
           else if(Math.round(u)===4&&Math.round(v)===0)ob=O.woodpile;else if(Math.round(u)===-4&&Math.round(v)===-1)ob=O.barrel;else ob=hh>.975?O.flower:hh>.96?O.bush:hh>.95?O.stone:0}
@@ -489,13 +495,19 @@ function genChunk(cx,cy){const x0=cx*CH,y0=cy*CH,V=CH+1,hv=new Float32Array(V*V)
           else if(k_==='manor'){if(au>=1.4&&au<2.4&&Math.floor(v+40)%4===0&&v<-1)ob=O.lamp;else if(au>es.gw-3.6&&Math.abs(v)>es.gd-3.6&&au<es.gw-2&&Math.abs(v)<es.gd-2)ob=O.tree;else ob=hh>.985?O.bench:hh>.95?O.bush:hh>.74?O.flower:0}
           else if(v>es.gd-4.6){T=FARM;ob=Math.floor(u+20)%2?O.crop:0}
           else ob=hh>.975?O.hay:hh>.962?O.barrel:hh>.95?O.woodpile:hh>.944?O.cart:0}}
+      else if((pz=poiAt(cx_,cy_))){T=biomeTile(x,y,hc,sl);if(T===CLIFF||T===SNOW)T=pz.bt===TUNDRA||pz.bt===TAIGA?TUNDRA:GRASS;const ky=x+','+y,d=Math.hypot(cx_-pz.x,cy_-pz.y);ob=pz.objs.get(ky)||0;
+        if(pz.type==='goblincamp'||pz.type==='goblinvillage'||pz.type==='banditcamp'){if(d<(pz.ring||5.5)+.4)T=PATH}else if(pz.type==='ruins'){if(Math.max(Math.abs(cx_-pz.x),Math.abs(cy_-pz.y))<5&&hh>.25)T=PLAZA}
+        else if(pz.type==='graveyard'){if(Math.abs(cx_-pz.x)<1&&cy_-pz.y<4)T=PATH}else if(pz.type==='stones'){if(Math.abs(d-2.6)<.6)T=PATH}
+        if(!ob&&d<pz.R-1&&pz.type!=='wshrine')ob=hh>.93?O.flower:hh>.9&&pz.type==='graveyard'?O.mushroom:0}
       else if(sl>26)T=CLIFF;
       else if(hc<4.5&&!inT)T=SAND;
       else if(inT&&inWalls(cx_,cy_,tw)){T=GRASS;const nb=bldAt(cx_,cy_,1.6);// yards: clutter gathers around the houses
         ob=nb?(hh>.9?O.crate:hh>.84?O.barrel:hh>.8?O.woodpile:hh>.76?O.fpot:hh>.73?O.hay:hh>.6?O.flower:0):(hh>.965?O.tree:hh>.945?O.bush:hh>.85?O.flower:hh>.845?O.well:0)}
       else if(inT&&isFarmZone(cx_,cy_,tw)&&sl<8){T=FARM;ob=(y%3)&&hh>.1?O.crop:hh>.985?O.hay:0}
-      else{T=biomeTile(x,y,hc,sl);
-        if(T===FOREST)ob=hh>.85?(hash(x,y,7)<.25?O.birch:O.tree):hh>.62?O.bush:hh>.58?O.mushroom:hh>.52?O.flower:0;
+      else{T=biomeTile(x,y,hc,sl);const ew=ELDERWOODS.length?ELDERWOODS.find(e=>Math.hypot(x-e.x,y-e.y)<e.R):null;if(ew&&T!==CLIFF&&T!==WATER&&T!==DEEP&&T!==SAND)T=ew.bt;
+        if(ew&&(T===FOREST||T===PINEF)){const gx=Math.floor(x/9),gy=Math.floor(y/9),ox=gx*9+1+Math.floor(hash(gx,gy,930)*7),oy=gy*9+1+Math.floor(hash(gy,gx,931)*7);
+          ob=x===ox&&y===oy&&hash(gx,gy,932)<.7&&Math.hypot(x-ew.x,y-ew.y)>14?O.gtree:hh>.972?O.gshroom:hh>.88?O.flower:hh>.84?O.bush:hh>.975?O.birch:hh>.8?O.mushroom:0}
+        else if(T===FOREST)ob=hh>.85?(hash(x,y,7)<.25?O.birch:O.tree):hh>.62?O.bush:hh>.58?O.mushroom:hh>.52?O.flower:0;
         else if(T===PINEF)ob=hh>.85?O.pine:hh>.66?O.bush:hh>.63?O.mushroom:0;
         else if(T===TAIGA)ob=hh>.86?O.spine:hh>.77?O.boulder:0;
         else if(T===TUNDRA)ob=hh>.985?O.stone:hh>.975?O.boulder:hh>.95?O.deadbush:hh>.92?O.flower:hh>.915?O.spine:0;
@@ -507,7 +519,8 @@ function genChunk(cx,cy){const x0=cx*CH,y0=cy*CH,V=CH+1,hv=new Float32Array(V*V)
         else if(T===ROCK)ob=hh>.975?O.boulder:hh>.95&&hc<260?O.pine:0;
         else if(T===SNOW)ob=hh>.96?O.spine:0;
         if(T===SAND&&hc<2)ob=hh>.85?O.reed:0;
-        if(!NT&&hash(x,y,99)>.9988&&T!==SNOW&&sl<10)ob=O.chest}}
+        if(!NT&&hash(x,y,99)>.9988&&T!==SNOW&&sl<10)ob=O.chest;
+        {const[wx_,wy_]=warp(x,y),[cm_,,raw_]=cliffInfo(wx_,wy_,hc);if(cm_>.3&&raw_<.0075&&sl<22&&T!==SNOW&&T!==SAND&&!(ew&&ob===O.gtree)){T=PATH;ob=0}}}}
     for(const[sx,sy]of SHR){const dd=Math.max(Math.abs(x-sx),Math.abs(y-sy));if(dd<=2){T=PLAZA;ob=dd===0?O.shrine:0}}
     for(const dn of dl){const dd=Math.max(Math.abs(x-dn.x),Math.abs(y-dn.y));if(dd<=2&&ob)ob=0;if(dd===0){ob=O.dungeon;if(T===WATER||T===DEEP)T=ROCK}}
     if(ob&&(inT||es)&&ob!==O.fountain&&doorNear(cx_,cy_))ob=0;
@@ -522,9 +535,59 @@ function tV(x,y){const c=chunk(cOf(x),cOf(y));return c.v[(y-c.cy*CH)*CH+x-c.cx*C
 function vH(x,y){const c=chunk(cOf(x),cOf(y)),V=CH+1;return c.hv[(y-c.cy*CH)*V+x-c.cx*CH]}
 function hAt(px,py){if(INSIDE)return 0;const fx=px/16,fy=py/16,x=Math.floor(fx),y=Math.floor(fy),u=fx-x,v=fy-y;return lerp(lerp(vH(x,y),vH(x+1,y),u),lerp(vH(x,y+1),vH(x+1,y+1),u),v)}
 const isWater=t=>t===DEEP||t===WATER;
-// homesteads come last: they need the climate map, which is defined above
-genHomesteads();
-for(const hs of HOMESTEADS)for(const b of hs.bld){const c=Math.cos(b.a),s=Math.sin(b.a);b.door=[b.x+s*(b.d/2),b.y-c*(b.d/2)];b.front=[b.x+s*(b.d/2+1.1),b.y-c*(b.d/2+1.1)];b.r=Math.hypot(b.w,b.d)/2;
+// ---------- places worth finding: camps, villages, graveyards, ruins, standing stones, wayshrines, and the Elderwoods ----------
+const POIS=[],PG=new Map(),ELDERWOODS=[];
+const POIN={goblincamp:['Grimtooth','Mudfang','Rotgut','Snaggle','Blackclaw','Gutspill','Ratbite','Skulk'],goblinvillage:['Gnashjaw','Bonepile','Mawhollow','Ironmuck'],
+  graveyard:['Old Ashford','Weeping Hill','Hollowmere','Saint Edda’s','Crowsrest','Mournvale'],ruins:['Velmor','Kael Dorn','Ostrava','Thessan','Ilvaris','Marrowgate','Caer Sedd'],stones:['Whispering','Sun-touched','Elder','Moonlit','Singing'],banditcamp:['Cutthroat','Red Hand','Ditchwater','Crowfoot']};
+const POILABEL={goblincamp:'Goblin Camp',goblinvillage:'Goblin Warren',graveyard:'Graveyard',ruins:'Ruins',stones:'Stones',banditcamp:'Bandit Hideout',wshrine:'Wayshrine',elder:'Elderwood'};
+function poiAt(x,y,m=0){const L=PG.get(Math.floor(x/16)+','+Math.floor(y/16));if(L)for(const p of L)if(Math.hypot(x-p.x,y-p.y)<=p.R+m)return p;return null}
+function addPOI(p){p.id=POIS.length;p.objs=p.objs||new Map();POIS.push(p);const R_=p.R+6;for(let gy=Math.floor((p.y-R_)/16);gy<=Math.floor((p.y+R_)/16);gy++)for(let gx=Math.floor((p.x-R_)/16);gx<=Math.floor((p.x+R_)/16);gx++){const k=gx+','+gy;if(!PG.has(k))PG.set(k,[]);PG.get(k).push(p)}return p}
+function poiFree(x,y,R){if(TOWNS.some(t=>Math.hypot(x-t.x,y-t.y)<t.R*1.6+R+12))return false;if(estateAt(x,y,R+6))return false;if(POIS.some(p=>Math.hypot(p.x-x,p.y-y)<p.R+R+14))return false;
+  if(ELDERWOODS.some(e=>Math.hypot(e.x-x,e.y-y)<e.R+R+8))return false;for(const[sx,sy]of SHR)if(Math.hypot(sx-x,sy-y)<R+10)return false;
+  const lo=[],c=dunCell(Math.floor(x/DUNC),Math.floor(y/DUNC));if(c&&Math.hypot(c.x-x,c.y-y)<R+8)return false;
+  for(let a=0;a<6.28;a+=.5)for(const r of[0,R*.5,R]){const px=x+Math.cos(a)*r,py=y+Math.sin(a)*r,h=baseH(px,py);if(h<8||h>480)return false;lo.push(h);const rd=roadAt(px,py);if(rd&&rd.d<rd.w/2+2)return false}
+  return Math.max(...lo)-Math.min(...lo)<56}
+function genPOIs(){const set=(p,dx,dy,o)=>p.objs.set(Math.round(p.x+dx)+','+Math.round(p.y+dy),o),pk=(a,s)=>a[Math.floor(hash(s,3,880)*a.length)];
+  // the Elderwoods: two vast forests of giant trees, an elven village at the heart of each
+  for(const want of[[FOREST,'The Elderwood'],[PINEF,'Silverleaf Grove']]){let best=null;
+    for(let k=0;k<500&&!best;k++){const x=Math.round((hash(k,want[0],881)-.5)*3000),y=Math.round((hash(want[0],k,882)-.5)*3000),h=baseH(x,y);if(h<14||h>300)continue;if(biomeTile(x,y,h,0)!==want[0])continue;
+      if(TOWNS.some(t=>Math.hypot(x-t.x,y-t.y)<t.R*1.6+80)||ELDERWOODS.some(e=>Math.hypot(e.x-x,e.y-y)<300))continue;let ok=0;for(let a=0;a<6.28;a+=.4)for(const r of[20,40]){const px=x+Math.cos(a)*r,py=y+Math.sin(a)*r,hh=baseH(px,py);if(hh>8&&hh<360)ok++}if(ok<28)continue;
+      const e={x,y,a:hash(k,1,883)*6.28,gw:10,gd:10,tol:60};if(!estOK(e))continue;best=e}
+    if(!best)continue;const e=best,hs={i:200+ELDERWOODS.length,name:want[1],x:e.x,y:e.y,R:10,PR:0,capital:false,bld:[],homes:[],B:{},gates:[],wall:[],homestead:true,elves:true,active:false,bt:want[0]};
+    addEstate(e,hs,'elves');hs.est=e;e.fam=want[1];
+    for(const[u,v,w,d]of[[-5,-2,5,4],[5,-2,5,4],[0,5,7,5]]){const b=estBuilding(e,u,v,w,d,'elfhome',{name:'Elven '+(w>6?'Hall':'Dwelling'),wall:'#8a7a52',roof:'#3c8a5a',chim:false,timber:false,stone:false,shut:'#c9a24a',roofT:'hip',porch:true});hs.homes.push(b)}
+    hs.bld=hs.homes.slice();ELDERWOODS.push({x:e.x,y:e.y,R:58,hs,name:want[1],bt:want[0]});HOMESTEADS.push(hs)}
+  // camps, villages, graveyards, ruins and stone circles scattered through the wilds
+  const kinds={goblincamp:[[FOREST,HILL,GRASS,PINEF,ROCK],8],goblinvillage:[[HILL,FOREST,ROCK],13],graveyard:[[GRASS,FOREST,MARSH,TUNDRA,HILL,PINEF],7],ruins:[[GRASS,DESERT,MARSH,ASH,HILL,TUNDRA,FOREST],8],stones:[[GRASS,HILL,TUNDRA,TAIGA],6],banditcamp:[[GRASS,DESERT,FOREST,HILL],7]};
+  const order=['goblincamp','graveyard','ruins','goblincamp','stones','banditcamp','ruins','goblinvillage','graveyard','goblincamp'];let n=0;
+  for(let cj=-HW+120;cj<HW-120;cj+=170)for(let ci=-HW+120;ci<HW-120;ci+=170){if(hash(ci,cj,884)<.32)continue;
+    for(let tr=0;tr<6;tr++){const x=Math.round(ci+hash(ci,cj,885+tr)*150),y=Math.round(cj+hash(cj,ci,895+tr)*150),h=baseH(x,y),bt=biomeTile(x,y,h,0),type=order[(Math.floor(hash(ci,cj,905)*order.length)+tr)%order.length],[ok,R]=kinds[type];
+      if(!ok.includes(bt)||!poiFree(x,y,R))continue;const p=addPOI({type,x,y,R,h0:h,bt,ga:hash(ci,cj,906)*6.283,name:''});p.name=(POIN[type]?pk(POIN[type],ci*7+cj)+' ':'')+POILABEL[type];if(type==='ruins')p.name='Ruins of '+pk(POIN.ruins,ci*7+cj);if(type==='stones')p.name='The '+pk(POIN.stones,ci*7+cj)+' Stones';
+      stampPOI(p,set);n++;break}}
+  // wayshrines beside the highways
+  for(const R of ROADS){if(!R.major)continue;for(let s=70;s<R.len-70;s+=150){let i=0;while(i<R.cum.length-2&&R.cum[i+1]<s)i++;const[a,b]=R.pts[i],[c,d]=R.pts[i+1],L=Math.hypot(c-a,d-b)||1,t=(s-R.cum[i])/L,x=a+(c-a)*t,y=b+(d-b)*t,nx=-(d-b)/L,ny=(c-a)/L,off=R.w/2+2.2,px=x+nx*off,py=y+ny*off;
+    if(TOWNS.some(T_=>Math.hypot(px-T_.x,py-T_.y)<T_.R*1.4)||baseH(px,py)<6||POIS.some(p=>Math.hypot(p.x-px,p.y-py)<p.R+6))continue;const bt=roadAt(px,py);if(bt&&bt.d<bt.w/2+.6)continue;
+    const p=addPOI({type:'wshrine',x:Math.round(px),y:Math.round(py),R:1.5,h0:R.h[i],name:'Wayshrine'});p.objs.set(p.x+','+p.y,O.wshrine)}}}
+function stampPOI(p,set){const r=k=>hash(p.x,p.y,920+k),t=p.type;
+  if(t==='goblincamp'||t==='goblinvillage'){const big=t==='goblinvillage',rr=big?11:6.5;p.ring=rr;
+    for(let a=0;a<6.283;a+=.5/rr){if(angDiff(a,p.ga)<(big?.22:.33))continue;set(p,Math.cos(a)*rr,Math.sin(a)*rr,O.palisade)}
+    const nt=big?6:3;for(let i=0;i<nt;i++){const a=p.ga+Math.PI+(i-(nt-1)/2)*(big?.9:1.15),d=big?7:3.8;set(p,Math.cos(a)*d,Math.sin(a)*d,big&&i%2?O.hut:O.tent)}
+    set(p,Math.cos(p.ga)*1.5,Math.sin(p.ga)*1.5,O.campfire);if(big)set(p,Math.cos(p.ga+2)*3.5,Math.sin(p.ga+2)*3.5,O.campfire);
+    for(const s of[-1,1])set(p,Math.cos(p.ga+s*(big?.3:.45))*(rr-1.2),Math.sin(p.ga+s*(big?.3:.45))*(rr-1.2),O.totem);
+    set(p,-Math.cos(p.ga)*1.2,-Math.sin(p.ga)*1.2,O.chest);if(big)set(p,-Math.cos(p.ga)*4.5,-Math.sin(p.ga)*4.5,O.chest);
+    for(let i=0;i<(big?6:3);i++){const a=r(i)*6.28,d=1.5+r(i+10)*(rr-3);const k=Math.round(p.x+Math.cos(a)*d)+','+Math.round(p.y+Math.sin(a)*d);if(!p.objs.has(k))p.objs.set(k,i%2?O.crate:O.bones)}
+    p.mobs=big?[['goblin',9],['goblin',1,1]]:[['goblin',4+Math.floor(r(30)*3)]]}
+  else if(t==='banditcamp'){for(let i=0;i<3;i++){const a=p.ga+Math.PI+(i-1)*1.2;set(p,Math.cos(a)*3.6,Math.sin(a)*3.6,O.tent)}set(p,0,0,O.campfire);set(p,-Math.cos(p.ga)*1.8,-Math.sin(p.ga)*1.8,O.chest);
+    for(let i=0;i<5;i++){const a=r(i)*6.28,d=2+r(i+10)*3.5,k=Math.round(p.x+Math.cos(a)*d)+','+Math.round(p.y+Math.sin(a)*d);if(!p.objs.has(k))p.objs.set(k,[O.crate,O.barrel,O.woodpile][i%3])}p.mobs=[['bandit',4+Math.floor(r(31)*2)]]}
+  else if(t==='graveyard'){for(let u=-6;u<=6;u++)for(const v of[-6,6]){if(v===-6&&Math.abs(u)<=1)continue;set(p,u,v,O.fence);set(p,v,u,O.fence)}
+    for(const u of[-4,-2,2,4])for(const v of[-3,-1,1,3])if(r(u*9+v)>.18)set(p,u,v,O.tomb);set(p,-4,4.6,O.deadtree);set(p,4,4.6,O.tomb);set(p,0,4,O.chest);p.mobs=[['skeleton',3],['ghost',2,0,1]]}
+  else if(t==='ruins'){for(let u=-5;u<=5;u++)for(const v of[-5,5]){if(r(u*3+v)<.3||(v===-5&&Math.abs(u)<=1))continue;set(p,u,v,O.ruinwall);if(r(u*5-v)>.4)set(p,v,u,O.ruinwall)}
+    for(const[u,v]of[[-3,-3],[3,-3],[-3,3],[3,3],[0,-3],[0,3]])if(r(u*7+v*3)>.15)set(p,u,v,O.pillar);set(p,0,0,O.chest);for(let i=0;i<6;i++){const k=Math.round(p.x+(r(i+40)-.5)*12)+','+Math.round(p.y+(r(i+50)-.5)*12);if(!p.objs.has(k))p.objs.set(k,O.stone)}
+    p.mobs=p.bt===DESERT?[['scorpion',2],['bandit',2]]:p.bt===MARSH?[['spider',2],['skeleton',2]]:[['skeleton',3],['bandit',1]]}
+  else if(t==='stones'){for(let i=0;i<8;i++){const a=i/8*6.283+p.ga;set(p,Math.cos(a)*4.2,Math.sin(a)*4.2,O.menhir)}set(p,0,0,O.altar);p.mobs=[]}}
+// homesteads, elves and places of interest come last: they need the climate map, which is defined above
+const NB0=BLD.length;genHomesteads();genPOIs();
+for(const b of BLD.slice(NB0)){const c=Math.cos(b.a),s=Math.sin(b.a);b.door=[b.x+s*(b.d/2),b.y-c*(b.d/2)];b.front=[b.x+s*(b.d/2+1.1),b.y-c*(b.d/2+1.1)];b.r=Math.hypot(b.w,b.d)/2;
   for(let gy=Math.floor((b.y-b.r)/8);gy<=Math.floor((b.y+b.r)/8);gy++)for(let gx=Math.floor((b.x-b.r)/8);gx<=Math.floor((b.x+b.r)/8);gx++){const k=gx+','+gy;if(!BG.has(k))BG.set(k,[]);BG.get(k).push(b)}}
 
 // ---------- terrain textures ----------
@@ -654,6 +717,7 @@ function person(o,f){const h=o.kid?4:0;return outline(mk(16,16,g=>{const sk=o.sk
   R(g,o.shirtD||o.shirt,3,7+h/2+(f?1:0),1,3);R(g,o.shirtD||o.shirt,12,7+h/2+(f?0:1),1,3);R(g,sk,3,10+h/2+(f?1:0),1,1);R(g,sk,12,10+h/2+(f?0:1),1,1);
   R(g,sk,4,2+y0,8,5-h/4);R(g,DK,6,4+y0,1,1);R(g,DK,9,4+y0,1,1);
   if(o.hair){R(g,o.hair,4,1+y0,8,2);R(g,o.hair,3,2+y0,1,o.long?6:3);R(g,o.hair,12,2+y0,1,o.long?6:3)}
+  if(o.elf){R(g,sk,2,3+y0,1,2);R(g,sk,13,3+y0,1,2);R(g,sk,1,2+y0,1,1);R(g,sk,14,2+y0,1,1)}
   if(o.beard)R(g,o.beard,5,5+y0,6,2);
   if(o.hat){R(g,o.hat,3,1+y0,10,1);R(g,o.hat,5,0+y0,6,1)}
   if(o.helm){R(g,o.helm,4,0+y0,8,3);R(g,o.helm,3,2+y0,1,3);R(g,o.helm,12,2+y0,1,3);R(g,'#c9d0d8',5,0+y0,3,1);R(g,o.helm,7,3+y0,2,2)}
@@ -747,6 +811,10 @@ S.wagon=outline(mk(30,24,g=>{R(g,'#f1e6c8',4,1,22,11);R(g,'#d8ccb0',4,1,22,2);fo
   for(const cx of[7,23]){disc(g,cx,19.5,4,'#4a2c17');disc(g,cx,19.5,2.5,'#8a5a34');R(g,'#3a2210',cx,19,1,1)}R(g,'#5a361b',0,14,3,2)}));
 S.horse=[0,1].map(f=>outline(mk(24,18,g=>{const c='#7a4a2a',d='#5a3018';R(g,c,4,6,14,7);R(g,c,16,2,4,7);R(g,c,18,1,5,4);R(g,d,19,0,2,2);R(g,'#1a1a1a',21,2,1,1);R(g,d,15,2,2,6);R(g,d,2,6,3,6);
   const L=f?[[5,13,0],[8,13,1],[14,13,1],[16,13,0]]:[[5,13,1],[8,13,0],[14,13,0],[16,13,1]];for(const[x,y,o]of L)R(g,o?d:c,x+(o?1:0),y,2,5);R(g,'#3a2210',5,8,13,1)})));
+
+// fairies of the Elderwood
+S.fairy=[['#ffb8f0','#ff6ad0'],['#b8f0ff','#5ad0ff'],['#fff3b0','#ffd34d']].map(([a,b])=>[0,1].map(f=>mk(9,7,g=>{R(g,'#ffffff',4,3,1,2);R(g,b,3,3,3,1);R(g,a,f?0:1,f?0:1,3,2);R(g,a,f?6:5,f?0:1,3,2);R(g,'#ffffff',4,2,1,1)})));
+S.flame=[0,1].map(f=>mk(8,10,g=>{R(g,'#ff6a1a',1,4,6,6);R(g,'#ffb13a',2,2+f,4,7-f);R(g,'#fff0a0',3,5,2,4);R(g,'#ff8a2a',f?5:2,0,1,3)}));
 // ---------- items ----------
 // t: type (weapon/shield/head/body/hands/feet/ring/amulet/use/loot). tier: how far from town it starts to drop (0-5).
 const ITEMS={
@@ -842,7 +910,7 @@ function mkPlayer(name,idx){return{isHero:true,idx,name:name||(idx?'Player 2':'A
 // switch which player the rest of the code is talking about
 function usePlayer(p){if(P){P._in=INSIDE;P._int=INT;saveUI(P)}P=p;INSIDE=p._in||null;INT=p._int||null;if(p.cam)CAM=p.cam;loadUI(p)}
 function syncPlayer(){if(P){P._in=INSIDE;P._int=INT}}
-function fresh(name){Q={stage:0,kills:0,skel:0,shrines:new Set(),chests:new Set(),conts:{},dead:{},dun:{}};time=60;enemies=[];pickups=[];EXP=new Uint8Array(EXW*EXW);
+function fresh(name){Q={stage:0,kills:0,skel:0,shrines:new Set(),chests:new Set(),conts:{},dead:{},dun:{},found:{},poi:{},fairy:{},altar:{}};time=60;enemies=[];pickups=[];EXP=new Uint8Array(EXW*EXW);
   P=null;INSIDE=null;INT=null;PLAYERS=[mkPlayer(name,0)];PLAYERS[0].cam=CAM1;usePlayer(PLAYERS[0]);
   for(let y=-90;y<=90;y+=8)for(let x=-90;x<=90;x+=8)markExp(CAPITAL.x+x,CAPITAL.y+y);recalc();P.hp=P.maxHp;P.sta=P.maxSta}
 function addPlayer2(){if(PLAYERS.length>1)return PLAYERS[1];const me=P,p=mkPlayer('Player 2',1);p.cam=Object.assign({},CAM_DEF);p.useKb=false;const p1=PLAYERS[0];
@@ -1123,7 +1191,7 @@ const GEARCH={slime:.02,redslime:.04,skeleton:.08,ghost:.05,wolf:.03,goblin:.12,
 const ECOL={skeleton:'#ebe7d6',ghost:'#cdbdff',redslime:'#e8584f',slime:'#5fd068',wolf:'#7d7f88',goblin:'#6fae4a',spider:'#3a3038',bear:'#6a4a2a',troll:'#8a9a8a',scorpion:'#b8783a',bandit:'#5a4a3a',draugr:'#8a9a8a'};
 // loot quality follows power level: tier 0-4, legendaries above PL 75
 const plTier=pl=>clamp(Math.floor(pl/20),0,4),plLeg=pl=>pl>75&&Math.random()<(pl-70)/120;
-function killEnemy(e,byGuard){burst(e.x,e.y-6,ECOL[e.k],14,70);sfx(320,.12,'square',.04,.4);if(byGuard)return;
+function killEnemy(e,byGuard){burst(e.x,e.y-6,ECOL[e.k],14,70);sfx(320,.12,'square',.04,.4);if(e.poi!=null)poiKilled(e);if(byGuard)return;
   gainXp(e.xp);P.stats.kills[e.k]=(P.stats.kills[e.k]||0)+1;
   if(e.k==='slime'||e.k==='redslime'){if(Q.stage===1)Q.kills++}if((e.k==='skeleton'||e.k==='draugr')&&Q.stage===3)Q.skel++;
   if(Math.random()<.7)pickups.push({k:'coin',x:e.x,y:e.y,v:(1+Math.floor(Math.random()*(2+e.pl/4)))*(e.boss?6:1),t:0,vy:-60,z:0,realm:e.realm});
@@ -1174,7 +1242,8 @@ const LINES2={'Brann the Smith':['Mind the forge, it bites.'],'Hilda the Armorer
 // ---------- collision: each realm (the open world, a building, a dungeon) has its own ----------
 function outdoorSolid(px,py){const tx=Math.floor(px/16),ty=Math.floor(py/16);if(Math.abs(tx)>=HW-3||Math.abs(ty)>=HW-3)return true;const t=tT(tx,ty);if(SOLIDT.has(t))return true;
   if(t===WATER||t===DEEP){const r=roadAt(px/16,py/16);if(r&&bridgeOf(r)){if(r.d<r.w/2+.15)return false;if(r.d<r.w/2+.8)return true}}
-  const o=tO(tx,ty);if(o&&SOLIDO.has(o)){const r=o===O.hedge||o===O.fence?8:o===O.fountain?11:o===O.stall||o===O.cart?8:o===O.dungeon?10:TRUNK.has(o)?3:o===O.boulder||o===O.lavarock?6:5;if(Math.abs(px-(tx*16+8))<r&&Math.abs(py-(ty*16+11))<r*.85)return true}
+  const o=tO(tx,ty);if(o&&SOLIDO.has(o)){const r=o===O.hedge||o===O.fence||o===O.palisade||o===O.ruinwall?8:o===O.tent?9:o===O.hut?11:o===O.gtree?0:o===O.altar?7:o===O.totem||o===O.pillar||o===O.menhir||o===O.wshrine?5:o===O.tomb?5:o===O.campfire?5:o===O.fountain?11:o===O.stall||o===O.cart?8:o===O.dungeon?10:TRUNK.has(o)?3:o===O.boulder||o===O.lavarock?6:5;if(Math.abs(px-(tx*16+8))<r&&Math.abs(py-(ty*16+11))<r*.85)return true}
+  if(t===FOREST||t===PINEF)for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++)if(tO(tx+i,ty+j)===O.gtree&&Math.hypot(px-((tx+i)*16+8),py-((ty+j)*16+10))<17)return true;
   if(t===HOUSE||nearAnyTown(tx,ty,1.5)){if(bldAt(px/16,py/16,.05))return true}
   // deep water: only heroes swim; everyone else keeps to the shallows and the bridges
   if(t===DEEP||(t===WATER&&hAt(px,py)<SEA-7))return!(MOVER&&MOVER.isHero);return false}
@@ -1214,7 +1283,7 @@ function nearestPlayer(x,y,realm='w',pred){let best=null,bd=1e9;for(const p of P
 
 // ---------- town navigation (one grid per town) ----------
 function navOf(t){if(!t.nav){t.NX0=Math.floor(t.x-t.R-40);t.NY0=Math.floor(t.y-t.R-40);t.NW=t.NH=Math.ceil(t.R*2+80);const N=t.nav=new Uint8Array(t.NW*t.NH);
-  for(let y=0;y<t.NH;y++)for(let x=0;x<t.NW;x++){const px=(x+t.NX0)*16+8,py=(y+t.NY0)*16+8;N[y*t.NW+x]=outdoorSolid(px,py)||outdoorSolid(px-4,py)||outdoorSolid(px+4,py)?0:1}
+  for(let y=0;y<t.NH;y++)for(let x=0;x<t.NW;x++){const px=(x+t.NX0)*16+8,py=(y+t.NY0)*16+8;N[y*t.NW+x]=outdoorSolid(px,py)||outdoorSolid(px-4,py)||outdoorSolid(px+4,py)||outdoorSolid(px,py-4)||outdoorSolid(px,py+4)?0:1}
   t.streetT=[];t.farmT=[];for(let y=0;y<t.NH;y++)for(let x=0;x<t.NW;x++){if(!N[y*t.NW+x])continue;const X=x+t.NX0,Y=y+t.NY0,tt=tT(X,Y);if((tt===STREET||tt===PLAZA)&&inWalls(X,Y,t))t.streetT.push([X,Y]);else if(tt===FARM)t.farmT.push([X,Y])}}return t.nav}
 const walkT=(t,x,y)=>{const N=navOf(t);return x>=t.NX0&&y>=t.NY0&&x<t.NX0+t.NW&&y<t.NY0+t.NH&&N[(y-t.NY0)*t.NW+x-t.NX0]===1};
 function findPath(t,ax,ay,bx,by){navOf(t);if(!walkT(t,bx,by)||!walkT(t,ax,ay))return null;const NW=t.NW,idx=(x,y)=>(y-t.NY0)*NW+x-t.NX0,prev=new Int32Array(t.NW*t.NH).fill(-1),q=[idx(ax,ay)];prev[q[0]]=q[0];
@@ -1268,16 +1337,40 @@ const CAPG=['Sergeant Corwin','Guard Edda','Guard Rolf','Guard Mira','Guard Bast
 const NPCPL={guard:75,shop:14,villager:5,elder:8,kid:1,settler:7};
 let NPCS=[],ANIMALS=[],ELDER=null;
 const sleepRot=c=>mk(c.height,c.width,g=>{g.translate(c.height,0);g.rotate(Math.PI/2);g.drawImage(c,0,0)});
-function initTowns(){NPCS=[];ANIMALS=[];for(const t of TOWNS)initTown(t);for(const h of HOMESTEADS)initHomestead(h);initRoads()}
+function initTowns(){NPCS=[];ANIMALS=[];FAIRIES=[];for(const t of TOWNS)initTown(t);for(const h of HOMESTEADS)initHomestead(h);initRoads()}
 const SETTLERS=[['the Homesteader',{shirt:'#7a6a3a',hat:'#8a6a3a',beard:'#5a3a2a'}],['the Woodcutter',{shirt:'#a83a2a',hair:'#3a2414',beard:'#3a2414'}],['the Trapper',{shirt:'#6a5a3a',hood:'#5a4a2a'}],
   ['the Herb-wife',{shirt:'#5a7a3a',dress:1,hair:'#bdb6aa',long:1}],['the Shepherd',{shirt:'#c9c2b0',hat:'#6a5a3a',staff:1}],['the Beekeeper',{shirt:'#e6c65a',dress:1,hair:'#7a3f1d',long:1,apron:'#f1e6c8'}]];
 const SETTLER_SAY=['Not many folk come out this far. Rest a while if you like.','The wolves have been bold this season. Keep your blade close.','I left the town for the quiet. The quiet suits me.','Mind the garden, traveller, those beans took me all spring.',
   'There is a cave in the hills that whistles at night. I keep well away from it.','If you are headed to town, the road is that way. Watch the ditches after dark.'];
-function initHomestead(h){const r=rng(h.i*977+5),n0=1+(r()<.6?1:0);
+function initHomestead(h){if(h.elves)return initElves(h);const r=rng(h.i*977+5),n0=1+(r()<.6?1:0);
   for(let k=0;k<n0;k++){const S_=SETTLERS[Math.floor(r()*SETTLERS.length)],spr=[0,1].map(f=>person(S_[1],f)),pl=NPCPL.settler,home=h.homes[0];
     const n={name:FIRST[Math.floor(r()*FIRST.length)]+' '+S_[0],role:'settler',spr,sprZ:sleepRot(spr[0]),speed:30,path:[],act:null,inside:false,wt:0,t:Math.random()*9,mv:false,cd:0,pl,hp:Math.round(4+pl*1.4),dmg:Math.round((1+pl*.11)*1.1),flip:0,i:NPCS.length,town:h,realm:'w',home,say:SETTLER_SAY};
     n.maxHp=n.hp;[n.x,n.y]=[home.front[0]*16+(k?10:-10),home.front[1]*16];NPCS.push(n);if(Q.dead[h.i+':'+n.name]>=dayNum()){n.dead=true;n.inside=true}}
   if(r()<.6)ANIMALS.push({kind:r()<.5?'dog':'chicken',town:h,x:h.homes[0].front[0]*16+20,y:h.homes[0].front[1]*16+8,t:Math.random()*9,tx:0,ty:0,wt:0,mv:false,flip:0,realm:'w',name:pick(['Bramble','Moss','Rook','Fern','Tuck'])})}
+// the elves of the Elderwood, their merchant, and the fairies that dance among the giant trees
+const ELFNAMES=['Aelindra','Thalion','Sylwen','Faelar','Ilyrien','Caelith','Merethyl','Varis','Lirael','Elandor'];
+const ELF_SAY=['These trees were old when your towns were mud huts, traveller.','The fairies are shy. Approach slowly, and they may bless you.','Walk softly beneath the great trees. They are listening.','Goblins have been bold in the hills. Our rangers keep them from the grove.','The stones in the north still sing on moonlit nights. Have you heard them?'];
+let FAIRIES=[];
+function initElves(h){const r=rng(h.i*31+9),looks=[{shirt:'#3c8a5a',hair:'#f1e6c8',long:1,elf:1,dress:1},{shirt:'#5a7a3a',hair:'#e6c65a',elf:1,hood:'#3c6a3a'},{shirt:'#3a6a8a',hair:'#dcd7cc',long:1,elf:1},{shirt:'#6a5a8a',hair:'#f1e6c8',elf:1,dress:1,long:1}];
+  const mkE=(name,look,extra)=>{const spr=[0,1].map(f=>person(look,f)),pl=30,home=h.homes[Math.floor(r()*h.homes.length)];const n={name,role:'settler',spr,sprZ:sleepRot(spr[0]),speed:30,path:[],act:null,inside:false,wt:0,t:Math.random()*9,mv:false,cd:0,pl,hp:Math.round(4+pl*1.4),dmg:Math.round((1+pl*.11)*1.1),flip:0,i:NPCS.length,town:h,realm:'w',home,say:ELF_SAY,...extra};
+    n.maxHp=n.hp;[n.x,n.y]=[home.front[0]*16,home.front[1]*16+8];NPCS.push(n);if(Q.dead[h.i+':'+name]>=dayNum()){n.dead=true;n.inside=true}return n};
+  for(let k=0;k<4;k++)mkE(ELFNAMES[Math.floor(r()*ELFNAMES.length)]+' of '+h.name.replace('The ',''),looks[k%4]);
+  const key='elf'+h.i;SHOPS[key]={name:'Elven Wares',stock:['gpotion','potion','charm','ward','vigor','cring','amethyst','sapphire','mightel','stonel'].filter(id=>ITEMS[id]),rate:.55,likes:['loot','ring','amulet']};
+  mkE(ELFNAMES[Math.floor(r()*ELFNAMES.length)]+' the Merchant',{shirt:'#c9a24a',hair:'#f1e6c8',long:1,elf:1,dress:1},{shopKey:key,say:['Elven-made, every piece. Have a look.']});
+  const ew=ELDERWOODS.find(e=>e.hs===h);if(ew)for(let k=0;k<16;k++){const a=r()*6.283,d=8+r()*(ew.R*.55);FAIRIES.push({i:FAIRIES.length,ax:(ew.x+Math.cos(a)*d)*16,ay:(ew.y+Math.sin(a)*d)*16,ph:r()*9,c:k%3,ew,x:0,y:0,z:12})}}
+function updateFairies(dt){for(const f of FAIRIES){if(!f.ew.hs.active)continue;f.ph+=dt;f.x=f.ax+Math.sin(f.ph*.7)*40+Math.sin(f.ph*1.9)*10;f.y=f.ay+Math.cos(f.ph*.5)*40;f.z=14+Math.sin(f.ph*2.3)*5}}
+// discovering places, the monsters that hold them, and clearing them out
+const poiCleared=p=>Q.poi[p.id]!=null&&dayNum()-Q.poi[p.id]<3;
+let poiT=0;
+function updatePOIs(dt){poiT-=dt;if(poiT>0)return;poiT=.5;
+  for(const q of PLAYERS){if(q.realm!=='w'||q.deadT>0)continue;const tx=q.x/16,ty=q.y/16;
+    for(const p of POIS){const d=Math.hypot(tx-p.x,ty-p.y);if(d>60)continue;
+      if(d<p.R+6&&!Q.found[p.id]){Q.found[p.id]=1;withP(q,()=>{toast((PLAYERS.length>1?q.name+': ':'')+'Discovered: '+p.name,2.6);gainXp(8);arp([523,659,784],.07)})}
+      if(p.mobs&&p.mobs.length&&!poiCleared(p)&&d<30&&!p.spawned){p.spawned=true;p.left=0;const pl=clamp(regionPL(Math.round(p.x),Math.round(p.y),p.bt)+(p.type==='goblinvillage'?8:4),1,100),night=darkness()>.4;
+        for(const[k,n,boss,nightOnly]of p.mobs){if(nightOnly&&!night)continue;for(let i=0;i<n;i++){for(let tr=0;tr<12;tr++){const a=Math.random()*6.283,rr=(1+Math.random()*(p.R-2.5))*16,x=p.x*16+8+Math.cos(a)*rr,y=p.y*16+8+Math.sin(a)*rr;
+          if(outdoorSolid(x,y))continue;const e=mkEnemy(k,x,y,pl+(boss?6:0),'w',boss?1:0);e.poi=p.id;e.hx=p.x*16;e.hy=p.y*16;e.leash=(p.R+4)*16;if(k==='ghost')e.fade=night?1:0;enemies.push(e);p.left++;break}}}}}}
+  for(const p of POIS)if(p.spawned&&!enemies.some(e=>e.poi===p.id&&!e.dead)){p.spawned=false}}
+function poiKilled(e){const p=POIS[e.poi];if(!p)return;p.left--;if(p.left<=0&&!poiCleared(p)){Q.poi[p.id]=dayNum();toast(p.name+' cleared! Its treasure is yours for the taking.',2.8);gainXp(25+(p.type==='goblinvillage'?40:0));arp([392,523,659,784,1047],.08);save()}}
 // settlers potter about their own clearing by day and bar the door at night
 function updateSettler(n,dt,dP,wp,dW){const e=n.home.est,h=hour(),night=h>=21||h<6.5,fx=n.home.front[0]*16,fy=n.home.front[1]*16;
   const inUse=PLAYERS.some(p=>p._in===n.home||(p===P&&INSIDE===n.home));
@@ -1369,7 +1462,7 @@ function updateTravNPC(n,dt,dP,wp,dW){const G=n.grp;n.inside=false;
   const[tx,ty]=slotPos(G,n),d=Math.hypot(tx-n.x,ty-n.y),[,,a]=roadPt(G.R,G.s);
   if(d>6&&(n.back||d>30)){n.back=true;const s=70*dt;n.x+=(tx-n.x)/d*Math.min(s,d);n.y+=(ty-n.y)/d*Math.min(s,d);n.mv=true;n.flip=tx<n.x?1:0}
   else{n.back=false;n.x=tx;n.y=ty;n.mv=!!G.moving;n.flip=Math.cos(a)*G.dir<0?1:0}}
-function updateNPCs(dt){const near=Math.hypot;updateGroups(dt);
+function updateNPCs(dt){const near=Math.hypot;updateGroups(dt);updatePOIs(dt);updateFairies(dt);
   if(dayNum()!==Q.lastDay){Q.lastDay=dayNum();for(const n of NPCS)if(n.dead&&!(Q.dead[n.town.i+':'+n.name]>=dayNum())){n.dead=false;n.hp=n.maxHp;n.inside=true;n.act=null;delete Q.dead[n.town.i+':'+n.name]}}
   for(const t of TOWNS)t.active=townActive(t);for(const h of HOMESTEADS)h.active=townActive(h);
   for(const n of NPCS){if(!n.town.active){n.act=null;continue}n.t+=dt;n.mv=false;n.flash=Math.max(0,(n.flash||0)-dt);n.cd=Math.max(0,n.cd-dt);n.scared=Math.max(0,(n.scared||0)-dt);if(n.dead)continue;
@@ -1590,6 +1683,7 @@ function exitDungeon(){const d=INSIDE.d;INSIDE=null;INT=null;P.realm='w';P.x=d.x
 function npcTalk(n){const N=n.name;
   if(n.role==='patrol'){if(P.wanted>0)return talk(N,'You are wanted for your crimes. The bounty is '+Math.ceil(P.wanted)+' gold. Pay it, or answer to the wardens.',[['Pay the bounty ('+Math.ceil(P.wanted)+'g)',payBounty],['Resist',()=>{n.hostile=true}]]);
     const G=n.grp,t=destOf(G);return talk(N,pick(G.kind==='caravan'?['We see this wagon safely to '+t.name+', or we do not get paid.','Keep your hands off the cargo, friend.','Bandits love a slow wagon. They do not love us.']:['We walk the road to '+t.name+'. Bandits think twice when they see us coming.','Roads are safer with wardens on them. Mind the woods after dark.','The lamps along the highway keep the worst of the night at bay.']),[['Carry on']])}
+  if(n.shopKey&&!n.scared)return talk(N,pick(n.say||['Have a look.']),[['Trade',()=>openPanel('buy',n.shopKey)],['Any news?',()=>talk(N,pick(ELF_SAY),[['Thanks']])],['Farewell']]);
   if(n.role==='trader'){const G=n.grp;if(G.state==='trade')return talk(N,'Wares from every corner of the island! I am camped outside '+(G.at?G.at.name:'town')+' a while longer, then back on the road.',[['Trade',()=>openPanel('buy',G.shop)],['Any news?',()=>talk(N,pick(RUMORS),[['Thanks']])],['Farewell']]);
     return talk(N,'Cannot stop now, we are bound for '+destOf(G).name+'. Find my wagon by the gates there and I will show you my wares.',[['Safe travels']])}
   if(n.role==='guard'){if(P.wanted>0)return talk(N,'You\'re wanted for crimes against '+n.town.name+'. The bounty is '+Math.ceil(P.wanted)+' gold. Pay up, or face the consequences.',[['Pay the bounty ('+Math.ceil(P.wanted)+'g)',payBounty],['Resist',()=>{n.hostile=true;n.alert=1}]]);return talk(N,pick(darkness()>.3?GNIGHT:GLINES),[['Carry on']])}
@@ -1610,11 +1704,16 @@ function nearInteract(){
     for(const c of INT.conts){const d=Math.hypot(c.x-P.x,c.y-P.y);if(d<bd+4){bd=d;best={type:'cont',c,x:c.x,y:c.y,label:c.name}}}return best}
   let best=null,bd=22;for(const n of NPCS){if(n.inside||n.dead||n.onWall||!n.town.active)continue;const d=Math.hypot(n.x-P.x,n.y-P.y);if(d<bd){bd=d;best={type:'npc',n,x:n.x,y:n.y}}}if(best)return best;
   for(const a of ANIMALS){if(!a.town.active)continue;const d=Math.hypot(a.x-P.x,a.y-P.y);if(d<18)return{type:'pet',a,x:a.x,y:a.y,label:'Pet '+a.name}}
+  for(const f of FAIRIES){if(!f.ew.hs.active)continue;if(Math.hypot(f.x-P.x,f.y-P.y)<26)return{type:'fairy',f,x:f.x,y:f.y,label:'Greet the fairy'}}
   {const gx=Math.floor(P.x/128),gy=Math.floor(P.y/128);for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++){const L=BG.get((gx+i)+','+(gy+j));if(L)for(const b of L){const d=Math.hypot(b.door[0]*16-P.x,b.door[1]*16-P.y);if(d<22)return{type:'door',b,x:b.door[0]*16,y:b.door[1]*16,label:'Enter'+(b.name?' '+b.name:'')}}}}
   const tx=Math.floor(P.x/16),ty=Math.floor(P.y/16);for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){const x=tx+dx,y=ty+dy,o=tO(x,y);
     if(o===O.dungeon&&Math.hypot(x*16+8-P.x,y*16+12-P.y)<34){const d=dunCell(Math.floor(x/DUNC),Math.floor(y/DUNC));if(d)return{type:'dungeon',d,x:x*16+8,y:y*16+8,label:'Enter '+d.name}}
-    if(o===O.chest&&!Q.chests.has(ckey(x,y))&&Math.hypot(x*16+8-P.x,y*16+12-P.y)<24)return{type:'chest',x:x*16+8,y:y*16+8,tx:x,ty:y,label:'Open'}}return null}
+    if(o===O.chest&&!Q.chests.has(ckey(x,y))&&Math.hypot(x*16+8-P.x,y*16+12-P.y)<24)return{type:'chest',x:x*16+8,y:y*16+8,tx:x,ty:y,label:'Open'}
+    if((o===O.altar||o===O.wshrine)&&Math.hypot(x*16+8-P.x,y*16+12-P.y)<30)return{type:o===O.altar?'altar':'wshrine',x:x*16+8,y:y*16+8,tx:x,ty:y,label:o===O.altar?'Touch the altar':'Pray at the wayshrine'}}return null}
 function interact(it){if(it.type==='npc')return npcTalk(it.n);if(it.type==='chest')return openChest(it);if(it.type==='door')return enterBuilding(it.b);if(it.type==='exit')return exitBuilding();if(it.type==='dungeon')return enterDungeon(it.d);
+  if(it.type==='fairy'){const f=it.f;if(Q.fairy[f.i]===dayNum())return toast('The fairy twirls around you and giggles. It has already blessed you today.',2);Q.fairy[f.i]=dayNum();P.hp=P.maxHp;P.sta=P.maxSta;gainXp(5);burst(P.x,P.y-10,'#ffb8f0',22,70);arp([784,988,1175,1568],.06);return toast('The fairy sprinkles you with glittering dust. You feel wonderful! (healed)',2.6)}
+  if(it.type==='wshrine'){P.hp=P.maxHp;P.sta=P.maxSta;burst(P.x,P.y-8,'#a8d8ff',14,50);arp([392,523,659],.08);save();return toast('You kneel at the wayshrine. Your wounds close and your spirit lifts. (healed, game saved)',2.6)}
+  if(it.type==='altar'){const p=poiAt(it.tx,it.ty,1);const id=p?p.id:0;if(Q.altar[id]===dayNum())return toast('The stones are silent. Return tomorrow.',2);Q.altar[id]=dayNum();P.buff.atk=2+Math.floor(P.lv/3);P.buff.ta=180;P.buff.def=2+Math.floor(P.lv/4);P.buff.td=180;recalc();burst(P.x,P.y-8,'#7fdcff',26,80);arp([262,392,523,784],.1);return toast('The stones hum with old power. Strength and warding fill you for three minutes.',3)}
   if(it.type==='dchest')return openChest({...it.c,tx:0,ty:0},INT.pl+(it.c.boss?8:0));
   if(it.type==='pet'){const a=it.a;float(a.x,a.y-12,'♥','#ff7a9a');toast(a.kind==='chicken'?'The chicken clucks at you.':'You pet '+a.name+'. '+(a.kind==='dog'?'Tail wags furiously.':'Purrrr.'),1.6);sfx(1100,.08,'triangle',.03,1.3);return}
   if(it.type==='cont'){const c=it.c;c.items=contItems(c);c.watched=watchers().length>0;c.asleep=!c.watched&&residents(INSIDE).length>0;openPanel('loot',null,c)}}
@@ -1631,7 +1730,8 @@ function updateWorld(dt){time+=dt;
     const nt=e.realm==='w'?nearAnyTown(e.x/16,e.y/16,1.25):null;
     if(e.kb>0){e.kb-=dt;move(e,e.kbx*dt,e.kby*dt,e.fly)}
     else{let mx=0,my=0;if(nt){const td=Math.hypot(e.x/16-nt.x,e.y/16-nt.y)||1;mx=(e.x/16-nt.x)/td;my=(e.y/16-nt.y)/td}// monsters shy away from the walls and the guards on them
-      else if(tp&&d<e.aggro*(e.realm!=='w'?1.4:1)&&!(tp.realm==='w'&&nearAnyTown(tp.x/16,tp.y/16,1.05))){mx=(tp.x-e.x)/d;my=(tp.y-e.y)/d}else{e.wt-=dt;if(e.wt<=0){e.wt=1.5+Math.random()*2;const a=Math.random()*Math.PI*2,r=Math.random()<.35?0:1;e.wx=Math.cos(a)*r;e.wy=Math.sin(a)*r}mx=e.wx*.5;my=e.wy*.5}
+      else if(tp&&d<e.aggro*(e.realm!=='w'?1.4:1)&&!(tp.realm==='w'&&nearAnyTown(tp.x/16,tp.y/16,1.05))){mx=(tp.x-e.x)/d;my=(tp.y-e.y)/d}else if(e.hx!=null&&Math.hypot(e.x-e.hx,e.y-e.hy)>e.leash){const dd=Math.hypot(e.x-e.hx,e.y-e.hy);mx=(e.hx-e.x)/dd;my=(e.hy-e.y)/dd}// camp monsters stay near their camp
+      else{e.wt-=dt;if(e.wt<=0){e.wt=1.5+Math.random()*2;const a=Math.random()*Math.PI*2,r=Math.random()<.35?0:1;e.wx=Math.cos(a)*r;e.wy=Math.sin(a)*r}mx=e.wx*.5;my=e.wy*.5}
       let s=e.spd;if(e.k==='slime'||e.k==='redslime')s*=Math.sin(e.t*6)>0?1.5:.15;move(e,mx*s*dt,my*s*dt,e.fly)}
     if(tp&&d<11*e.sc&&e.fade>.5)withP(tp,()=>hurtPlayer(e.dmg,e.x,e.y));
     if(e.realm==='w'&&(!tp||d>40*16||(e.k==='ghost'&&!night&&e.fade<=0)))e.dead=1}
@@ -1797,6 +1897,13 @@ const VT={};const VA=mk(256,64,g=>{let n=0;const tile=(name,fn)=>{const x=(n%16)
   tile('brick',g=>{R(g,'#8a867e',0,0,16,16);for(let y=0;y<16;y+=4){R(g,'#6e6a64',0,y,16,1);for(let x=(y%8?0:4);x<16;x+=8)R(g,'#6e6a64',x,y,1,4)}});
   tile('log',g=>{R(g,'#7a5232',0,0,16,16);R(g,'#c89a5a',5,5,6,6);R(g,'#a07040',6,6,4,4);R(g,'#5a3a22',0,0,16,1)});
   tile('darkleaf',g=>{speck(g,'#2a5a2a',['#356a32','#1f4a20','#3a7a36'],.55,523)});
+  tile('hide',g=>{speck(g,'#a88a5a',['#98784a','#b89a6a','#8a6a3a'],.4,524);for(let x=0;x<16;x+=5)R(g,'#6a4a2a',x,0,1,16)});
+  tile('mud',g=>{speck(g,'#7a6040',['#6a5034','#8a7050','#5a4a30'],.5,525);for(let k=0;k<5;k++)R(g,'#9a8050',Math.floor(hash(k,0,526)*14),Math.floor(hash(k,1,526)*15),3,1)});
+  tile('totem',g=>{R(g,'#7a4a24',0,0,16,16);R(g,'#c83a3a',2,3,4,3);R(g,'#c83a3a',10,3,4,3);R(g,'#1a1a1a',3,4,2,1);R(g,'#1a1a1a',11,4,2,1);R(g,'#f1e6c8',4,10,8,2);for(let x=4;x<12;x+=2)R(g,'#1a1a1a',x,10,1,2);R(g,'#3a8a5a',0,14,16,2)});
+  tile('glowcap',g=>{R(g,'#5ad0e8',0,0,16,16);for(let k=0;k<7;k++)disc(g,1+hash(k,0,527)*14,1+hash(k,1,527)*14,1.4,'#e8fbff');R(g,'#3ab0d0',0,15,16,1)});
+  tile('cliff',g=>{R(g,'#8a8278',0,0,16,16);for(let y=0;y<16;y+=4){R(g,'#6e675e',0,y+3,16,1);for(let x=(y*3)%7;x<16;x+=7)R(g,'#6e675e',x,y,1,3);R(g,'#9a9286',(y*5)%13,y+1,4,1)}});
+  tile('rune',g=>{R(g,'#7fdcff',0,0,16,16);R(g,'#ffffff',7,2,2,12);R(g,'#ffffff',3,7,10,2);R(g,'#bff0ff',2,2,2,2);R(g,'#bff0ff',12,12,2,2)});
+  tile('bone',g=>{R(g,'#e8e0c8',0,0,16,16);for(let k=0;k<6;k++)R(g,'#c8c0a8',Math.floor(hash(k,0,528)*14),Math.floor(hash(k,1,528)*15),3,1)});
 });
 const voxTex=(()=>{const t=new THREE.CanvasTexture(VA);t.magFilter=t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;t.colorSpace=THREE.SRGBColorSpace;t.flipY=false;return t})();
 const SUNDIR={value:new THREE.Vector3(.3,1,.4).normalize()},SUNI={value:.5},AMB={value:.62};
@@ -1854,6 +1961,26 @@ function voxObject(V,X,o,tx,ty,x,y,z,v){const h=k=>hash(tx,ty,700+k),yaw=h(0)*Ma
   if(o===O.cactus){const m=.8+h(1)*.5;V.box(x,y,z-2,9,9,40*m,yaw,'cactus','cactus',[1,1,1],24);for(const s of[-1,1])if(h(2+s)<.75){const a=yaw+(s>0?0:Math.PI),zz=z+(14+h(5+s)*10)*m;V.box(x+Math.cos(a)*8,y+Math.sin(a)*8,zz,10,6,6,a,'cactus','cactus',[1,1,1],24);V.box(x+Math.cos(a)*12,y+Math.sin(a)*12,zz,6,6,16*m,a,'cactus','cactus',[1,1,1],24)}return}
   if(o===O.bush){const s=14+h(1)*10,lf=h(2)<.4?'berry':'leaf2';V.box(x,y,z-1,s,s,s*.7,yaw,lf,lf,[1,1,1],32);V.box(x+(h(3)-.5)*8,y+(h(4)-.5)*8,z+s*.4,s*.7,s*.7,s*.5,yaw+.7,lf,lf,[1.05,1.05,1],32);return}
   if(o===O.boulder||o===O.lavarock){const t=o===O.lavarock?'lava':h(5)<.35?'mossy':'stone',s=16+h(1)*14;V.box(x,y,z-3,s,s*.85,s*.7,yaw,t,t,[1,1,1],28);V.box(x+(h(2)-.5)*s*.5,y+(h(3)-.5)*s*.5,z+s*.45,s*.65,s*.6,s*.4,yaw+.8,t,t,[1.05,1.05,1.05],28);if(h(4)<.5)V.box(x+s*.5*Math.cos(yaw),y+s*.5*Math.sin(yaw),z-2,s*.45,s*.4,s*.35,yaw+.3,t,t,[.95,.95,.95],28);return}
+  if(o===O.palisade){for(let k=0;k<3;k++){const ox=(k-1)*5,hh=24+h(k)*8;V.box(tx*16+8+ox,ty*16+8+(h(k+3)-.5)*4,z-2,5,5,hh,0,'bark','log',[1,1,1],16);V.box(tx*16+8+ox,ty*16+8+(h(k+3)-.5)*4,z-2+hh,3,3,4,0,'bark','bark',[1,1,1],16)}return}
+  if(o===O.tent){const ts=['hide','hide','mud'][v%3];for(let i=0;i<5;i++){const s=26-i*5;V.box(x,y,z-1+i*5,s,s,5,yaw,ts,ts,[1-i*.03,1-i*.03,1-i*.03],16)}V.box(x+Math.cos(yaw)*12,y+Math.sin(yaw)*12,z-1,4,8,10,yaw,'post','post',[.5,.5,.5],0);V.box(x,y,z+24,3,3,8,0,'post','post',[1,1,1],0);return}
+  if(o===O.hut){for(const a of[0,Math.PI/4])V.box(x,y,z-1,26,26,15,yaw+a,'mud','mud',[1,1,1],16);for(let i=0;i<5;i++){const s=34-i*7;V.box(x,y,z+13+i*5,s,s,5,yaw+i*.2,'hay','hay',[.85,.8,.7],16)}V.box(x+Math.cos(yaw)*13,y+Math.sin(yaw)*13,z-1,5,10,12,yaw,'post','post',[.4,.4,.4],0);return}
+  if(o===O.campfire){for(let i=0;i<7;i++){const a=i/7*6.283;V.box(x+Math.cos(a)*7,y+Math.sin(a)*7,z-1,4,4,3,a,'stone','stone',[1,1,1],0)}V.box(x,y,z,12,3,3,yaw,'bark','log',[1,1,1],0);V.box(x,y,z,3,12,3,yaw,'bark','log',[1,1,1],0);V.box(x,y,z+2,6,6,6,yaw+.7,'glow','glow',[2,1.2,.5],0);return}
+  if(o===O.totem){V.box(x,y,z-1,7,7,30,yaw,'totem','bark',[1,1,1],0);V.box(x,y,z+29,8,8,6,yaw,'bone','bone',[1,1,1],0);V.box(x,y,z+18,18,3,3,yaw,'bark','bark',[1,1,1],0);return}
+  if(o===O.tomb){const tw=8+h(1)*3;V.box(x,y,z-1,tw,3,12+h(2)*4,yaw*.1+(h(3)-.5)*.2,'stone','mossy',[1,1,1],16);V.box(x,y,z+11+h(2)*4,tw-2,3,2,yaw*.1,'stone','mossy',[1,1,1],16);V.box(x,y-5,z-1,tw+2,8,1.5,yaw*.1,'mossy','mossy',[1,1,1],16);return}
+  if(o===O.pillar){const hh=v%3===0?12+h(1)*8:28+h(1)*14;V.box(x,y,z-1,10,10,3,0,'stone','stone',[1,1,1],16);V.box(x,y,z+2,7,7,hh,0,'stone','mossy',[1,1,1],16);if(v%3)V.box(x,y,z+2+hh,11,11,3,0,'stone','mossy',[1,1,1],16);else V.box(x+6,y+4,z-1,6,5,4,yaw,'stone','stone',[1,1,1],0);return}
+  if(o===O.ruinwall){for(let k=0;k<3;k++)V.box(tx*16+3+k*5,ty*16+8,z-1,5.4,6,10+h(k)*18,0,'brick',k%2?'mossy':'brick',[.95,.95,.95],16);return}
+  if(o===O.menhir){const hh=34+h(1)*12;V.box(x,y,z-2,10,7,hh,yaw,'mossy','stone',[1,1,1],16);V.box(x,y,z-2+hh,7,5,5,yaw,'stone','stone',[1,1,1],16);V.box(x,y,z+10,10.4,7.4,4,yaw,'rune','rune',[1.2,1.2,1.3],16);return}
+  if(o===O.altar){V.box(x,y,z-1,22,16,8,0,'stone','stone',[1,1,1],16);V.box(x,y,z+7,14,9,2,0,'rune','rune',[1.4,1.4,1.5],16);return}
+  if(o===O.wshrine){V.box(x,y,z-1,13,13,5,0,'stone','stone',[1,1,1],16);V.box(x,y,z+4,6,6,20,0,'stone','mossy',[1,1,1],16);V.box(x,y,z+18,8,8,6,0,'glow','glow',[1,1.4,1.8],0);V.box(x,y,z+24,15,15,3,0,'plank','plank',[.8,.5,.4],16);return}
+  if(o===O.gtree){const m=.85+h(1)*.35,th=130*m;V.box(x,y,z-3,30,30,th,yaw,'bark','bark',[1,1,1],32);for(let i=0;i<4;i++){const a=yaw+i*1.571;V.box(x+Math.cos(a)*16,y+Math.sin(a)*16,z-3,16,12,20,a,'bark','bark',[.95,.95,.95],32)}
+    const lf=h(2)<.5?'leaf':'darkleaf';V.box(x,y,z+th-10,150*m,150*m,40*m,yaw,lf,lf,[1,1,1],32,true);V.box(x,y,z+th+28*m,100*m,100*m,34*m,yaw+.4,lf,lf,[1.06,1.06,1],32,true);V.box(x,y,z+th+58*m,56*m,56*m,26*m,yaw+.8,lf,lf,[1.1,1.1,1.02],32,true);
+    for(let i=0;i<4;i++){const a=yaw+i*1.57+.4;V.box(x+Math.cos(a)*62*m,y+Math.sin(a)*62*m,z+th-20,46*m,46*m,30*m,a,lf,lf,[.95,.95,.95],32,true)}
+    // a treehouse ringing the trunk, with a lit window and a ladder down
+    if(h(5)<.6){const pz=z+60*m;V.box(x,y,pz,56,56,4,yaw,'plank','plank',[1,1,1],16);V.box(x+Math.cos(yaw)*20,y+Math.sin(yaw)*20,pz+4,20,20,16,yaw,'plank','plank',[.9,.85,.8],16);V.box(x+Math.cos(yaw)*20,y+Math.sin(yaw)*20,pz+20,26,26,4,yaw,'darkleaf','darkleaf',[1,1,1],16);
+      V.box(x+Math.cos(yaw)*30.4,y+Math.sin(yaw)*30.4,pz+8,1,7,7,yaw,'glow','glow',[1.6,1.5,1.2],0);V.box(x-Math.cos(yaw)*30,y-Math.sin(yaw)*30,z-2,3,8,pz-z+4,yaw,'post','post',[1,1,1],0)}
+    return}
+  if(o===O.gshroom){const s=.8+h(1)*.7;V.box(x,y,z-1,3*s,3*s,8*s,yaw,'bone','bone',[1,1,1],0);V.box(x,y,z+7*s,11*s,11*s,4*s,yaw,'glowcap','glowcap',[1.5,1.5,1.6],0);return}
+  if(o===O.bones){V.box(x,y,z-1,10,2,2,yaw,'bone','bone',[1,1,1],0);V.box(x+2,y+1,z-1,2,8,2,yaw,'bone','bone',[1,1,1],0);V.box(x-3,y-2,z-1,4,4,4,yaw,'bone','bone',[1,1,1],0);return}
   if(o===O.stone){const s=4+h(1)*5;V.box(x+(h(2)-.5)*10,y+(h(3)-.5)*10,z-1,s,s*.8,s*.55,yaw,'stone','stone',[1,1,1],16);return}
   if(o===O.hedge){V.box(tx*16+8,ty*16+8,z-1,16.5,16.5,18,0,'hedge','hedge',[1,1,1],16);return}
   if(o===O.fence){const cx=tx*16+8,cy=ty*16+8;V.box(cx,cy,z-1,3,3,15,0,'post','post',[1,1,1],0);for(const[dx,dy]of[[1,0],[0,1]])if(X(tx+dx,ty+dy)===O.fence)for(const hz of[5,11])V.box(cx+dx*8,cy+dy*8,z+hz,dx?16:2,dy?16:2,2.5,0,'plank','plank',[1,1,1],16);return}
@@ -1870,9 +1997,11 @@ function voxObject(V,X,o,tx,ty,x,y,z,v){const h=k=>hash(tx,ty,700+k),yaw=h(0)*Ma
   return false}
 function buildVox(c){const V=new VB(),C=new VB(),X=(tx,ty)=>tO(tx,ty);
   for(let j=0;j<CH;j++)for(let i=0;i<CH;i++){const k=j*CH+i,o=c.o[k],tx=c.cx*CH+i,ty=c.cy*CH+j,x=tx*16+8,y=ty*16+12,T_=c.t[k];
-    if(o&&o!==O.chest&&o!==O.shrine&&o!==O.fountain&&o!==O.dungeon){const z=hAtFast(c,x,y);
+    if(o&&o!==O.chest&&o!==O.shrine&&o!==O.fountain&&o!==O.dungeon){if(o===O.bones&&!GRASSY.has(T_)&&T_!==PATH){}const z=hAtFast(c,x,y);
       if(o===O.flower||o===O.mushroom||o===O.reed||o===O.crop||o===O.deadbush||o===O.fpot){const img=o===O.flower?S.flower[c.v[k]%3]:o===O.crop?S.crop[(i+j)%2]:OBJS[o];C.cross(img,x,y,z-1,(OSC[o]||1)*(.85+hash(tx,ty,8)*.3),hash(tx,ty,9)*3,GRASSY.has(T_)?meadow(tx,ty):[1,1,1])}
       else voxObject(V,X,o,tx,ty,x,y,z,c.v[k])}
+    if(T_===CLIFF){const V_=CH+1,hs=[c.hv[j*V_+i],c.hv[j*V_+i+1],c.hv[(j+1)*V_+i],c.hv[(j+1)*V_+i+1]],lo=Math.min(...hs),hi=Math.max(...hs),sh=.9+hash(tx,ty,61)*.18;
+      V.box(tx*16+8,ty*16+8,lo-4,16.8,16.8,hi-lo+1,0,'cliff','mossy',[sh,sh,sh],16);if(hash(tx,ty,62)<.5)V.box(tx*16+8+(hash(tx,ty,63)-.5)*8,ty*16+8+(hash(tx,ty,64)-.5)*8,lo-4,10,10,(hi-lo)*(.4+hash(tx,ty,65)*.5),hash(tx,ty,66),'cliff','mossy',[sh*.95,sh*.95,sh*.95],16)}
     // grass tufts and wildflowers carpet the meadows
     if(GRASSY.has(T_)&&!o){const n=hash(tx,ty,13);if(n<.42){const fl=fbmN(tx*.07,ty*.07,303,2)>.62&&n<.16,img=fl?WFLOW[Math.floor(hash(tx,ty,14)*5)]:TUFT[Math.floor(hash(tx,ty,15)*4)],px=tx*16+2+hash(tx,ty,16)*12,py=ty*16+2+hash(tx,ty,17)*12;
       C.cross(img,px,py,hAtFast(c,px,py)-.5,.7+hash(tx,ty,18)*.4,hash(tx,ty,19)*3,fl?[1,1,1]:meadow(tx,ty))}}}
@@ -1898,12 +2027,12 @@ function buildTerrain(c,lod){const x0=c.cx*CH,y0=c.cy*CH,V=CH+1,pos=[],nor=[],uv
   const m=new THREE.Mesh(g,lod===0?terrMat:lodMat);m.matrixAutoUpdate=false;return m}
 // how big each thing stands next to the hero: trees 8-10 m, lampposts ~3.5 m, barrels and crates about waist high
 const OSC={[O.tree]:3.4,[O.birch]:3.4,[O.pine]:3.8,[O.spine]:3.8,[O.deadtree]:2.8,[O.cactus]:1.8,[O.bush]:1.5,[O.boulder]:1.6,[O.lavarock]:1.4,[O.lamp]:1.5,[O.well]:1.3,
-  [O.barrel]:.7,[O.crate]:.75,[O.hay]:.9,[O.cart]:1.15,[O.bench]:.85,[O.woodpile]:.9,[O.fpot]:.65,[O.mushroom]:.7,[O.crop]:.75,[O.reed]:1.3,[O.deadbush]:1,[O.stall]:1.35,[O.flower]:.8,[O.dungeon]:1.8};
+  [O.barrel]:.7,[O.crate]:.75,[O.hay]:.9,[O.cart]:1.15,[O.bench]:.85,[O.woodpile]:.9,[O.fpot]:.65,[O.mushroom]:.7,[O.crop]:.75,[O.reed]:1.3,[O.deadbush]:1,[O.stall]:1.35,[O.flower]:.8,[O.dungeon]:1.8,[O.gtree]:9,[O.menhir]:2,[O.pillar]:1.6,[O.tent]:1.3,[O.hut]:1.6,[O.palisade]:1.2,[O.tomb]:.8};
 const ESC={troll:1.6,bear:1.35,spider:1.15,scorpion:1.1,wolf:1.05,slime:.85,redslime:.85},ASC={cat:.65,dog:.8,chicken:.6};
-const OBJS={[O.cactus]:S.cactus,[O.deadtree]:S.deadtree,[O.birch]:S.birch,[O.mushroom]:S.mushroom,[O.lavarock]:S.lavarock,[O.deadbush]:S.deadbush,[O.crate]:S.crate,[O.hay]:S.hay,[O.cart]:S.cart,[O.bench]:S.bench,[O.woodpile]:S.woodpile,[O.fpot]:S.fpot,[O.well]:S.well,[O.tree]:S.tree,[O.pine]:S.pine,[O.spine]:S.spine,[O.bush]:S.bush,[O.boulder]:S.boulder,[O.lamp]:S.lamp,[O.barrel]:S.barrel,[O.reed]:S.reed,[O.stall]:null,[O.crop]:S.crop[0],[O.flower]:null};
+const OBJS={[O.cactus]:S.cactus,[O.deadtree]:S.deadtree,[O.birch]:S.birch,[O.mushroom]:S.mushroom,[O.lavarock]:S.lavarock,[O.deadbush]:S.deadbush,[O.crate]:S.crate,[O.hay]:S.hay,[O.cart]:S.cart,[O.bench]:S.bench,[O.woodpile]:S.woodpile,[O.fpot]:S.fpot,[O.well]:S.well,[O.tree]:S.tree,[O.pine]:S.pine,[O.spine]:S.spine,[O.bush]:S.bush,[O.boulder]:S.boulder,[O.lamp]:S.lamp,[O.barrel]:S.barrel,[O.reed]:S.reed,[O.stall]:null,[O.crop]:S.crop[0],[O.flower]:null,[O.gtree]:S.tree,[O.menhir]:S.boulder,[O.pillar]:S.boulder,[O.tent]:S.hay,[O.hut]:S.hay,[O.palisade]:S.woodpile};
 function buildBills(c,lod){const list=[],keep=[],spec=[];for(let j=0;j<CH;j++)for(let i=0;i<CH;i++){const k=j*CH+i,o=c.o[k];if(!o)continue;const x=(c.cx*CH+i)*16+8,y=(c.cy*CH+j)*16+12;
-    if(o===O.chest||o===O.shrine||o===O.fountain||o===O.lamp||o===O.dungeon){spec.push([o,x,y,c.cx*CH+i,c.cy*CH+j]);if(o!==O.lamp&&o!==O.dungeon)continue}
-    if(lod===2&&o!==O.tree&&o!==O.pine&&o!==O.spine&&o!==O.birch&&o!==O.dungeon&&o!==O.cactus)continue;if(lod===2&&hash(i,j,c.cx)<.4)continue;if(lod===1&&(o===O.flower||o===O.reed))continue;
+    if(o===O.chest||o===O.shrine||o===O.fountain||o===O.lamp||o===O.dungeon||o===O.campfire||o===O.wshrine||o===O.altar||o===O.gshroom){spec.push([o,x,y,c.cx*CH+i,c.cy*CH+j]);if(o!==O.lamp&&o!==O.dungeon&&o!==O.campfire&&o!==O.wshrine&&o!==O.altar&&o!==O.gshroom)continue}
+    if(lod===2&&o!==O.tree&&o!==O.pine&&o!==O.spine&&o!==O.birch&&o!==O.dungeon&&o!==O.cactus&&o!==O.gtree)continue;if(lod===2&&hash(i,j,c.cx)<.4)continue;if(lod===1&&(o===O.flower||o===O.reed))continue;
     const img=o===O.dungeon?(c.dl.find(d=>d.x===c.cx*CH+i&&d.y===c.cy*CH+j)||{kind:'cave'}).kind==='cave'?S.cave:S.barrow:o===O.stall?S.stall[c.v[k]%4]:o===O.flower?S.flower[c.v[k]%3]:o===O.crop?S.crop[(i+j)%2]:OBJS[o];if(!img)continue;(o===O.dungeon?keep:list).push([img,x,y,o,c.cx*CH+i,c.cy*CH+j])}
   const m=new THREE.Group(),mk_=L=>{const g=billGeo(Math.max(1,L.length));for(const[img,x,y,o,tx,ty]of L)bput(g,img,x,y,hAtFast(c,x,y)-1,{sc:(OSC[o]||1)*(TREES.has(o)?treeSize(tx,ty):1)});bdone(g);const bm=new THREE.Mesh(g,billMat);bm.frustumCulled=false;m.add(bm);return bm};
   const bmObj=mk_(list);if(keep.length)mk_(keep);
@@ -2078,11 +2207,14 @@ function renderView(dt,vi){const V_=VIEWS[vi];VW=V_.w;VH=V_.h;if(!P.camObj)P.cam
       if(o===O.chest)bput(g,Q.chests.has(ckey(tx_,ty_))?S.chestOpen:S.chest,x,y,z);
       else if(o===O.shrine){const k=SHR.findIndex(([a,b])=>a===tx_&&b===ty_),on=Q.shrines.has(k);bput(g,on?S.shrineOn:S.shrine,x,y,z-2,{sc:1.8});if(on)lights.push([x,y,z+14,46]);else if(Q.stage===2)bput(g,S.shrineOn,x,y,z-2,{a:.4+.3*Math.sin(time*4),sc:1.8})}
       else if(o===O.fountain){}
+      else if(o===O.campfire){bput(g,S.flame[Math.abs(Math.floor(time*8+x))%2],x,y,z+3,{sc:1.3,keep:1});lights.push([x,y,z+10,70+Math.sin(time*9+x)*6])}
+      else if(o===O.wshrine)lights.push([x,y,z+20,40]);else if(o===O.altar)lights.push([x,y,z+10,46]);else if(o===O.gshroom){if(night)lights.push([x,y,z+8,26])}
       else if(o===O.lamp)lights.push([x,y,z+32,64]);else if(o===O.dungeon)lights.push([x,y,z+10,40])}}
     for(const[img,x,y,z]of townBills)if(near2(x,y)){bput(g,img,x,y,z);if(img===S.torch)lights.push([x,y,z+6,60])}
     for(const b of BLD)if(night&&Math.abs(b.x*16-P.x)<900&&Math.abs(b.y*16-P.y)<900){const c=Math.cos(b.a),s=Math.sin(b.a);lights.push([b.x*16+s*(b.d*8+2),b.y*16-c*(b.d*8+2),b.h0+18,34])}
     for(const n of NPCS){if(n.inside||n.dead||!n.town.active||!near2(n.x,n.y))continue;const f=n.mv?Math.floor(n.t*7)%2:Math.floor(n.t*1.5)%2,z=gH(n.x,n.y)+(n.onWall?WALLTOP:0)+(n.onCart&&!n.back?10:0);bput(g,n.spr[f],n.x,n.y,z+(n.mv?0:f*.4),{flip:n.flip,flash:n.flash>0?1:0,keep:1});
       if((n.role==='guard'||n.role==='patrol')&&night){bput(g,S.torch,n.x-7,n.y+1,z+8);lights.push([n.x,n.y,z+14,46])}}
+    for(const f of FAIRIES)if(f.ew.hs.active&&near2(f.x,f.y)){const z=gH(f.x,f.y)+f.z;bput(g,S.fairy[f.c][Math.floor(time*12+f.i)%2],f.x,f.y,z,{sc:1.2,keep:1});lights.push([f.x,f.y,z,night?42:22])}
     for(const G of GROUPS)if(G.kind==='caravan'&&G.cart&&near2(G.cart.x,G.cart.y)){const c=G.cart,fl=Math.cos(c.a)*-Math.sin(YAW)+Math.sin(c.a)*Math.cos(YAW)<0?1:0,hx=c.x+Math.cos(c.a)*28,hy=c.y+Math.sin(c.a)*28;
       bput(g,S.wagon,c.x,c.y,gH(c.x,c.y),{sc:1.35,flip:fl,keep:1});bput(g,S.horse[G.moving?Math.floor(time*6)%2:0],hx,hy,gH(hx,hy),{sc:1.2,flip:fl,keep:1});if(night)lights.push([c.x,c.y,gH(c.x,c.y)+20,50])}
     for(const a of ANIMALS){if(!a.town.active||!near2(a.x,a.y))continue;bput(g,ANSPR[a.kind][a.mv?Math.floor(a.t*8)%2:0],a.x,a.y,gH(a.x,a.y),{flip:a.flip,sc:ASC[a.kind],keep:1})}
@@ -2185,7 +2317,8 @@ function drawMini(){const W=80,id=mg.createImageData(W,W),d=id.data;
   const dot=(wx,wy,colr,s=2)=>{const x=40+(wx-ptx)/2,y=40+(wy-pty)/2;if(x>=0&&y>=0&&x<W&&y<W){mg.fillStyle='#000';mg.fillRect(x-s,y-s,s*2,s*2);mg.fillStyle=colr;mg.fillRect(x-s+1,y-s+1,s*2-2,s*2-2)}};
   SHR.forEach(([sx,sy],i)=>dot(sx+.5,sy+.5,Q.shrines.has(i)?'#ffd34d':'#7fdcff'));
   for(let cj=Math.floor((pty-80)/DUNC);cj<=Math.floor((pty+80)/DUNC);cj++)for(let ci=Math.floor((ptx-80)/DUNC);ci<=Math.floor((ptx+80)/DUNC);ci++){const dn=dunCell(ci,cj);if(dn)dot(dn.x,dn.y,'#b060d0')}
-  if(P.wanted>0)for(const g of NPCS)if(g.role==='guard'&&!g.inside&&!g.dead&&g.town.active)dot(g.x/16,g.y/16,'#ff4040',1.5);
+  for(const p of POIS)if(Q.found[p.id]&&Math.abs(p.x-ptx)<80&&Math.abs(p.y-pty)<80)dot(p.x,p.y,poiCleared(p)?'#8a8a8a':POICOL[p.type],p.type==='wshrine'?1.5:2);
+  if(P.wanted>0)for(const g of NPCS)if((g.role==='guard'||g.role==='patrol')&&!g.inside&&!g.dead&&g.town.active)dot(g.x/16,g.y/16,'#ff4040',1.5);
   for(const q of PLAYERS)if(q!==P&&q.realm==='w')dot(q.x/16,q.y/16,q.idx?'#7dde6a':'#7ab8ff');
   mg.fillStyle='#000';mg.fillRect(36,0,9,8);mg.fillStyle='#ff5a4a';mg.font='6px "Press Start 2P",monospace';mg.textAlign='center';mg.fillText('N',40.5,7);
   mg.save();mg.translate(40.5,40.5);mg.rotate(P.h+Math.PI/2);mg.fillStyle='#000';mg.beginPath();mg.moveTo(0,-5);mg.lineTo(4,4);mg.lineTo(-4,4);mg.closePath();mg.fill();mg.fillStyle='#fff';mg.beginPath();mg.moveTo(0,-3.5);mg.lineTo(2.5,2.5);mg.lineTo(-2.5,2.5);mg.closePath();mg.fill();mg.restore()}
@@ -2197,12 +2330,15 @@ function stepWorldMap(){if(wmRow>=512)return;const end=Math.min(512,wmRow+4),d=w
     const nt=nearAnyTown(tx,ty,1.2);if(nt){if(bldAt(tx,ty,1.5))col=[192,70,60];else if(wallDist(tx,ty,nt)<3)col=[70,68,64]}
     const sh=h>=SEA?clamp(1+(h-hs)*.03,.65,1.35):1,i=(y*512+x)*4;d[i]=col[0]*sh;d[i+1]=col[1]*sh;d[i+2]=col[2]*sh;d[i+3]=255}
   wmRow=end;if(wmRow>=512){wmg.putImageData(wmData,0,0);for(const p of PLAYERS)withP(p,()=>{if(panelOpen()&&pTab==='map')drawWorldMap()})}}
+const POICOL={goblincamp:'#7dde6a',goblinvillage:'#2fa83a',graveyard:'#d8d2c0',ruins:'#e0b050',stones:'#7fdcff',banditcamp:'#e05a3a',wshrine:'#a8d8ff'};
 function drawWorldMap(){const c=UI.body.querySelector('#wmap');if(!c)return;const g=c.getContext('2d');UI.body.querySelector('#mapNote').textContent=wmRow<512?'Charting the land… '+Math.round(wmRow/5.12)+'%':'';
   if(wmRow<512)wmg.putImageData(wmData,0,0);g.drawImage(WM,0,0);
   g.fillStyle='#1a1410';for(let y=0;y<EXW;y++)for(let x=0;x<EXW;x++)if(!EXP[y*EXW+x])g.fillRect(x*2,y*2,2,2);
   const M_=(tx,ty)=>[(tx+HW)/8,(ty+HW)/8],seen=(tx,ty)=>EXP[Math.floor((ty+HW)/EXC)*EXW+Math.floor((tx+HW)/EXC)];
   for(const[k,d]of DUNS)if(d&&seen(d.x,d.y)){const[x,y]=M_(d.x,d.y);g.fillStyle='#000';g.fillRect(x-3,y-3,6,6);g.fillStyle=Q.dun['d'+d.id]?'#6a5a7a':'#b060d0';g.fillRect(x-2,y-2,4,4)}
   g.font='8px "Press Start 2P",monospace';g.textAlign='center';for(const t of TOWNS){if(!seen(t.x,t.y)&&!P.god)continue;const[x,y]=M_(t.x,t.y);g.strokeStyle='#c0463c';g.lineWidth=2;g.beginPath();g.arc(x,y,t.R/8+2,0,7);g.stroke();g.fillStyle='#000';g.fillText(t.name,x+1,y-t.R/8-5);g.fillStyle='#fff3c4';g.fillText(t.name,x,y-t.R/8-6)}
+  for(const e of ELDERWOODS){if(!seen(e.x,e.y)&&!P.god)continue;const[x,y]=M_(e.x,e.y);g.strokeStyle='#7dde6a';g.lineWidth=2;g.setLineDash([3,3]);g.beginPath();g.arc(x,y,e.R/8,0,7);g.stroke();g.setLineDash([]);g.fillStyle='#000';g.fillText(e.name,x+1,y-e.R/8-3);g.fillStyle='#c8ffb8';g.fillText(e.name,x,y-e.R/8-4)}
+  for(const p of POIS){if(!Q.found[p.id]&&!P.god)continue;const[x,y]=M_(p.x,p.y),s=p.type==='wshrine'?2:3;g.fillStyle='#000';g.fillRect(x-s-1,y-s-1,s*2+2,s*2+2);g.fillStyle=poiCleared(p)?'#8a8a8a':POICOL[p.type];g.fillRect(x-s,y-s,s*2,s*2)}
   SHR.forEach(([sx,sy],i)=>{if(!seen(sx,sy)&&!Q.shrines.has(i))return;const[x,y]=M_(sx,sy);g.fillStyle='#000';g.fillRect(x-4,y-4,9,9);g.fillStyle=Q.shrines.has(i)?'#ffd34d':'#7fdcff';g.fillRect(x-3,y-3,7,7)});
   for(const q of PLAYERS){const ox=q.realm==='w'?q.x/16:q.out?q.out.x/16:q.x/16,oy=q.realm==='w'?q.y/16:q.out?q.out.y/16:q.y/16,[x,y]=M_(ox,oy);g.save();g.translate(x,y);g.rotate(q.h+Math.PI/2);g.fillStyle='#000';g.beginPath();g.moveTo(0,-8);g.lineTo(6,6);g.lineTo(-6,6);g.closePath();g.fill();g.fillStyle=q.idx?'#7dde6a':'#fff';g.beginPath();g.moveTo(0,-6);g.lineTo(4,4);g.lineTo(-4,4);g.closePath();g.fill();g.restore()}
   c.onclick=e=>{if(!P.god)return;const r=c.getBoundingClientRect(),tx=Math.floor((e.clientX-r.left)/r.width*512*8-HW),ty=Math.floor((e.clientY-r.top)/r.height*512*8-HW);
