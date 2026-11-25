@@ -175,7 +175,7 @@ table.rec img{width:24px;height:24px;image-rendering:pixelated;vertical-align:mi
     <div id="panel" class="panel" hidden role="dialog" aria-label="Menu"><div class="ptop"><div id="pTabs" class="pTabs" role="tablist"></div><span id="pGold" class="pGold"></span><button id="pClose" class="pClose" type="button" aria-label="Close">✕</button></div><div id="pBody" class="pBody"></div></div>
     <div id="touch">
       <div id="joy" aria-label="Movement joystick"><div id="joyk"></div></div>
-      <button class="tb" id="tA" aria-label="Attack">A</button><button class="tb" id="tB" aria-label="Talk or open">B</button><button class="tb" id="tP" aria-label="Drink potion">P</button><button class="tb" id="tRun" aria-label="Sprint" aria-pressed="false">Run</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button>
+      <button class="tb" id="tA" aria-label="Attack">A</button><button class="tb" id="tB" aria-label="Talk or open">B</button><button class="tb" id="tP" aria-label="Drink potion">P</button><button class="tb" id="tRun" aria-label="Sprint" aria-pressed="false">Run</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button>
     </div>
     <div id="start">
       <div>
@@ -203,6 +203,7 @@ table.rec img{width:24px;height:24px;image-rendering:pixelated;vertical-align:mi
       <li><kbd>W</kbd><kbd>S</kbd><kbd>↑</kbd><kbd>↓</kbd> walk forward or back</li>
       <li><kbd>A</kbd><kbd>D</kbd><kbd>←</kbd><kbd>→</kbd> turn</li>
       <li><kbd>Shift</kbd> sprint (uses stamina)</li>
+      <li><kbd>Space</kbd> dodge roll: you can't be hit mid-roll</li>
       <li><kbd>Space</kbd> dodge roll: you can't be hit mid-roll</li>
       <li><kbd>Left click</kbd> swing your weapon</li>
       <li><kbd>Q</kbd> drink a healing potion</li></ul></div>
@@ -375,6 +376,8 @@ for(const b of BLD){const c=Math.cos(b.a),s=Math.sin(b.a);b.door=[b.x+s*(b.d/2),
 const B=CAPITAL.B,HOMES=CAPITAL.homes;
 const BG=new Map();BLD.forEach(b=>{for(let gy=Math.floor((b.y-b.r)/8);gy<=Math.floor((b.y+b.r)/8);gy++)for(let gx=Math.floor((b.x-b.r)/8);gx<=Math.floor((b.x+b.r)/8);gx++){const k=gx+','+gy;if(!BG.has(k))BG.set(k,[]);BG.get(k).push(b)}});
 const bldAt=(tx,ty,m=0)=>{const L=BG.get(Math.floor(tx/8)+','+Math.floor(ty/8));if(L)for(const b of L)if(inOBB(b,tx,ty,m))return b;return null};
+function doorNear(x,y){const gx=Math.floor(x/8),gy=Math.floor(y/8);for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++){const L=BG.get((gx+i)+','+(gy+j));if(L)for(const b of L)if(b.front&&(Math.hypot(x-b.front[0],y-b.front[1])<2.4||Math.hypot(x-b.door[0],y-b.door[1])<1.8))return true}return false}
+const nearTower=(t,x,y)=>t.wall.some(([a,b])=>Math.hypot(x-a,y-b)<1.45);
 const isFarmZone=(x,y,t)=>{const d=Math.hypot(x-t.x,y-t.y),a=Math.atan2(y-t.y,x-t.x),wr=wallR(t,a);return d>wr+4&&d<wr+30&&fbmN(x*.05,y*.05,88,2)>.5};
 
 // ---------- danger: the hidden power level (1-100) of the land around you ----------
@@ -421,7 +424,7 @@ function genChunk(cx,cy){const x0=cx*CH,y0=cy*CH,V=CH+1,hv=new Float32Array(V*V)
     const cx_=x+.5,cy_=y+.5,tw=NT,td=tw?Math.hypot(cx_-tw.x,cy_-tw.y):1e9,inT=tw&&td<tw.R*1.5,nearW=inT&&Math.abs(td-wallR(tw,Math.atan2(cy_-tw.y,cx_-tw.x)))<3;
     if(hc<SEA-12)T=DEEP;else if(hc<SEA)T=WATER;
     else{const r=roadAt(cx_,cy_);
-      if(nearW&&wallDist(cx_,cy_,tw)<1.1&&!inGate(cx_,cy_,tw))T=TWALL;
+      if(nearW&&((wallDist(cx_,cy_,tw)<1.1&&!inGate(cx_,cy_,tw))||nearTower(tw,cx_,cy_)))T=TWALL;
       else if(inT&&bldAt(cx_,cy_,.2))T=HOUSE;
       else if(inT&&td<tw.PR+(fbmN(x*.3,y*.3,5,1)-.5)*2){T=PLAZA;if(Math.floor(cx_)===Math.floor(tw.x)&&Math.floor(cy_)===Math.floor(tw.y))ob=O.fountain;else if(td>tw.PR*.55&&td<tw.PR*.75&&hh>.93)ob=O.stall;else if(td>tw.PR*.8&&hh<.05)ob=O.lamp;else if(td>tw.PR*.8&&hh>.97)ob=O.bench}
       else if(r&&r.d<r.w/2){T=r.town&&inT&&inWalls(cx_,cy_,tw)?STREET:PATH;if(r.town&&r.d>r.w/2-.8&&hash(Math.round(r.t*20),r.i,r.ri)<.08&&hh<.2&&!r.ring)ob=O.lamp;else if(r.town&&r.d>r.w/2-.6&&hh>.985)ob=O.cart}
@@ -446,6 +449,7 @@ function genChunk(cx,cy){const x0=cx*CH,y0=cy*CH,V=CH+1,hv=new Float32Array(V*V)
         if(!NT&&hash(x,y,99)>.9988&&T!==SNOW&&sl<10)ob=O.chest}}
     for(const[sx,sy]of SHR){const dd=Math.max(Math.abs(x-sx),Math.abs(y-sy));if(dd<=2){T=PLAZA;ob=dd===0?O.shrine:0}}
     for(const dn of dl){const dd=Math.max(Math.abs(x-dn.x),Math.abs(y-dn.y));if(dd<=2&&ob)ob=0;if(dd===0){ob=O.dungeon;if(T===WATER||T===DEEP)T=ROCK}}
+    if(ob&&inT&&ob!==O.fountain&&doorNear(cx_,cy_))ob=0;
     t[k]=T;o[k]=ob}
   return{cx,cy,hv,t,o,v,dl}}
 function chunk(cx,cy){const k=cx*100000+cy;let c=chunks.get(k);if(!c){c=genChunk(cx,cy);chunks.set(k,c);if(chunks.size>1600)evictChunks()}return c}
@@ -1004,7 +1008,7 @@ function spawn(){const outs=PLAYERS.filter(p=>p.realm==='w'&&!p.deadT);if(!outs.
   for(let tries=0;tries<8;tries++){const a=Math.random()*Math.PI*2,r=(14+Math.random()*7)*16,x=p.x+Math.cos(a)*r,y=p.y+Math.sin(a)*r,tx=Math.floor(x/16),ty=Math.floor(y/16);
     if(TOWNS.some(t=>Math.hypot(tx-t.x,ty-t.y)<t.R+45))continue;const t=tT(tx,ty);if(t===WATER||t===DEEP||outdoorSolid(x,y))continue;
     const k=night&&Math.random()<.2?'ghost':night&&Math.random()<.15?'skeleton':wpick(BIOSPAWN[t]||BIOSPAWN[GRASS]);
-    const pl=clamp(regionPL(tx,ty,t)+Math.round((Math.random()-.5)*10),1,100);enemies.push(mkEnemy(k,x,y,pl));
+    const pl=clamp(regionPL(tx,ty,t)+Math.round((Math.random()-.5)*10),1,100);{const e=mkEnemy(k,x,y,pl);enemies.push(e);unstick(e)}
     if(k==='wolf'&&Math.random()<.6)for(let j=0;j<1+Math.floor(Math.random()*2);j++){const ox=x+(Math.random()-.5)*40,oy=y+(Math.random()-.5)*40;if(!outdoorSolid(ox,oy))enemies.push(mkEnemy('wolf',ox,oy,pl))}
     if(k==='bandit'&&Math.random()<.5&&!outdoorSolid(x+20,y))enemies.push(mkEnemy('bandit',x+20,y,pl));
     return}}
@@ -1074,7 +1078,7 @@ const LINES2={'Brann the Smith':['Mind the forge, it bites.'],'Hilda the Armorer
 
 // ---------- collision: each realm (the open world, a building, a dungeon) has its own ----------
 function outdoorSolid(px,py){const tx=Math.floor(px/16),ty=Math.floor(py/16);if(Math.abs(tx)>=HW-3||Math.abs(ty)>=HW-3)return true;const t=tT(tx,ty);if(SOLIDT.has(t))return true;
-  const o=tO(tx,ty);if(o&&SOLIDO.has(o)){const r=o===O.fountain?11:o===O.stall||o===O.cart?8:o===O.dungeon?10:5;if(Math.abs(px-(tx*16+8))<r&&Math.abs(py-(ty*16+11))<r*.85)return true}
+  const o=tO(tx,ty);if(o&&SOLIDO.has(o)){const r=o===O.fountain?11:o===O.stall||o===O.cart?8:o===O.dungeon?10:TRUNK.has(o)?3:o===O.boulder||o===O.lavarock?6:5;if(Math.abs(px-(tx*16+8))<r&&Math.abs(py-(ty*16+11))<r*.85)return true}
   if(t===HOUSE||nearAnyTown(tx,ty,1.5)){if(bldAt(px/16,py/16,.05))return true}
   if(t===WATER&&hAt(px,py)<SEA-7)return true;return false}
 function interiorSolid(px,py){const I=INT;if(Math.abs(px)>I.W/2-5||py>I.D/2-5)return true;if(py<-I.D/2+5&&Math.abs(px)>9)return true;
@@ -1084,10 +1088,15 @@ function dungeonSolid(L,px,py){const cx=Math.floor(px/16),cy=Math.floor(py/16);r
 function realmSolid(r,px,py){if(r==='w')return outdoorSolid(px,py);if(r[0]==='d')return dungeonSolid(DLAY.get(r),px,py);return interiorSolid(px,py)}
 let MOVER=null;
 const solidPx=(px,py)=>realmSolid(MOVER?MOVER.realm||'w':P.realm,px,py);
-const blocked=(x,y,hw,hh)=>solidPx(x-hw,y-hh)||solidPx(x+hw,y-hh)||solidPx(x-hw,y+hh)||solidPx(x+hw,y+hh);
+// trees are solid only at the trunk, so there is always room to weave through a forest; the body is sampled at nine points so nothing thin slips between them
+const TRUNK=new Set([O.tree,O.pine,O.spine,O.birch,O.deadtree,O.cactus,O.lamp]);
+const blocked=(x,y,hw,hh)=>{for(const dy of[-hh,0,hh])for(const dx of[-hw,0,hw])if(solidPx(x+dx,y+dy))return true;return false};
 function move(e,dx,dy,fly){if(fly||(e===P&&P.god&&P.realm==='w')){e.x+=dx;e.y+=dy;if(e===P){e.x=clamp(e.x,(-HW+4)*16,(HW-4)*16);e.y=clamp(e.y,(-HW+4)*16,(HW-4)*16)}return}
-  MOVER=e;if(!blocked(e.x+dx,e.y,5,3))e.x+=dx;if(!blocked(e.x,e.y+dy,5,3))e.y+=dy;MOVER=null}
+  MOVER=e;if(!blocked(e.x+dx,e.y,4,3))e.x+=dx;if(!blocked(e.x,e.y+dy,4,3))e.y+=dy;MOVER=null}
 const moveOut=move;
+// never leave anyone embedded in a tree, wall, crate or piece of furniture: step them out to the nearest free spot
+function freeAt(e,x,y){const m=MOVER;MOVER=e;const b=blocked(x,y,4,3);MOVER=m;return!b}
+function unstick(e){if(freeAt(e,e.x,e.y))return true;for(let r=3;r<=240;r+=3)for(let k=0;k<24;k++){const a=k/24*Math.PI*2,x=e.x+Math.cos(a)*r,y=e.y+Math.sin(a)*r;if(freeAt(e,x,y)){e.x=x;e.y=y;return true}}return false}
 const withP=(p,fn)=>{const me=P;usePlayer(p);try{return fn()}finally{usePlayer(me)}};
 function nearestPlayer(x,y,realm='w',pred){let best=null,bd=1e9;for(const p of PLAYERS){if(p.realm!==realm||p.deadT>0||(pred&&!pred(p)))continue;const d=Math.hypot(p.x-x,p.y-y);if(d<bd){bd=d;best=p}}return[best,bd]}
 
@@ -1201,8 +1210,9 @@ function updateNPCs(dt){const near=Math.hypot;
       if(!n.path.length&&!n.inside){if(n.place==='home'){if(dP>40)n.inside=true}
         else if(n.mode==='wander'){n.wt-=dt;if(n.wt<=0){n.wt=4+Math.random()*7;goTo(n,placeTile(n,n.place))}}}}
     else if(n.fleeing&&!n.path.length&&!n.inside){n.inside=true}
+    if(!n.inside&&!n.onWall&&!n.path.length&&!freeAt(n,n.x,n.y))[n.x,n.y]=T(...nearestWalk(n.town,n.x/16,n.y/16));
     walkPath(n,dt,dP,!!wp)}
-  for(const a of ANIMALS){if(!a.town.active)continue;a.t+=dt;a.mv=false;const[np,dP]=nearestPlayer(a.x,a.y);
+  for(const a of ANIMALS){if(!a.town.active)continue;if(!freeAt(a,a.x,a.y))unstick(a);a.t+=dt;a.mv=false;const[np,dP]=nearestPlayer(a.x,a.y);
     if(a.kind!=='dog'&&np&&dP<40&&np.running){const s=70*dt,d=dP||1;moveOut(a,(a.x-np.x)/d*s,(a.y-np.y)/d*s);a.mv=true;a.flip=a.x<np.x?1:0;continue}// cats and chickens scatter from a running hero
     if(a.kind==='dog'&&np&&dP<90&&dP>24&&!np.running){const s=40*dt;moveOut(a,(np.x-a.x)/dP*s,(np.y-a.y)/dP*s);a.mv=true;a.flip=np.x<a.x?1:0;continue}// dogs trot over to say hello
     a.wt-=dt;if(a.wt<=0){a.wt=2+Math.random()*5;const ang=Math.random()*Math.PI*2,go=Math.random()<.6;a.tx=go?Math.cos(ang):0;a.ty=go?Math.sin(ang):0}
@@ -1254,18 +1264,37 @@ function furnish(b){const W=b.w*16,D=b.d*16,r=rng(b.i*977+13),f=[],sp=[],beds=[]
   if(k==='home'||k==='farm'){bed(left+6,back-12,1);if(W>=96)bed(right-6,back-12,1);fire();table(0,6);cont('Cupboard','cupboard',right-1,0,10,22,26,WOODS[3]);cont('Chest','chest',left+6,back-36,16,10,9,'#7a4a24');
     cont('Barrel','barrel',right-2,-D/2+14,12,12,14,'#7a4a24');spr(pick(['plant','jug','books']),left-1,-6,0);box(left+18,-D/2+22,28,18,.5,CLOTH[Math.floor(r()*5)],{solid:false});
     for(let i=0;i<2;i++)stand.push([r()*W*.5-W*.25,-D/2+20+r()*D*.3]);if(k==='farm')spr('sack',left,-D/2+16)}
-  else if(k==='inn'){counter=[0,back-16];box(0,back-26,W*.5,8,14,WOODS[1]);cont('Kegs','barrel',W*.32,back-6,14,12,16,'#7a4a24');cont('Pantry','cupboard',-W*.32,back-4,18,10,26,WOODS[3]);fire&&box(-W/2+8,0,8,24,28,'#77746e');lights.push([-W/2+12,0,10,70]);
-    for(const[x,y]of[[-W*.22,-4],[W*.2,-6],[0,-D*.25]])table(x,y);cont('Strongbox','strongbox',W*.42,back-24,14,10,10,'#5a361b');for(let i=0;i<4;i++)stand.push([(r()-.5)*W*.6,-D*.1+(r()-.5)*D*.3])}
+  else if(k==='inn'){counter=[0,back-20];box(0,back-38,W*.36,8,14,WOODS[1]);cont('Kegs','barrel',W*.32,back-6,14,12,16,'#7a4a24');cont('Pantry','cupboard',-W*.32,back-4,18,10,26,WOODS[3]);fire&&box(-W/2+8,0,8,24,28,'#77746e');lights.push([-W/2+12,0,10,70]);
+    for(const[x,y]of[[-W*.22,-4],[W*.2,-6],[0,-D*.25]])table(x,y);cont('Strongbox','strongbox',W*.16,back-6,14,10,10,'#5a361b');for(let i=0;i<4;i++)stand.push([(r()-.5)*W*.6,-D*.1+(r()-.5)*D*.3])}
   else if(k==='temple'){spr('altar',0,back-6,0,1.2);lights.push([0,back-6,16,80]);for(const x of[-W*.28,W*.28])for(let y=-D*.25;y<back-24;y+=14)box(x,y,W*.3,6,8,WOODS[0]);
     for(const x of[-W/2+8,W/2-8])for(const y of[-D*.2,D*.15]){spr('candle',x,y,12);lights.push([x,y,16,36]);box(x,y,6,6,12,'#c9c2b0')}cont('Offering box','offering',W*.3,back-6,12,8,12,'#c9a24a');counter=[0,back-18];stand.push([-W*.2,back-20])}
-  else if(k==='guard'){for(let i=0;i<3;i++)bed(left+6+i*30,back-12,1);table(W*.2,-4);spr('rack',right-2,-6,0);cont('Footlocker','locker',left+6,back-36,16,10,9,'#5a5a62');cont('Footlocker','locker',left+36,back-36,16,10,9,'#5a5a62');cont('Armory chest','locker',right-2,back-10,14,12,12,'#4a4a52');for(let i=0;i<2;i++)stand.push([(r()-.5)*W*.4,-D*.1])}
+  else if(k==='guard'){for(let i=0;i<3;i++)bed(left+6+i*30,back-12,1);table(W*.2,-4);spr('rack',right-2,-6,0);cont('Footlocker','locker',left+6,back-36,16,10,9,'#5a5a62');cont('Footlocker','locker',left+36,back-36,16,10,9,'#5a5a62');cont('Armory chest','locker',right-2,-D/2+16,14,12,12,'#4a4a52');for(let i=0;i<2;i++)stand.push([(r()-.5)*W*.4,-D*.1])}
   else{// shops: a counter with the keeper behind it
-    counter=[0,back-10];box(-W*.12,back-26,W*.56,10,14,WOODS[1]);cont('Strongbox','strongbox',right-2,back-6,14,10,10,'#5a361b');cont('Stock crate','crate',left+4,back-6,14,14,14,'#8a5528');
+    counter=[W*.05,back-16];box(-W*.1,back-36,W*.34,10,14,WOODS[1]);cont('Strongbox','strongbox',right-2,back-6,14,10,10,'#5a361b');cont('Stock crate','crate',left+4,back-6,14,14,14,'#8a5528');
     if(k==='smith'){spr('anvil',-W*.2,0,0);box(left+4,4,16,16,16,'#3a3840');box(left+4,4,10,10,17,'#ff7a2a',{solid:false,glow:1});lights.push([left+4,4,18,70]);spr('rack',right-2,-10,0)}
     else if(k==='armor'){spr('stand',-W*.25,-2,0);spr('stand',W*.2,-8,0);spr('rack',right-2,-10,0)}
     else if(k==='potion'){for(const x of[left,right-2]){box(x,-4,8,26,24,WOODS[3]);spr('jug',x,-10,24);spr('jug',x,2,24)}lights.push([0,-4,12,40]);spr('plant',W*.2,-D*.3,0)}
     else{spr('sack',-W*.2,-4,0);spr('sack',-W*.25,4,0);box(W*.2,0,14,14,14,'#8a5528');spr('jug',W*.2,0,14)}
     spr('candle',W*.1,back-26,14);lights.push([W*.1,back-26,18,40])}
+  // keep a clear aisle from the door, slide anything in the way to the side, and stand people on open floor
+  for(const it of f){if(!it.solid||it.k!=='box')continue;if(Math.abs(it.x)<16+it.w/2&&it.y-it.d/2<-D/2+34){const side=it.x>=0?1:-1,nx=side*(17+it.w/2);if(Math.abs(nx)+it.w/2<W/2-6)it.x=nx;else it.y=-D/2+36+it.d/2}}
+  const solidAt=(x,y,m=6)=>Math.abs(x)>W/2-8||Math.abs(y)>D/2-8||f.some(it=>it.solid&&Math.abs(x-it.x)<it.w/2+m&&Math.abs(y-it.y)<it.d/2+m);
+  const settle=pt=>{if(!solidAt(pt[0],pt[1]))return pt;for(let r=4;r<60;r+=4)for(let k=0;k<12;k++){const x=pt[0]+Math.cos(k/12*6.283)*r,y=pt[1]+Math.sin(k/12*6.283)*r;if(!solidAt(x,y)&&y>-D/2+24)return[x,y]}return pt};
+  for(let i=0;i<stand.length;i++)stand[i]=settle(stand[i]);
+  // walk the room from the door like a player would; anything out of reach moves to a reachable spot by a wall
+  const pSolid=(x,y)=>Math.abs(x)>W/2-5||y>D/2-5||(y<-D/2+5&&Math.abs(x)>9)||f.some(it=>it.solid&&Math.abs(x-it.x)<it.w/2+3&&Math.abs(y-it.y)<it.d/2+3);
+  const pFree=(x,y)=>!(pSolid(x-5,y-3)||pSolid(x+5,y-3)||pSolid(x-5,y+3)||pSolid(x+5,y+3));
+  const reach=()=>{const st=4,seen=new Set(),q=[[0,Math.round((-D/2+14)/st)*st]];seen.add(q[0]+'');for(let h=0;h<q.length;h++){const[x,y]=q[h];for(const[dx,dy]of[[st,0],[-st,0],[0,st],[0,-st]]){const n=[x+dx,y+dy];if(seen.has(n+'')||Math.abs(n[0])>W/2||Math.abs(n[1])>D/2)continue;if(!pFree(...n))continue;seen.add(n+'');q.push(n)}}return q};
+  let R_=reach();const near=(x,y,r)=>R_.some(([a,b])=>Math.hypot(a-x,b-y)<r);
+  for(const it of f){if(!it.cont||near(it.x,it.y,24))continue;
+    const spots=R_.filter(([x,y])=>y>-D/2+30&&(Math.abs(x)>W/2-22||y>D/2-22)).sort((a,b)=>b[1]-a[1]);
+    for(const[x,y]of spots){const nx=Math.abs(x)>W/2-22?Math.sign(x)*(W/2-6-it.w/2):x,ny=Math.abs(x)>W/2-22?y:D/2-6-it.d/2;
+      if(f.some(o=>o!==it&&o.solid&&Math.abs(nx-o.x)<(o.w+it.w)/2+2&&Math.abs(ny-o.y)<(o.d+it.d)/2+2))continue;const ox=it.x,oy=it.y;it.x=nx;it.y=ny;R_=reach();if(near(nx,ny,24)&&near(0,D/2-30,400))break;it.x=ox;it.y=oy;R_=reach()}
+    if(!near(it.x,it.y,24)){// last resort: any open floor you can reach, keeping the door aisle clear
+      const n0=R_.length,cand=R_.filter(([x,y])=>y>-D/2+36&&Math.abs(x)>14).sort((a,b)=>b[1]-a[1]);
+      for(const[x,y]of cand){if(f.some(o=>o!==it&&o.solid&&Math.abs(x-o.x)<(o.w+it.w)/2+2&&Math.abs(y-o.y)<(o.d+it.d)/2+2))continue;const ox=it.x,oy=it.y;it.x=x;it.y=y;R_=reach();if(near(x,y,24)&&R_.length>n0*.85)break;it.x=ox;it.y=oy;R_=reach()}}}
+  for(let i=0;i<stand.length;i++)if(!near(stand[i][0],stand[i][1],8)){const c=R_.filter(([x,y])=>y>-D/2+24).sort((a,b)=>Math.hypot(a[0]-stand[i][0],a[1]-stand[i][1])-Math.hypot(b[0]-stand[i][0],b[1]-stand[i][1]))[0];if(c)stand[i]=c}
+  if(counter&&!near(counter[0],counter[1],8)){const c=R_.filter(([x,y])=>y>0).sort((a,b)=>b[1]-a[1])[0];if(c)counter=c}
   const conts=f.filter(x=>x.cont).map((x,i)=>({...x.cont,x:x.x,y:x.y,i,key:b.i+':'+i})).concat(f.filter(x=>x.k==='loose').map((x,i)=>({name:'On the table',kind:'loose',item:x.item,x:x.x,y:x.y,i:100+i,key:b.i+':l'+i,loose:x})));
   return{b,W,D,furn:f,sprites:sp,beds,stand,counter,lights,conts,floor:k==='temple'||k==='guard'?'stone':k==='inn'||k==='potion'?'tile':'wood'}}
 const SHOPSTOCK={smith:SHOPS.smith.stock,armor:SHOPS.armor.stock,potion:SHOPS.potion.stock,trade:SHOPS.trade.stock,inn:['bread','potion'],temple:['potion'],guard:['helm','kite','spear','short']};
@@ -1294,8 +1323,8 @@ function enterBuilding(b){const keeper=NPCS.find(n=>n.home===b&&n.role==='shop')
 function doEnter(b){P.out={x:P.x,y:P.y,h:P.h};INSIDE=b;INT=furnish(b);P.realm='b'+b.i;P.x=0;P.y=-INT.D/2+14;P.h=Math.PI/2;
   for(const c of INT.conts)c.owner=true;const res=residents(b);let bi=0,si=0;
   for(const n of res){if(asleep(n)&&INT.beds[bi]){[n.ix,n.iy]=INT.beds[bi++];n.sleeping=true}else{n.sleeping=false;const s=n.role==='shop'&&INT.counter?INT.counter:INT.stand[si++%Math.max(1,INT.stand.length)]||[0,0];[n.ix,n.iy]=s}}
-  buildInterior();sfx(260,.1,'triangle',.04,1.2);save()}
-function exitBuilding(){const b=INSIDE;if(!b)return;if(b.dun)return exitDungeon();INSIDE=null;INT=null;P.realm='w';P.x=b.front[0]*16;P.y=b.front[1]*16;const c=Math.cos(b.a),s=Math.sin(b.a);P.h=Math.atan2(-c,s);leaveInterior();sfx(260,.1,'triangle',.04,.8);save()}
+  unstick(P);buildInterior();sfx(260,.1,'triangle',.04,1.2);save()}
+function exitBuilding(){const b=INSIDE;if(!b)return;if(b.dun)return exitDungeon();INSIDE=null;INT=null;P.realm='w';P.x=b.front[0]*16;P.y=b.front[1]*16;unstick(P);const c=Math.cos(b.a),s=Math.sin(b.a);P.h=Math.atan2(-c,s);leaveInterior();sfx(260,.1,'triangle',.04,.8);save()}
 
 // ---------- dungeons: rooms and corridors, monsters of the dungeon's power level, a guardian and its hoard ----------
 const dunPL=d=>clamp(regionPL(d.x,d.y,tT(d.x,d.y))+6,1,100);
@@ -1312,15 +1341,17 @@ function genDungeon(d){const r=rng(d.id*7+1),G=48,g=new Uint8Array(G*G),rooms=[{
   rooms.forEach((R_,i)=>{lights.push([(R_.x+.6)*16,(R_.y+.6)*16,14,70],[(R_.x+R_.w-.6)*16,(R_.y+.6)*16,14,70]);
     if(R_===boss)chests.push({x:(R_.x+(R_.w>>1))*16+8,y:(R_.y+1)*16+8,boss:1,key:'d'+d.id+':boss'});else if(i&&r()<.5)chests.push({x:(R_.x+1)*16+8,y:(R_.y+R_.h-2)*16+8,key:'d'+d.id+':'+i});
     if(i)for(let k=0;k<1+Math.floor(r()*3);k++)spawns.push([(R_.x+1+r()*(R_.w-2))*16,(R_.y+1+r()*(R_.h-2))*16,R_===boss&&k===0]);});
-  for(const c of chests)g[Math.floor(c.y/16)*G+Math.floor(c.x/16)]=2;// chests block like furniture
+  for(const c of chests){const cx=Math.floor(c.x/16),cy=Math.floor(c.y/16);for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)carve(cx+dx,cy+dy)}
+  for(const[x,y]of spawns)carve(Math.floor(x/16),Math.floor(y/16));
   return{d,G,g,rooms,exit,lights,chests,spawns,boss,pl:dunPL(d)}}
 function enterDungeon(d){const realm='d'+d.id;let L=DLAY.get(realm);if(!L){L=genDungeon(d);DLAY.set(realm,L)}
   P.out={x:P.x,y:P.y,h:P.h};INSIDE={dun:true,d,i:realm,name:d.name,front:[d.x,d.y+2],kind:'dungeon',realm};INT=L;P.realm=realm;P.x=L.exit[0]*16+8;P.y=(L.exit[1]-1)*16+8;P.h=-Math.PI/2;
   const cleared=Q.dun[realm]&&dayNum()-Q.dun[realm].cleared<3;
   if(!enemies.some(e=>e.realm===realm)&&!cleared){const kinds=d.kind==='cave'?['spider','bear','troll','goblin']:['draugr','skeleton','ghost','draugr'];
     for(const[x,y,boss]of L.spawns){const k=boss?(d.kind==='cave'?'troll':'draugr'):pick(kinds);enemies.push(mkEnemy(k,x,y,clamp(L.pl+(boss?8:Math.round((Math.random()-.5)*8)),1,100),realm,boss?1:0))}}
+  for(const e of enemies)if(e.realm===realm)unstick(e);unstick(P);
   toast(d.name+(cleared?' (cleared)':''),2.4);buildDungeonScene(L);sfx(180,.3,'triangle',.05,.6);P.stats.dungeons++}
-function exitDungeon(){const d=INSIDE.d;INSIDE=null;INT=null;P.realm='w';P.x=d.x*16+8;P.y=(d.y+2)*16+8;P.h=Math.PI/2;leaveInterior();save()}
+function exitDungeon(){const d=INSIDE.d;INSIDE=null;INT=null;P.realm='w';P.x=d.x*16+8;P.y=(d.y+2)*16+8;P.h=Math.PI/2;unstick(P);leaveInterior();save()}
 
 // ---------- talking ----------
 function npcTalk(n){const N=n.name;
@@ -1359,7 +1390,7 @@ function updateWorld(dt){time+=dt;
   updateNPCs(dt);updateProjs(dt);
   const night=darkness()>.4;
   for(const e of enemies){const[tp,d]=nearestPlayer(e.x,e.y,e.realm);if(!tp&&e.realm!=='w'){continue}
-    e.t+=dt;e.flash=Math.max(0,e.flash-dt);if(e.k==='ghost'&&e.realm==='w')e.fade=clamp(e.fade+(night?dt:-dt)*.8,0,1);
+    if(!e.fly&&!freeAt(e,e.x,e.y))unstick(e);e.t+=dt;e.flash=Math.max(0,e.flash-dt);if(e.k==='ghost'&&e.realm==='w')e.fade=clamp(e.fade+(night?dt:-dt)*.8,0,1);
     const nt=e.realm==='w'?nearAnyTown(e.x/16,e.y/16,1.25):null;
     if(e.kb>0){e.kb-=dt;move(e,e.kbx*dt,e.kby*dt,e.fly)}
     else{let mx=0,my=0;if(nt){const td=Math.hypot(e.x/16-nt.x,e.y/16-nt.y)||1;mx=(e.x/16-nt.x)/td;my=(e.y/16-nt.y)/td}// monsters shy away from the walls and the guards on them
@@ -1374,8 +1405,9 @@ function updateWorld(dt){time+=dt;
   updateFx(dt);saveT-=dt;if(saveT<=0){saveT=6;save()}}
 function updatePlayer(dt){const I=P.inp;P.stats.play+=dt;
   if(P.buff.ta>0){P.buff.ta-=dt;if(P.buff.ta<=0)recalc()}if(P.buff.td>0){P.buff.td-=dt;if(P.buff.td<=0)recalc()}
-  if(P.deadT>0){P.deadT-=dt;if(P.deadT<=0){if(INSIDE){INSIDE=null;INT=null;leaveInterior()}P.realm='w';const t=nearAnyTown(P.x/16,P.y/16,8)||CAPITAL,f=t.B.temple?t.B.temple.front:[t.x,t.y+4];[P.x,P.y]=[f[0]*16,f[1]*16];P.hp=P.maxHp;P.sta=P.maxSta;
+  if(P.deadT>0){P.deadT-=dt;if(P.deadT<=0){if(INSIDE){INSIDE=null;INT=null;leaveInterior()}P.realm='w';const t=nearAnyTown(P.x/16,P.y/16,8)||CAPITAL,f=t.B.temple?t.B.temple.front:[t.x,t.y+4];[P.x,P.y]=[f[0]*16,f[1]*16];unstick(P);P.hp=P.maxHp;P.sta=P.maxSta;
       if(P.wanted>0){const pay=Math.min(P.gold,Math.ceil(P.wanted));P.gold-=pay;P.stats.bounties+=pay;P.wanted=0}else P.gold=Math.floor(P.gold/2);P.inv=1.5;save()}return}
+  if(!(P.god&&P.realm==='w')&&!freeAt(P,P.x,P.y))unstick(P);
   // bounties fade when no guard can see you
   if(P.wanted>0){const seen=P.realm==='w'&&NPCS.some(g=>g.role==='guard'&&g.hostile&&!g.inside&&!g.dead&&Math.hypot(g.x-P.x,g.y-P.y)<320);if(!seen){const far=!nearAnyTown(P.x/16,P.y/16,1.4);P.wanted=Math.max(0,P.wanted-(far&&P.realm==='w'?3:.4)*dt);if(P.wanted<=0)toast('The guards have stopped looking for '+(PLAYERS.length>1?P.name:'you')+'.',2)}}
   P.h=(P.h+I.turn*2.6*dt)%(Math.PI*2);const fwd=I.fwd,back=fwd<0?.7:1,dx=Math.cos(P.h)*fwd*back,dy=Math.sin(P.h)*fwd*back;
@@ -1745,7 +1777,7 @@ function drawWorldMap(){const c=UI.body.querySelector('#wmap');if(!c)return;cons
   for(const q of PLAYERS){const ox=q.realm==='w'?q.x/16:q.out?q.out.x/16:q.x/16,oy=q.realm==='w'?q.y/16:q.out?q.out.y/16:q.y/16,[x,y]=M_(ox,oy);g.save();g.translate(x,y);g.rotate(q.h+Math.PI/2);g.fillStyle='#000';g.beginPath();g.moveTo(0,-8);g.lineTo(6,6);g.lineTo(-6,6);g.closePath();g.fill();g.fillStyle=q.idx?'#7dde6a':'#fff';g.beginPath();g.moveTo(0,-6);g.lineTo(4,4);g.lineTo(-4,4);g.closePath();g.fill();g.restore()}
   c.onclick=e=>{if(!P.god)return;const r=c.getBoundingClientRect(),tx=Math.floor((e.clientX-r.left)/r.width*512*8-HW),ty=Math.floor((e.clientY-r.top)/r.height*512*8-HW);
     if(INSIDE){if(INSIDE.dun)exitDungeon();else exitBuilding()}let fx=tx,fy=ty;for(let k=0;k<400;k++){const x=tx+Math.round((Math.random()-.5)*k),y=ty+Math.round((Math.random()-.5)*k);if(vertexH(x,y)>2){fx=x;fy=y;break}}
-    P.x=fx*16+8;P.y=fy*16+8;P.realm='w';enemies=enemies.filter(e=>e.realm!=='w');closePanel();toast('Teleported',1.2)}}
+    P.x=fx*16+8;P.y=fy*16+8;P.realm='w';unstick(P);enemies=enemies.filter(e=>e.realm!=='w');closePanel();toast('Teleported',1.2)}}
 
 // ---------- loop ----------
 let last=performance.now();
@@ -1762,7 +1794,7 @@ fresh();initTowns();buildTowns();
 requestAnimationFrame(loop);
 function begin(cont){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)()}catch(e){}
   if(!(cont&&load())){fresh(($('hName').value||'').trim().slice(0,14)||'Ash')}
-  initTowns();for(const p of PLAYERS){usePlayer(p);P.lastCell=-1;explore();if(p.insideB>=0&&BLD[p.insideB]){p.realm='w';doEnter(BLD[p.insideB])}}usePlayer(PLAYERS[0]);layoutChanged();
+  initTowns();for(const p of PLAYERS){usePlayer(p);P.lastCell=-1;explore();if(p.insideB>=0&&BLD[p.insideB]){p.realm='w';doEnter(BLD[p.insideB])}else unstick(p)}usePlayer(PLAYERS[0]);layoutChanged();
   $('start').hidden=true;running=true;hudSig='';drawMini();padUI();
   toast(Q.stage===0?'Welcome to Emberhold. Find Elder Maren by the fountain':'Welcome back, '+P.name,2.8);frame.tabIndex=-1;refocus();arp([392,523,659])}
 function camUI(){$('cTilt').value=Math.round(CAM1.tilt);$('oTilt').textContent=Math.round(CAM1.tilt)+'°';
