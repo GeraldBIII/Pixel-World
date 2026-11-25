@@ -175,7 +175,7 @@ table.rec img{width:24px;height:24px;image-rendering:pixelated;vertical-align:mi
     <div id="panel" class="panel" hidden role="dialog" aria-label="Menu"><div class="ptop"><div id="pTabs" class="pTabs" role="tablist"></div><span id="pGold" class="pGold"></span><button id="pClose" class="pClose" type="button" aria-label="Close">✕</button></div><div id="pBody" class="pBody"></div></div>
     <div id="touch">
       <div id="joy" aria-label="Movement joystick"><div id="joyk"></div></div>
-      <button class="tb" id="tA" aria-label="Attack">A</button><button class="tb" id="tB" aria-label="Talk or open">B</button><button class="tb" id="tP" aria-label="Drink potion">P</button><button class="tb" id="tRun" aria-label="Sprint" aria-pressed="false">Run</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button>
+      <button class="tb" id="tA" aria-label="Attack">A</button><button class="tb" id="tB" aria-label="Talk or open">B</button><button class="tb" id="tP" aria-label="Drink potion">P</button><button class="tb" id="tRun" aria-label="Sprint" aria-pressed="false">Run</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button>
     </div>
     <div id="start">
       <div>
@@ -203,6 +203,7 @@ table.rec img{width:24px;height:24px;image-rendering:pixelated;vertical-align:mi
       <li><kbd>W</kbd><kbd>S</kbd><kbd>↑</kbd><kbd>↓</kbd> walk forward or back</li>
       <li><kbd>A</kbd><kbd>D</kbd><kbd>←</kbd><kbd>→</kbd> turn</li>
       <li><kbd>Shift</kbd> sprint (uses stamina)</li>
+      <li><kbd>Space</kbd> dodge roll: you can't be hit mid-roll</li>
       <li><kbd>Space</kbd> dodge roll: you can't be hit mid-roll</li>
       <li><kbd>Space</kbd> dodge roll: you can't be hit mid-roll</li>
       <li><kbd>Space</kbd> dodge roll: you can't be hit mid-roll</li>
@@ -1620,8 +1621,13 @@ function lighting(){const dk=darkness()/.8,sc=skyColor();scene.background=sc;sce
 
 // ---------- interiors and dungeons: each player gets a scene of their own ----------
 function interiorScene(){if(!P.sceneI){const s=new THREE.Scene(),a=new THREE.HemisphereLight(0xffe8c8,0x6a5a4a,1.2),d=new THREE.DirectionalLight(0xffffff,.5);d.position.set(.3,1,.5);s.add(a,d);s.background=new THREE.Color(0x0a0806);s.userData.amb=a;P.sceneI=s;P.intMeshes=[];P.intWalls=[]}return P.sceneI}
+// build the indoor shaders in the background as soon as play starts, so stepping through a door or into a dungeon never stalls
+// while the graphics card compiles them (that can take seconds on consoles and some Windows browsers)
+const WARM=[];function warmInterior(){try{const s=interiorScene(),g=new THREE.BoxGeometry(1,1,1),fm=new THREE.MeshLambertMaterial({map:texOf(FLOORS[0],true)}),ms=[bMat,glowMat,billMat,fm].map(m=>{const me=new THREE.Mesh(g,m);me.position.set(P.x,0,P.y);me.frustumCulled=false;s.add(me);return me});
+  const done=()=>{for(const me of ms)s.remove(me);g.dispose();WARM.push(fm)};camera.updateMatrixWorld();
+  if(renderer.compileAsync&&renderer.extensions.has('KHR_parallel_shader_compile'))renderer.compileAsync(s,camera).then(done,done);else{renderer.compile(s,camera);done()}}catch(e){console.warn(e)}}
 function buildInterior(){leaveInterior();const SI=interiorScene(),I=INT,M=new MB(),G=new MB(),F={x:0,y:0,a:0};
-  const fl=new THREE.Mesh(new THREE.PlaneGeometry(I.W,I.D),new THREE.MeshLambertMaterial({map:texOf(FLOORS[I.floor],true)}));fl.material.map.repeat.set(I.W/16,I.D/16);fl.rotation.x=-Math.PI/2;SI.add(fl);P.intMeshes.push(fl);
+  const fl=new THREE.Mesh(new THREE.PlaneGeometry(I.W,I.D),new THREE.MeshLambertMaterial({map:texOf(FLOORS[I.floor],true)}));fl.material.map.repeat.set(I.W/16,I.D/16);fl.rotation.x=-Math.PI/2;fl.userData.own=true;SI.add(fl);P.intMeshes.push(fl);
   const wc=INSIDE.wall,mkWall=(x,y,w,d,nx,ny)=>{const m=new MB();m.box(F,x,y,w,d,0,44,wc);m.box(F,x,y,w+.2,d+.2,0,6,'#4a2c17');const me=m.mesh(bMat);me.userData.n=[nx,ny,x,y];SI.add(me);P.intWalls.push(me);P.intMeshes.push(me)};
   mkWall(0,I.D/2+3,I.W+12,6,0,1);mkWall(-I.W/2-3,0,6,I.D,-1,0);mkWall(I.W/2+3,0,6,I.D,1,0);mkWall(-I.W/4-6,-I.D/2-3,I.W/2-12,6,0,-1);mkWall(I.W/4+6,-I.D/2-3,I.W/2-12,6,0,-1);
   G.box(F,0,-I.D/2-2,18,2,0,.6,'#ffd77a');
@@ -1636,7 +1642,7 @@ function buildDungeonScene(L){leaveInterior();const SI=interiorScene(),M=new MB(
   for(const[x,y]of L.lights)G.box(F,x,y,3,3,14,20,'#ffb13a');
   const[ex,ey]=L.exit;G.box(F,ex*16+8,ey*16+12,22,2,0,1,'#ffd77a');
   for(const m of[M.mesh(bMat),G.mesh(glowMat)]){SI.add(m);P.intMeshes.push(m)}}
-function leaveInterior(){if(P.intMeshes)for(const m of P.intMeshes){P.sceneI.remove(m);m.geometry.dispose()}P.intMeshes=[];P.intWalls=[]}
+function leaveInterior(){if(P.intMeshes)for(const m of P.intMeshes){P.sceneI.remove(m);m.geometry.dispose();if(m.userData.own){m.material.map.dispose();m.material.dispose()}}P.intMeshes=[];P.intWalls=[]}
 
 // ---------- per-frame drawing ----------
 const v3=new THREE.Vector3();
@@ -1810,7 +1816,7 @@ requestAnimationFrame(loop);
 function begin(cont){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)()}catch(e){}
   if(!(cont&&load())){fresh(($('hName').value||'').trim().slice(0,14)||'Ash')}
   initTowns();for(const p of PLAYERS){usePlayer(p);P.lastCell=-1;explore();if(p.insideB>=0&&BLD[p.insideB]){p.realm='w';doEnter(BLD[p.insideB])}else unstick(p)}usePlayer(PLAYERS[0]);layoutChanged();
-  $('start').hidden=true;running=true;hudSig='';drawMini();padUI();
+  $('start').hidden=true;running=true;setTimeout(warmInterior,300);hudSig='';drawMini();padUI();
   toast(Q.stage===0?'Welcome to Emberhold. Find Elder Maren by the fountain':'Welcome back, '+P.name,2.8);frame.tabIndex=-1;refocus();arp([392,523,659])}
 function camUI(){$('cTilt').value=Math.round(CAM1.tilt);$('oTilt').textContent=Math.round(CAM1.tilt)+'°';
   $('cZoom').value=Math.round(CAM1.zoom*100);$('oZoom').textContent=Math.round(CAM1.zoom*100)+'%';$('cView').value=CAM1.view;viewUI()}
