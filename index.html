@@ -59,6 +59,13 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .legend ul{margin:0;padding:0;list-style:none;color:var(--mute)}
 .legend li{margin:4px 0}
 kbd{font:9px "Press Start 2P",monospace;color:var(--ink);background:#2a2216;border:1px solid #6b5a3a;border-bottom-width:3px;border-radius:3px;padding:3px 5px;margin-right:4px;white-space:nowrap}
+#camui{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;margin-top:16px;padding:12px 16px;background:#16261c;border:2px solid #3a5a3f;border-radius:6px}
+#camui h3{margin:0;font:600 20px/1.2 "Pixelify Sans";color:var(--gold)}
+#camui label{display:flex;align-items:center;gap:8px;color:var(--mute)}
+#camui input[type=range]{width:min(150px,40vw);accent-color:var(--gold)}
+#camui input[type=checkbox]{width:18px;height:18px;accent-color:var(--gold)}
+#camui output{font:9px "Press Start 2P",monospace;color:var(--ink);min-width:5ch}
+#camui button{min-height:36px;padding:8px 12px}
 .note{margin-top:18px;color:#8e9a83;font-size:15px}
 @media(max-width:600px){#mini{width:96px;height:96px}#hud{font-size:8px;max-width:64%}#quest{font-size:8px}#hearts img{width:14px;height:12px}#clock{font-size:7px}}
 @media(prefers-reduced-motion:reduce){#toast{transition:none}}
@@ -94,6 +101,14 @@ kbd{font:9px "Press Start 2P",monospace;color:var(--ink);background:#2a2216;bord
       </div>
     </div>
   </div>
+  <section id="camui" aria-label="Camera">
+    <h3>Camera</h3>
+    <label>Tilt <input type="range" id="cTilt" min="25" max="90" step="1"><output id="oTilt"></output></label>
+    <label>Orbit <input type="range" id="cOrbit" min="-180" max="180" step="1"><output id="oOrbit"></output></label>
+    <label>Zoom <input type="range" id="cZoom" min="60" max="220" step="5"><output id="oZoom"></output></label>
+    <label class="chk"><input type="checkbox" id="cFollow"> Turn with hero</label>
+    <button id="cReset" type="button">Reset</button>
+  </section>
   <section class="legend">
     <div><h3>Move &amp; fight</h3><ul>
       <li><kbd>W</kbd><kbd>S</kbd><kbd>↑</kbd><kbd>↓</kbd> walk forward or back</li>
@@ -104,6 +119,10 @@ kbd{font:9px "Press Start 2P",monospace;color:var(--ink);background:#2a2216;bord
       <li><kbd>E</kbd><kbd>Enter</kbd> talk to villagers, open chests</li>
       <li><kbd>M</kbd> show or hide the map</li>
       <li><kbd>N</kbd> sound on or off</li></ul></div>
+    <div><h3>Camera</h3><ul>
+      <li><kbd>Right-drag</kbd> orbit and tilt</li>
+      <li><kbd>Scroll</kbd> zoom in or out</li>
+      <li><kbd>R</kbd> reset the camera</li></ul></div>
     <div><h3>Tips</h3><ul>
       <li>Monsters grow tougher the farther you roam from the village.</li>
       <li>Skeletons haunt forests and hills; ghosts appear only at night.</li>
@@ -133,8 +152,8 @@ const mirror=c=>mk(c.width,c.height,g=>{g.scale(-1,1);g.drawImage(c,-c.width,0)}
 const pat=(rows,map)=>mk(rows[0].length,rows.length,g=>{rows.forEach((r,y)=>[...r].forEach((ch,x)=>{if(map[ch])R(g,map[ch],x,y)}))});
 
 // ---------- tiles ----------
-const DEEP=0,WATER=1,SAND=2,GRASS=3,FOREST=4,HILL=5,MOUNT=6,PATH=7,FLOOR=8,WALL=9,ROOF=10,DOOR=11,WIN=12;
-const SOLID=new Set([DEEP,WATER,MOUNT,WALL,ROOF,DOOR,WIN]);
+const DEEP=0,WATER=1,SAND=2,GRASS=3,FOREST=4,HILL=5,MOUNT=6,PATH=7,FLOOR=8,WALL=9,ROOF=10,DOOR=11,WIN=12,HOUSE=13;
+const SOLID=new Set([DEEP,WATER,MOUNT,WALL,ROOF,DOOR,WIN,HOUSE]);
 const SOLIDO=new Set(['tree','pine','boulder','chest','shrine','well','lamp','bush']);
 function ground(base,cols,seed,dens,blade){return mk(16,16,g=>{R(g,base,0,0,16,16);
   for(let y=0;y<16;y++)for(let x=0;x<16;x++)if(hash(x,y,seed)<dens)R(g,cols[Math.floor(hash(x,y,seed+1)*cols.length)],x,y);
@@ -157,6 +176,8 @@ TI[WALL]=[mk(16,16,wall)];
 TI[WIN]=[mk(16,16,g=>{wall(g);R(g,'#4a2c17',4,3,8,8);R(g,'#f4cf6a',5,4,6,6);R(g,'#fff0b0',5,4,2,2);R(g,'#4a2c17',8,4,1,6);R(g,'#4a2c17',5,6,6,1);R(g,'#c79a5a',3,11,10,1)})];
 TI[DOOR]=[mk(16,16,g=>{wall(g);R(g,'#3a2210',4,2,8,14);R(g,'#6b3e1e',5,3,6,13);R(g,'#5a3418',7,3,1,13);R(g,'#e0b24a',9,9,1,1)})];
 TI[ROOF]=[0,1].map(i=>mk(16,16,g=>{R(g,'#b0423a',0,0,16,16);for(let y=0;y<16;y+=4){R(g,'#8c2f2a',0,y+3,16,1);for(let x=((y/4+i)%2)*2;x<16;x+=4){R(g,'#8c2f2a',x,y,1,3);R(g,'#cc5d53',x+1,y,2,1)}}}));
+
+TI[HOUSE]=[mk(16,16,g=>{R(g,'#6b5a3e',0,0,16,16);R(g,'#5a4a32',0,15,16,1)})];
 
 // ---------- object sprites ----------
 const S={};
@@ -218,7 +239,7 @@ const SHR=[[46,-34],[-54,24],[16,60]];
 const HOUSES=[[-10,-8],[5,-8],[-10,4],[5,4]];
 function village(x,y,h){
   if((Math.abs(x)===12||Math.abs(y)===10)&&x!==0&&y!==0)return{t:GRASS,o:'tree',v:0};
-  for(const[hx,hy]of HOUSES){if(x>=hx&&x<hx+5&&y>=hy&&y<hy+4){if(y<hy+3)return{t:ROOF,v:(x+y)&1};return{t:x===hx+2?DOOR:(x===hx+1||x===hx+3)?WIN:WALL,v:0}}}
+  for(const[hx,hy]of HOUSES){if(x>=hx&&x<hx+5&&y>=hy&&y<hy+4)return{t:HOUSE,v:0}}
   if(Math.abs(x)<=3&&Math.abs(y)<=2)return{t:FLOOR,o:x===0&&y===-1?'well':null,v:(x+y)&1};
   if(x===0||y===0)return{t:PATH,v:h>.5?1:0};
   if(Math.abs(x)===4&&Math.abs(y)===3)return{t:GRASS,o:'lamp',v:0};
@@ -272,13 +293,20 @@ if(matchMedia('(pointer:coarse)').matches)document.body.classList.add('coarse');
 
 // ---------- input ----------
 const keys={};const pressed=new Set();
-const GAMEKEYS=new Set(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','KeyW','KeyA','KeyS','KeyD','KeyJ','KeyE','KeyQ','KeyM','KeyN','Enter']);
-addEventListener('keydown',e=>{if(!running)return;if(GAMEKEYS.has(e.code)&&e.target.tagName!=='BUTTON')e.preventDefault();
+const GAMEKEYS=new Set(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','KeyW','KeyA','KeyS','KeyD','KeyJ','KeyE','KeyQ','KeyM','KeyN','KeyR','Enter']);
+addEventListener('keydown',e=>{if(!running)return;if(e.target.tagName==='INPUT'&&e.code.startsWith('Arrow'))return;if(GAMEKEYS.has(e.code)&&e.target.tagName!=='BUTTON')e.preventDefault();
   if(!$('dlg').hidden){const n=parseInt(e.key);const bs=$('dlgOpts').querySelectorAll('button');if(n>=1&&n<=bs.length)bs[n-1].click();else if(e.code==='Escape')closeDlg();else if((e.code==='KeyE'||e.code==='Enter'||e.code==='Space')&&e.target.tagName!=='BUTTON'){bs[bs.length-1]&&bs[bs.length-1].click()}return}
   if(!keys[e.code])pressed.add(e.code);keys[e.code]=true});
 addEventListener('keyup',e=>{keys[e.code]=false});
 cv.addEventListener('mousedown',e=>{if(!running||e.button!==0||!$('dlg').hidden)return;e.preventDefault();keys.Mouse0=true});
 addEventListener('mouseup',e=>{if(e.button===0)keys.Mouse0=false});
+let camDrag=null;
+cv.addEventListener('mousedown',e=>{if(e.button===2){e.preventDefault();camDrag=[e.clientX,e.clientY]}});
+addEventListener('mousemove',e=>{if(!camDrag)return;const dx=e.clientX-camDrag[0],dy=e.clientY-camDrag[1];camDrag=[e.clientX,e.clientY];
+  CAM.orbit=((CAM.orbit-dx*.4+540)%360)-180;CAM.tilt=clamp(CAM.tilt+dy*.3,25,90);camUI()});
+addEventListener('mouseup',e=>{if(e.button===2&&camDrag){camDrag=null;saveCam()}});
+frame.addEventListener('contextmenu',e=>e.preventDefault());
+frame.addEventListener('wheel',e=>{if(!running)return;e.preventDefault();CAM.zoom=clamp(CAM.zoom*Math.exp(-e.deltaY*.0012),.6,2.2);camUI();saveCam()},{passive:false});
 addEventListener('blur',()=>{for(const k in keys)keys[k]=false});
 [['tU','ArrowUp'],['tD','ArrowDown'],['tL','ArrowLeft'],['tR','ArrowRight'],['tA','Mouse0'],['tB','KeyE'],['tP','KeyQ']].forEach(([id,code])=>{const b=$(id);
   b.addEventListener('pointerdown',e=>{e.preventDefault();if(!$('dlg').hidden&&code==='KeyE'){const bs=$('dlgOpts').querySelectorAll('button');bs[bs.length-1]&&bs[bs.length-1].click();return}keys[code]=true;pressed.add(code)});
@@ -326,8 +354,8 @@ function spawn(){const night=darkness()>.4,pd=Math.hypot(P.x,P.y)/16,cap=6+Math.
     const t=tile(tx,ty).t,d=Math.hypot(tx,ty),q=Math.random();let k='slime';
     if(night&&q<.25)k='ghost';else if((t===FOREST||t===HILL||night)&&q<.55)k='skeleton';else if(d>45&&q<.8)k='redslime';
     const b=EN[k],sc=1+Math.max(0,d-20)/90;enemies.push({k,x,y,hp:Math.round(b.hp*sc),max:Math.round(b.hp*sc),dmg:b.dmg+Math.floor(d/140),spd:b.spd,xp:Math.round(b.xp*sc),aggro:b.aggro,fly:b.fly,t:Math.random()*9,wx:0,wy:0,wt:0,kb:0,kbx:0,kby:0,flash:0,fade:k==='ghost'?0:1});return}}
-function burst(x,y,c,n=8,sp=60){for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=sp*(.4+Math.random());parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-20,t:0,life:.4+Math.random()*.4,c})}}
-const float=(x,y,txt,c)=>texts.push({x,y,txt,c,t:0});
+function burst(x,y,c,n=8,sp=60){for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=sp*(.4+Math.random());parts.push({x,y,z:8,vx:Math.cos(a)*s*.6,vy:Math.sin(a)*s*.6,vz:30+Math.random()*50,t:0,life:.4+Math.random()*.4,c})}}
+const float=(x,y,txt,c)=>texts.push({x,y:y+18,z:22,txt,c,t:0});
 function hurtPlayer(dmg,fx,fy){if(P.inv>0||deadT>0)return;P.hp=Math.max(0,P.hp-dmg);P.inv=1;const d=Math.hypot(P.x-fx,P.y-fy)||1;P.kb=.14;P.kbx=(P.x-fx)/d*150;P.kby=(P.y-fy)/d*150;shake=4;sfx(140,.18,'sawtooth',.05,.5);float(P.x,P.y-18,'-'+dmg,'#ff6b6b');
   if(P.hp<=0){deadT=2.2;toast('You fell… the village healers bring you home',2.2);sfx(220,.6,'triangle',.06,.3)}}
 function gainXp(n){P.xp+=n;while(P.xp>=need(P.lv)){P.xp-=need(P.lv);P.lv++;P.maxHp+=2;P.hp=P.maxHp;toast('Level up! Lv '+P.lv+' · +1 heart');arp([523,659,784,1047],.06);burst(P.x,P.y-8,'#ffe27a',18,80)}}
@@ -349,6 +377,7 @@ function update(dt){
   const turn=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0),fwd=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0);
   P.h=(P.h+turn*2.6*dt)%(Math.PI*2);const back=fwd<0?.7:1,dx=Math.cos(P.h)*fwd*back,dy=Math.sin(P.h)*fwd*back;
   if(pressed.has('KeyM')){showMap=!showMap;$('mini').style.display=showMap?'':'none'}
+  if(pressed.has('KeyR')){Object.assign(CAM,CAM_DEF);camUI();saveCam();toast('Camera reset',1.2)}
   if(pressed.has('KeyN')){soundOn=!soundOn;toast(soundOn?'Sound on':'Sound off',1.2)}
   if(pressed.has('KeyQ')){if(P.pots>0&&P.hp<P.maxHp){P.pots--;P.hp=Math.min(P.maxHp,P.hp+6);float(P.x,P.y-18,'+6','#7dff8a');arp([523,784]);burst(P.x,P.y-8,'#ff7aa0',10,40)}else if(P.pots<=0)toast('No potions — Tobb sells them',1.4)}
   if(pressed.has('KeyE')||pressed.has('Enter')){const it=nearInteract();if(it){if(it.type==='npc'){pressed.clear();it.n.kind==='elder'?elderTalk():merchTalk();return}else openChest(it)}}
@@ -383,68 +412,135 @@ function update(dt){
   if(Q.stage===2)SHR.forEach(([sx,sy],i)=>{if(!Q.shrines.has(i)&&Math.hypot(sx*16+8-P.x,sy*16+12-P.y)<26){Q.shrines.add(i);toast('A shrine awakens! ('+Q.shrines.size+'/3)');arp([392,523,659,784,1047],.09);burst(sx*16+8,sy*16,'#ffe27a',30,90);save()}});
   updateFx(dt);
   saveT-=dt;if(saveT<=0){saveT=6;save()}}
-function updateFx(dt){for(const p of parts){p.t+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=120*dt}parts=parts.filter(p=>p.t<p.life);for(const t of texts){t.t+=dt;t.y-=18*dt}texts=texts.filter(t=>t.t<.9);shake=Math.max(0,shake-dt*20)}
+function updateFx(dt){for(const p of parts){p.t+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.z=Math.max(0,p.z+p.vz*dt);p.vz-=160*dt}parts=parts.filter(p=>p.t<p.life);for(const t of texts){t.t+=dt;t.z+=18*dt}texts=texts.filter(t=>t.t<.9);shake=Math.max(0,shake-dt*20)}
 
-// ---------- render ----------
-const TALL={tree:S.tree,pine:S.pine,shrine:null,lamp:S.lamp,well:S.well};
-function shadow(x,y,w=6){ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(x,y,w,2.2,0,0,7);ctx.fill()}
-const gcv=document.createElement('canvas'),gg=gcv.getContext('2d');
-let CX=0,CY=0,COS=1,SIN=0,OX=0,OY=0;
-// camera turns with the hero: their heading always points up the screen
-const camAng=()=>-Math.PI/2-P.h;
-const toS=(x,y)=>{const dx=x-CX,dy=y-CY;return[OX+dx*COS-dy*SIN,OY+dx*SIN+dy*COS]};
-// draw an upright sprite: world coords near (wx,wy) land unrotated around its screen point
-const place=(wx,wy)=>{const[a,b]=toS(wx,wy);ctx.setTransform(1,0,0,1,Math.round(a-wx),Math.round(b-wy))};
-function render(){
-  const th=camAng();COS=Math.cos(th);SIN=Math.sin(th);CX=P.x;CY=P.y-8;
-  OX=VW/2+(Math.random()-.5)*shake;OY=VH/2+(Math.random()-.5)*shake;
-  ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#000';ctx.fillRect(0,0,VW,VH);
-  const rr=Math.hypot(VW,VH)/2+24,tx0=Math.floor((CX-rr)/16),ty0=Math.floor((CY-rr)/16),tx1=Math.floor((CX+rr)/16),ty1=Math.floor((CY+rr)/16)+1,wf=Math.floor(time*1.6)%2;
-  const GW=(tx1-tx0+1)*16,GH=(ty1-ty0+1)*16;if(gcv.width<GW||gcv.height<GH){gcv.width=GW;gcv.height=GH}
-  const list=[],lights=[],vis=(a,b,m=40)=>a>-m&&b>-m&&a<VW+m&&b<VH+m+24;
-  for(let ty=ty0;ty<=ty1;ty++)for(let tx=tx0;tx<=tx1;tx++){const t=tile(tx,ty),X=(tx-tx0)*16,Y=(ty-ty0)*16,WX=tx*16,WY=ty*16,imgs=TI[t.t];
+// ---------- camera ----------
+// A perspective camera that hovers behind the hero. The player sets tilt, orbit and zoom;
+// with "turn with hero" on, the camera's yaw follows the hero's heading.
+const CAM_DEF={tilt:55,orbit:0,zoom:1.15,follow:true},CAM=Object.assign({},CAM_DEF),CAMKEY='emberwild-cam';
+try{const c=JSON.parse(localStorage.getItem(CAMKEY));if(c)Object.assign(CAM,c)}catch(e){}
+const saveCam=()=>{try{localStorage.setItem(CAMKEY,JSON.stringify(CAM))}catch(e){}};
+const DIST=300,FAR=22*16;
+let FX=0,FY=0,YAW=0,SY=0,CYW=1,SP=1,CP=0,FL=330,PCX=0,PCY=0,CAMX=0,CAMY=0,CAMZ=0;
+const camYaw=()=>(CAM.follow?P.h:-Math.PI/2)+CAM.orbit*Math.PI/180;
+const camAng=()=>-Math.PI/2-YAW;
+function setupCam(){FX=P.x;FY=P.y;YAW=camYaw();SY=Math.sin(YAW);CYW=Math.cos(YAW);const t=clamp(CAM.tilt,25,90)*Math.PI/180;SP=Math.sin(t);CP=Math.cos(t);
+  FL=DIST*CAM.zoom;PCX=VW/2+(Math.random()-.5)*shake;PCY=VH*(.5+.15*CP)+(Math.random()-.5)*shake;
+  CAMX=FX-CYW*DIST*CP;CAMY=FY-SY*DIST*CP;CAMZ=DIST*SP}
+// world (x,y,z up) -> [screenX, screenY, scale, depth, forward distance]
+function proj(x,y,z=0){const dx=x-FX,dy=y-FY,a=-SY*dx+CYW*dy,b=CYW*dx+SY*dy,dep=b*CP-z*SP+DIST;if(dep<30)return null;const s=FL/dep;return[PCX+a*s,PCY-(b*SP+z*CP)*s,s,dep,b]}
+const fogA=b=>clamp((FAR-b)/(FAR*.28),0,1);
+
+// ---------- ground (mode-7 style perspective floor) ----------
+const gcv=document.createElement('canvas'),gg=gcv.getContext('2d');let gcX=1e9,gcY=1e9,gcW=-1;
+const rot=document.createElement('canvas');rot.width=rot.height=FAR*2;const rg=rot.getContext('2d');
+function groundCache(wf){const tx=Math.floor(FX/16),ty=Math.floor(FY/16);
+  if(wf===gcW&&Math.abs(tx*16-gcX)<6*16&&Math.abs(ty*16-gcY)<6*16)return;
+  gcX=tx*16;gcY=ty*16;gcW=wf;const n=Math.ceil(FAR/16)+8,size=(2*n+1)*16;if(gcv.width!==size){gcv.width=gcv.height=size}
+  for(let j=-n;j<=n;j++)for(let i=-n;i<=n;i++){const x=tx+i,y=ty+j,t=tile(x,y),X=(i+n)*16,Y=(j+n)*16,imgs=TI[t.t];
     gg.drawImage(isWater(t.t)?imgs[wf]:imgs[t.v%imgs.length],X,Y);
-    if(isWater(t.t)){gg.fillStyle='#c6e8f7';if(!isWater(tile(tx,ty-1).t))gg.fillRect(X,Y,16,1);if(!isWater(tile(tx,ty+1).t))gg.fillRect(X,Y+15,16,1);if(!isWater(tile(tx-1,ty).t))gg.fillRect(X,Y,1,16);if(!isWater(tile(tx+1,ty).t))gg.fillRect(X+15,Y,1,16)}
-    if(t.t===WIN)lights.push([WX+8,WY+8,22]);
-    if(t.o==='flower')gg.drawImage(S.flower[t.v%3],X,Y);else if(t.o){const[a,b]=toS(WX+8,WY+15);if(vis(a,b))list.push({sy:b,wx:WX+8,wy:WY+15,o:t.o,X:WX,Y:WY,tx,ty})}}
-  ctx.setTransform(COS,SIN,-SIN,COS,OX,OY);ctx.drawImage(gcv,0,0,GW,GH,tx0*16-CX,ty0*16-CY,GW,GH);
-  const add=(x,y,o)=>{const[a,b]=toS(x,y);if(vis(a,b))list.push(Object.assign(o,{sy:b,wx:x,wy:y}))};
-  for(const n of NPCS)add(n.x,n.y,{n});for(const e of enemies)add(e.x,e.y,{e});for(const p of pickups)add(p.x,p.y,{p});add(P.x,P.y,{pl:1});
-  list.sort((a,b)=>a.sy-b.sy);
-  for(const d of list){place(d.wx,d.wy);
-    if(d.o){const o=d.o;if(o==='shrine'){const i=SHR.findIndex(([a,b])=>a===d.tx&&b===d.ty),on=Q.shrines.has(i);ctx.drawImage(on?S.shrineOn:S.shrine,d.X,d.Y-8);if(on)lights.push([d.X+8,d.Y-2,46]);else if(Q.stage===2){ctx.globalAlpha=.4+.3*Math.sin(time*4);ctx.drawImage(S.shrineOn,d.X,d.Y-8);ctx.globalAlpha=1}}
-      else if(o==='chest')ctx.drawImage(Q.chests.has(ckey(d.tx,d.ty))?S.chestOpen:S.chest,d.X,d.Y);
-      else if(TALL[o]){ctx.drawImage(TALL[o],d.X,d.Y-8);if(o==='lamp')lights.push([d.X+8,d.Y-3,50])}
-      else ctx.drawImage(S[o],d.X,d.Y)}
-    else if(d.n){const n=d.n,f=Math.floor(time*1.5)%2;shadow(n.x,n.y);ctx.drawImage(NSPR[n.kind][f],n.x-8,n.y-15-f)}
-    else if(d.e){const e=d.e,f=Math.floor(e.t*(e.k==='skeleton'?6:3))%2,bob=e.k==='ghost'?Math.round(Math.sin(e.t*3)*2)-3:0;
-      if(e.k!=='ghost')shadow(e.x,e.y);ctx.globalAlpha=e.k==='ghost'?.82*e.fade:1;ctx.drawImage((e.flash>0?EWHITE:ESPR)[e.k][f],e.x-8,e.y-15+bob);ctx.globalAlpha=1;
-      if(e.hp<e.max){ctx.fillStyle='#000';ctx.fillRect(e.x-7,e.y-19+bob,14,3);ctx.fillStyle='#e0363c';ctx.fillRect(e.x-6,e.y-18+bob,12*e.hp/e.max,1)}}
-    else if(d.p){const p=d.p,img=p.k==='coin'?S.coin:p.k==='heart'?S.heart:S.pot,b=Math.round(Math.sin(p.t*5)*1.2);shadow(p.x,p.y,3);ctx.drawImage(img,Math.round(p.x-img.width/2),Math.round(p.y-img.height-2+p.z+b))}
-    else{shadow(P.x,P.y);const fr=P.moving?Math.floor(P.anim)%2:2;
-      // the hero always faces up the screen, so the swing arcs ahead of them
-      if(P.atk>0){const base=-Math.PI/2,pr=1-P.atk/.18,a=base-1.3+2.6*pr;ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(P.x,P.y-7,15,base-1.3,a);ctx.stroke();ctx.save();ctx.translate(P.x,P.y-7);ctx.rotate(a);ctx.drawImage(S.sword,2,-2);ctx.restore()}
-      if(!(P.inv>0&&Math.floor(P.inv*14)%2))ctx.drawImage(HERO[1][fr],Math.round(P.x-8),Math.round(P.y-15))}}
-  for(const p of parts){place(p.x,p.y);ctx.globalAlpha=1-p.t/p.life;ctx.fillStyle=p.c;ctx.fillRect(Math.round(p.x),Math.round(p.y),2,2)}ctx.globalAlpha=1;
+    if(isWater(t.t)){gg.fillStyle='#c6e8f7';if(!isWater(tile(x,y-1).t))gg.fillRect(X,Y,16,1);if(!isWater(tile(x,y+1).t))gg.fillRect(X,Y+15,16,1);if(!isWater(tile(x-1,y).t))gg.fillRect(X,Y,1,16);if(!isWater(tile(x+1,y).t))gg.fillRect(X+15,Y,1,16)}
+    if(t.o==='flower')gg.drawImage(S.flower[t.v%3],X,Y)}
+  gcv.ox=(tx-n)*16;gcv.oy=(ty-n)*16}
+const SKY_TOP='#6fb0e2',FOG='#cfe6ef';
+function drawGround(){groundCache(Math.floor(time*1.6)%2);
+  rg.setTransform(1,0,0,1,0,0);rg.fillStyle=FOG;rg.fillRect(0,0,FAR*2,FAR*2);
+  const A=-SY,B=-CYW,C=CYW,D=-SY,ox=gcv.ox-FX,oy=gcv.oy-FY;rg.setTransform(A,B,C,D,FAR+A*ox+C*oy,FAR+B*ox+D*oy);rg.drawImage(gcv,0,0);
+  ctx.setTransform(1,0,0,1,0,0);const sky=ctx.createLinearGradient(0,0,0,VH);sky.addColorStop(0,SKY_TOP);sky.addColorStop(1,FOG);ctx.fillStyle=sky;ctx.fillRect(0,0,VW,VH);
+  for(let r=0;r<VH;r++){const t=PCY-(r+.5),den=FL*SP-t*CP;if(den<=0)continue;const b=t*DIST/den;if(b>FAR-1||b<-FAR+1)continue;const s=FL/(b*CP+DIST);
+    ctx.drawImage(rot,FAR-PCX/s,FAR-b,VW/s,1,0,r,VW,1)}
+  // haze toward the horizon
+  const yf=PCY-FAR*SP*FL/(FAR*CP+DIST),ym=PCY-FAR*.62*SP*FL/(FAR*.62*CP+DIST);
+  if(ym>0){const g=ctx.createLinearGradient(0,yf,0,ym);g.addColorStop(0,FOG);g.addColorStop(1,'rgba(207,230,239,0)');ctx.fillStyle=g;ctx.fillRect(0,Math.max(0,yf-2),VW,ym-Math.max(0,yf-2))}}
+
+// ---------- 3D helpers ----------
+const SUN=[.35,.55,.76];
+const shade=(c,n)=>{const k=.58+.42*Math.max(0,n[0]*SUN[0]+n[1]*SUN[1]+n[2]*SUN[2]),[r,g,b]=hex(c);return'rgb('+(r*k|0)+','+(g*k|0)+','+(b*k|0)+')'};
+const facing=(x,y,z,n)=>(CAMX-x)*n[0]+(CAMY-y)*n[1]+(CAMZ-z)*n[2]>0;
+function poly(pts,fill,stroke,lw=.8){const q=[];for(const p of pts){const v=proj(p[0],p[1],p[2]);if(!v)return false;q.push(v)}
+  ctx.beginPath();q.forEach((v,i)=>i?ctx.lineTo(v[0],v[1]):ctx.moveTo(v[0],v[1]));ctx.closePath();ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle=stroke||fill;ctx.lineWidth=lw;ctx.stroke();return true}
+function line3(a,b,c,w=.7){const p=proj(...a),q=proj(...b);if(!p||!q)return;ctx.strokeStyle=c;ctx.lineWidth=w;ctx.beginPath();ctx.moveTo(p[0],p[1]);ctx.lineTo(q[0],q[1]);ctx.stroke()}
+// a rectangle lying on a wall: along axis 'x' (wall at fixed y) or 'y' (wall at fixed x)
+const wallRect=(ax,fixed,u0,u1,z0,z1)=>ax==='x'?[[u0,fixed,z0],[u1,fixed,z0],[u1,fixed,z1],[u0,fixed,z1]]:[[fixed,u0,z0],[fixed,u1,z0],[fixed,u1,z1],[fixed,u0,z1]];
+const WOOD='#8b5a30',ROOFC='#b0423a',EDGE='#2a1a0e',GLASS='#f4cf6a';
+function drawHouse([hx,hy],lights){const x0=hx*16,y0=hy*16,x1=x0+80,y1=y0+64,ym=(y0+y1)/2,H=26,RH=50,out=.6;
+  const win=(ax,fixed,u)=>{poly(wallRect(ax,fixed,u-6,u+6,8,18),GLASS,'#4a2c17',1);lights.push(ax==='x'?[u,fixed+(fixed===y1?out:-out),13,26]:[fixed+(fixed===x1?out:-out),u,13,26])};
+  const planks=(ax,fixed,u0,u1)=>{for(const z of[9,18])line3(ax==='x'?[u0,fixed,z]:[fixed,u0,z],ax==='x'?[u1,fixed,z]:[fixed,u1,z],'rgba(60,34,16,.55)')};
+  const S_=[0,1,0],N_=[0,-1,0],E_=[1,0,0],W_=[-1,0,0];
+  if(facing(x0,y1,0,S_)){poly(wallRect('x',y1,x0,x1,0,H),shade(WOOD,S_),EDGE);planks('x',y1,x0,x1);poly(wallRect('x',y1,x0+32,x0+48,0,20),'#4a2a14',EDGE,1);win('x',y1,x0+16);win('x',y1,x0+64)}
+  if(facing(x0,y0,0,N_)){poly(wallRect('x',y0,x0,x1,0,H),shade(WOOD,N_),EDGE);planks('x',y0,x0,x1);win('x',y0,x0+22);win('x',y0,x0+58)}
+  for(const[x,n]of[[x0,W_],[x1,E_]])if(facing(x,ym,0,n)){poly([[x,y0,0],[x,y1,0],[x,y1,H],[x,ym,RH],[x,y0,H]],shade(WOOD,n),EDGE);planks('y',x,y0,y1);win('y',x,ym)}
+  const len=Math.hypot(ym-y0,RH-H),nS=[0,(RH-H)/len,(y1-ym)/len],nN=[0,-(RH-H)/len,(y1-ym)/len];
+  for(const[ye,n]of[[y1,nS],[y0,nN]])if(facing(x0,(ye+ym)/2,(H+RH)/2,n)){
+    poly([[x0,ye,H],[x1,ye,H],[x1,ym,RH],[x0,ym,RH]],shade(ROOFC,n),'#5a1f1a',1);
+    for(const f of[.25,.5,.75])line3([x0,ye+(ym-ye)*f,H+(RH-H)*f],[x1,ye+(ym-ye)*f,H+(RH-H)*f],'rgba(90,25,20,.6)');
+    for(let x=x0+10;x<x1;x+=10)line3([x,ye,H],[x,ym,RH],'rgba(90,25,20,.35)')}
+  // chimney on the ridge
+  const cx=x0+60,cw=5,ch=RH+10;for(const[n,pts]of[[S_,[[cx-cw,ym+cw,RH-4],[cx+cw,ym+cw,RH-4],[cx+cw,ym+cw,ch],[cx-cw,ym+cw,ch]]],[N_,[[cx-cw,ym-cw,RH-4],[cx+cw,ym-cw,RH-4],[cx+cw,ym-cw,ch],[cx-cw,ym-cw,ch]]],[E_,[[cx+cw,ym-cw,RH-4],[cx+cw,ym+cw,RH-4],[cx+cw,ym+cw,ch],[cx+cw,ym-cw,ch]]],[W_,[[cx-cw,ym-cw,RH-4],[cx-cw,ym+cw,RH-4],[cx-cw,ym+cw,ch],[cx-cw,ym-cw,ch]]]])if(facing(pts[0][0],pts[0][1],pts[0][2],n))poly(pts,shade('#7d7a82',n),'#3a3840');
+  poly([[cx-cw,ym-cw,ch],[cx+cw,ym-cw,ch],[cx+cw,ym+cw,ch],[cx-cw,ym+cw,ch]],'#3a3840','#2a282e')}
+const mh=(x,y)=>tile(x,y).t===MOUNT?18+Math.floor(hash(x,y,77)*16):0;
+function drawRock(tx,ty){const x0=tx*16,y0=ty*16,x1=x0+16,y1=y0+16,h=mh(tx,ty),v=hash(tx,ty,78);
+  const side=v<.5?'#6e7079':'#666871',top=h>=30?(v<.5?'#e9edf3':'#dfe4ec'):(v<.5?'#8d909a':'#858892');
+  for(const[n,nh,pts]of[[[0,1,0],mh(tx,ty+1),y=>[[x0,y1,y],[x1,y1,y],[x1,y1,h],[x0,y1,h]]],[[0,-1,0],mh(tx,ty-1),y=>[[x0,y0,y],[x1,y0,y],[x1,y0,h],[x0,y0,h]]],[[1,0,0],mh(tx+1,ty),y=>[[x1,y0,y],[x1,y1,y],[x1,y1,h],[x1,y0,h]]],[[-1,0,0],mh(tx-1,ty),y=>[[x0,y0,y],[x0,y1,y],[x0,y1,h],[x0,y0,h]]]])
+    if(nh<h){const p=pts(nh);if(facing(p[0][0],p[0][1],h,n))poly(p,shade(side,n),'#3f4048',.6)}
+  poly([[x0,y0,h],[x1,y0,h],[x1,y1,h],[x0,y1,h]],shade(top,[0,0,1]),h>=30?'#c9cfd8':'#6f727c',.6)}
+
+// ---------- sprites ----------
+const TALL={tree:S.tree,pine:S.pine,lamp:S.lamp,well:S.well};
+function bill(img,x,y,z=0,dy=0){const p=proj(x,y,z);if(!p)return null;const s=p[2],w=Math.round(img.width*s),h=Math.round(img.height*s);ctx.drawImage(img,Math.round(p[0]-w/2),Math.round(p[1]-h+dy*s),w,h);return p}
+function shadow(x,y,w=6){const p=proj(x,y,0);if(!p)return;ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(p[0],p[1],w*p[2],Math.max(1,w*p[2]*(.3+.4*CP)),0,0,7);ctx.fill()}
+function heroDir(){let r=(P.h-YAW)%(Math.PI*2);if(r>Math.PI)r-=Math.PI*2;if(r<-Math.PI)r+=Math.PI*2;const a=Math.abs(r);return a<Math.PI/4?1:a>Math.PI*3/4?0:r>0?3:2}
+function drawHero(){shadow(P.x,P.y);const fr=P.moving?Math.floor(P.anim)%2:2,hp=proj(P.x,P.y,7);if(!hp)return;
+  const tip=proj(P.x+Math.cos(P.h)*15,P.y+Math.sin(P.h)*15,7),behind=tip&&tip[1]<hp[1]-1;
+  const sw=()=>{if(P.atk<=0||!tip)return;const s=hp[2],base=Math.atan2(tip[1]-hp[1],tip[0]-hp[0]),pr=1-P.atk/.18,a=base-1.3+2.6*pr;
+    ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=2*s;ctx.beginPath();ctx.arc(hp[0],hp[1],15*s,base-1.3,a);ctx.stroke();
+    ctx.save();ctx.translate(hp[0],hp[1]);ctx.rotate(a);ctx.drawImage(S.sword,2*s,-2*s,S.sword.width*s,S.sword.height*s);ctx.restore()};
+  if(behind)sw();if(!(P.inv>0&&Math.floor(P.inv*14)%2))bill(HERO[heroDir()][fr],P.x,P.y,0,1);if(!behind)sw()}
+
+function render(){
+  setupCam();drawGround();
+  const items=[],lights=[];
+  const bot=PCY-VH,bBot=bot*DIST/(FL*SP-bot*CP)-40,tx=Math.floor(FX/16),ty=Math.floor(FY/16),n=Math.ceil(FAR/16);
+  const onScr=(p,m=60)=>p&&p[0]>-m&&p[0]<VW+m&&p[1]>-12&&p[1]<VH+m;
+  for(let j=-n;j<=n;j++)for(let i=-n;i<=n;i++){const x=tx+i,y=ty+j,t=tile(x,y);
+    if(t.t===MOUNT){const p=proj(x*16+8,y*16+8,0);if(p&&p[4]>bBot&&p[4]<FAR&&p[0]>-120&&p[0]<VW+120)items.push({d:p[3]-6,b:p[4],f:()=>drawRock(x,y)});continue}
+    if(!t.o||t.o==='flower')continue;
+    const X=x*16,Y=y*16,p=proj(X+8,Y+12,0);if(!onScr(p)||p[4]>FAR||p[4]<bBot)continue;const o=t.o;
+    items.push({d:p[3],b:p[4],f:()=>{
+      if(o==='shrine'){const k=SHR.findIndex(([a,b])=>a===x&&b===y),on=Q.shrines.has(k);bill(on?S.shrineOn:S.shrine,X+8,Y+12,0,3);if(on)lights.push([X+8,Y+12,14,46]);else if(Q.stage===2){const a=ctx.globalAlpha;ctx.globalAlpha=a*(.4+.3*Math.sin(time*4));bill(S.shrineOn,X+8,Y+12,0,3);ctx.globalAlpha=a}}
+      else if(o==='chest'){shadow(X+8,Y+13,6);bill(Q.chests.has(ckey(x,y))?S.chestOpen:S.chest,X+8,Y+12,0,2)}
+      else if(TALL[o]){shadow(X+8,Y+13,o==='tree'?7:o==='pine'?6:4);bill(TALL[o],X+8,Y+12,0,2);if(o==='lamp')lights.push([X+8,Y+12,18,50])}
+      else{shadow(X+8,Y+13,6);bill(S[o],X+8,Y+12,0,2)}}})}
+  for(const h of HOUSES){const p=proj(h[0]*16+40,h[1]*16+32,0);if(p&&p[4]<FAR+60&&p[4]>bBot-60)items.push({d:p[3],b:Math.max(0,p[4]-40),f:()=>drawHouse(h,lights)})}
+  const add=(x,y,f)=>{const p=proj(x,y,0);if(onScr(p)&&p[4]<FAR)items.push({d:p[3],b:p[4],f})};
+  for(const nn of NPCS)add(nn.x,nn.y,()=>{const f=Math.floor(time*1.5)%2;shadow(nn.x,nn.y);bill(NSPR[nn.kind][f],nn.x,nn.y,f,1)});
+  for(const e of enemies)add(e.x,e.y,()=>{const f=Math.floor(e.t*(e.k==='skeleton'?6:3))%2,z=e.k==='ghost'?3-Math.round(Math.sin(e.t*3)*2):0;
+    if(e.k!=='ghost')shadow(e.x,e.y);const a=ctx.globalAlpha;if(e.k==='ghost')ctx.globalAlpha=a*.82*e.fade;const p=bill((e.flash>0?EWHITE:ESPR)[e.k][f],e.x,e.y,z,1);ctx.globalAlpha=a;
+    if(p&&e.hp<e.max){const s=p[2],top=p[1]-17*s;ctx.fillStyle='#000';ctx.fillRect(p[0]-7*s,top,14*s,3*s);ctx.fillStyle='#e0363c';ctx.fillRect(p[0]-6*s,top+s,12*s*e.hp/e.max,s)}});
+  for(const pk of pickups)add(pk.x,pk.y,()=>{const img=pk.k==='coin'?S.coin:pk.k==='heart'?S.heart:S.pot,b=Math.sin(pk.t*5)*1.2;shadow(pk.x,pk.y,3);bill(img,pk.x,pk.y,2-pk.z+b,0)});
+  items.push({d:proj(P.x,P.y,0)[3],b:0,f:drawHero});
+  items.sort((a,b)=>b.d-a.d);
+  for(const it of items){ctx.globalAlpha=fogA(it.b);it.f()}ctx.globalAlpha=1;
+  for(const p of parts){const q=proj(p.x,p.y,p.z);if(!q)continue;ctx.globalAlpha=1-p.t/p.life;ctx.fillStyle=p.c;const s=Math.max(1,2*q[2]);ctx.fillRect(Math.round(q[0]-s/2),Math.round(q[1]-s/2),s,s)}ctx.globalAlpha=1;
   ctx.font='8px "Press Start 2P",monospace';ctx.textAlign='center';
-  for(const t of texts){place(t.x,t.y);ctx.globalAlpha=1-t.t/.9;ctx.fillStyle='#000';ctx.fillText(t.txt,Math.round(t.x)+1,Math.round(t.y)+1);ctx.fillStyle=t.c;ctx.fillText(t.txt,Math.round(t.x),Math.round(t.y))}ctx.globalAlpha=1;
-  if(running&&!paused&&deadT<=0){const it=nearInteract();if(it){const bx=it.x,by=it.y-(it.type==='npc'?26:14)+Math.round(Math.sin(time*5));place(it.x,it.y);ctx.fillStyle='#1b140d';ctx.fillRect(bx-6,by-8,12,11);ctx.fillStyle='#f2b544';ctx.fillRect(bx-5,by-7,10,9);ctx.fillStyle='#1b140d';ctx.fillText(document.body.classList.contains('coarse')?'B':'E',bx+.5,by+1)}}
-  ctx.setTransform(1,0,0,1,0,0);
+  for(const t of texts){const q=proj(t.x,t.y,t.z);if(!q)continue;ctx.globalAlpha=1-t.t/.9;ctx.fillStyle='#000';ctx.fillText(t.txt,Math.round(q[0])+1,Math.round(q[1])+1);ctx.fillStyle=t.c;ctx.fillText(t.txt,Math.round(q[0]),Math.round(q[1]))}ctx.globalAlpha=1;
+  if(running&&!paused&&deadT<=0){const it=nearInteract();if(it){const q=proj(it.x,it.y,it.type==='npc'?26:16);if(q){const bx=Math.round(q[0]),by=Math.round(q[1]+Math.sin(time*5));ctx.fillStyle='#1b140d';ctx.fillRect(bx-6,by-8,12,11);ctx.fillStyle='#f2b544';ctx.fillRect(bx-5,by-7,10,9);ctx.fillStyle='#1b140d';ctx.fillText(document.body.classList.contains('coarse')?'B':'E',bx+.5,by+1)}}}
   // lighting
   const dk=darkness();
   if(dk>.01){lg.globalCompositeOperation='source-over';lg.clearRect(0,0,VW,VH);lg.fillStyle='rgba(10,14,42,'+dk+')';lg.fillRect(0,0,VW,VH);lg.globalCompositeOperation='destination-out';
-    const L=[[P.x,P.y-8,64],...lights];for(const[x,y,r]of L){const[sx,sy]=toS(x,y);if(sx<-r||sy<-r||sx>VW+r||sy>VH+r)continue;const gr=lg.createRadialGradient(sx,sy,0,sx,sy,r);gr.addColorStop(0,'rgba(0,0,0,1)');gr.addColorStop(.5,'rgba(0,0,0,.7)');gr.addColorStop(1,'rgba(0,0,0,0)');lg.fillStyle=gr;lg.beginPath();lg.arc(sx,sy,r,0,7);lg.fill()}
-    ctx.drawImage(lcv,0,0);ctx.globalCompositeOperation='lighter';for(const[x,y,r]of lights){const[sx,sy]=toS(x,y);if(sx<-r||sy<-r||sx>VW+r||sy>VH+r)continue;const gr=ctx.createRadialGradient(sx,sy,0,sx,sy,r*.6);gr.addColorStop(0,'rgba(255,170,60,'+(.22*dk)+')');gr.addColorStop(1,'rgba(255,170,60,0)');ctx.fillStyle=gr;ctx.fillRect(sx-r,sy-r,r*2,r*2)}ctx.globalCompositeOperation='source-over'}
+    const L=[[P.x,P.y,8,64],...lights],pts=[];for(const[x,y,z,r]of L){const q=proj(x,y,z);if(!q)continue;const R_=r*q[2];if(q[0]<-R_||q[1]<-R_||q[0]>VW+R_||q[1]>VH+R_)continue;pts.push([q[0],q[1],R_]);
+      const gr=lg.createRadialGradient(q[0],q[1],0,q[0],q[1],R_);gr.addColorStop(0,'rgba(0,0,0,1)');gr.addColorStop(.5,'rgba(0,0,0,.7)');gr.addColorStop(1,'rgba(0,0,0,0)');lg.fillStyle=gr;lg.beginPath();lg.arc(q[0],q[1],R_,0,7);lg.fill()}
+    ctx.drawImage(lcv,0,0);ctx.globalCompositeOperation='lighter';for(const[sx,sy,r]of pts.slice(1)){const gr=ctx.createRadialGradient(sx,sy,0,sx,sy,r*.6);gr.addColorStop(0,'rgba(255,170,60,'+(.22*dk)+')');gr.addColorStop(1,'rgba(255,170,60,0)');ctx.fillStyle=gr;ctx.fillRect(sx-r,sy-r,r*2,r*2)}ctx.globalCompositeOperation='source-over'}
   const h=hour();if(h>16.5&&h<19.5){ctx.fillStyle='rgba(255,120,40,'+(.12*Math.sin((h-16.5)/3*Math.PI))+')';ctx.fillRect(0,0,VW,VH)}
   // quest marker
-  let tgt=null;if(Q.stage===2&&Q.shrines.size<3)tgt=nextShrine();else if(Q.stage===0||(Q.stage===1&&Q.kills>=8)||(Q.stage===2&&Q.shrines.size>=3))tgt=[NPCS[0].x,NPCS[0].y-20];
-  if(tgt&&running){const[sx,sy]=toS(tgt[0],tgt[1]),m=14;
-    if(sx>m&&sy>m&&sx<VW-m&&sy<VH-m){const b=Math.round(Math.sin(time*5)*2);arrowAt(sx,sy-14+b,Math.PI/2)}
-    else{const ccx=VW/2,ccy=VH/2,ax=sx-ccx,ay=sy-ccy,s=Math.min((VW/2-m)/Math.abs(ax||1e-6),(VH/2-m)/Math.abs(ay||1e-6));arrowAt(ccx+ax*s,ccy+ay*s,Math.atan2(ay,ax))}}
+  let tgt=null;if(Q.stage===2&&Q.shrines.size<3)tgt=nextShrine();else if(Q.stage===0||(Q.stage===1&&Q.kills>=8)||(Q.stage===2&&Q.shrines.size>=3))tgt=[NPCS[0].x,NPCS[0].y];
+  if(tgt&&running){const m=14,q=proj(tgt[0],tgt[1],30);
+    if(q&&q[0]>m&&q[1]>m&&q[0]<VW-m&&q[1]<VH-m&&q[4]<FAR){arrowAt(q[0],q[1]+Math.round(Math.sin(time*5)*2),Math.PI/2)}
+    else{const dx=tgt[0]-FX,dy=tgt[1]-FY,ax=-SY*dx+CYW*dy,ay=-(CYW*dx+SY*dy),s=Math.min((VW/2-m)/Math.abs(ax||1e-6),(VH/2-m)/Math.abs(ay||1e-6));arrowAt(VW/2+ax*s,VH/2+ay*s,Math.atan2(ay,ax))}}
   if(deadT>0){ctx.fillStyle='rgba(60,0,0,'+(.5*(1-deadT/2.2)+.2)+')';ctx.fillRect(0,0,VW,VH)}}
 function arrowAt(x,y,a){ctx.save();ctx.translate(Math.round(x),Math.round(y));ctx.rotate(a);ctx.fillStyle='#1b140d';ctx.beginPath();ctx.moveTo(8,0);ctx.lineTo(-5,-7);ctx.lineTo(-2,0);ctx.lineTo(-5,7);ctx.closePath();ctx.fill();ctx.fillStyle='#f2b544';ctx.beginPath();ctx.moveTo(6,0);ctx.lineTo(-3,-5);ctx.lineTo(-1,0);ctx.lineTo(-3,5);ctx.closePath();ctx.fill();ctx.restore()}
 
-const MC={};[[DEEP,'#1d4f86'],[WATER,'#3a86c8'],[SAND,'#e2cd8c'],[GRASS,'#4e9a3b'],[FOREST,'#2f6a2a'],[HILL,'#a08f5f'],[MOUNT,'#7e8089'],[PATH,'#c9a068'],[FLOOR,'#b7b1a6'],[WALL,'#8b5a30'],[ROOF,'#c0463c'],[DOOR,'#8b5a30'],[WIN,'#8b5a30']].forEach(([k,c])=>MC[k]=hex(c));
+const MC={};[[DEEP,'#1d4f86'],[WATER,'#3a86c8'],[SAND,'#e2cd8c'],[GRASS,'#4e9a3b'],[FOREST,'#2f6a2a'],[HILL,'#a08f5f'],[MOUNT,'#7e8089'],[PATH,'#c9a068'],[FLOOR,'#b7b1a6'],[WALL,'#8b5a30'],[ROOF,'#c0463c'],[DOOR,'#8b5a30'],[WIN,'#8b5a30'],[HOUSE,'#c0463c']].forEach(([k,c])=>MC[k]=hex(c));
 const TREEC=hex('#245a22');let miniT=0;
 function drawMini(){const W=80,id=mg.createImageData(W,W),d=id.data,ptx=P.x/16,pty=P.y/16,th=camAng(),c=Math.cos(th),sn=Math.sin(th);
   for(let y=0;y<W;y++)for(let x=0;x<W;x++){const u=(x-40)*2,v=(y-40)*2,t=tile(Math.floor(ptx+u*c+v*sn),Math.floor(pty-u*sn+v*c)),col=(t.o==='tree'||t.o==='pine')?TREEC:MC[t.t],i=(y*W+x)*4;d[i]=col[0];d[i+1]=col[1];d[i+2]=col[2];d[i+3]=255}
@@ -464,6 +560,13 @@ function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;
 requestAnimationFrame(loop);
 function begin(cont){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)()}catch(e){}if(!(cont&&load()))fresh();$('start').hidden=true;running=true;hudSig='';drawMini();
   toast(Q.stage===0?'Find Elder Maren — follow the gold arrow':'Welcome back, hero',2.6);frame.tabIndex=-1;frame.focus({preventScroll:true});arp([392,523,659])}
+function camUI(){$('cTilt').value=Math.round(CAM.tilt);$('oTilt').textContent=Math.round(CAM.tilt)+'°';$('cOrbit').value=Math.round(CAM.orbit);$('oOrbit').textContent=Math.round(CAM.orbit)+'°';
+  $('cZoom').value=Math.round(CAM.zoom*100);$('oZoom').textContent=Math.round(CAM.zoom*100)+'%';$('cFollow').checked=CAM.follow}
+camUI();
+$('cTilt').oninput=e=>{CAM.tilt=+e.target.value;camUI();saveCam()};$('cOrbit').oninput=e=>{CAM.orbit=+e.target.value;camUI();saveCam()};
+$('cZoom').oninput=e=>{CAM.zoom=e.target.value/100;camUI();saveCam()};$('cFollow').onchange=e=>{CAM.follow=e.target.checked;saveCam();frame.focus({preventScroll:true})};
+['cTilt','cOrbit','cZoom'].forEach(id=>$(id).addEventListener('change',()=>frame.focus({preventScroll:true})));
+$('cReset').onclick=()=>{Object.assign(CAM,CAM_DEF);camUI();saveCam();frame.focus({preventScroll:true})};
 $('bNew').onclick=()=>begin(false);$('bCont').onclick=()=>begin(true);
 addEventListener('pagehide',()=>{if(running)save()});
 }
