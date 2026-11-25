@@ -1,0 +1,58 @@
+# Fernhollow
+
+A fantasy farming game in 2D top-down pixel art. You inherit your grandmother's overgrown farm in a fae-touched hollow. Clear the land, grow magical crops, befriend the villagers, and explore the woods and hills around you.
+
+Plain HTML, CSS and JavaScript. No build step and no downloads. All art and sound are generated in code.
+
+## Play
+
+- **On your computer:** open `fernhollow/index.html` in a browser. It works straight from the file.
+- **On the web:** turn on GitHub Pages for this repo and go to `https://<user>.github.io/Pixel-World/fernhollow/`.
+
+Progress saves in the browser automatically each night when you sleep, and whenever you pick **Save Game** in the pause menu.
+
+## Controls
+
+| Action | Keyboard & mouse | Xbox controller | Touch |
+| --- | --- | --- | --- |
+| Move | WASD / arrows | Left stick / D-pad | Drag on the left side |
+| Use tool or item (hold to repeat) | Space, J, left-click | X or RT | Big **Use** button |
+| Talk, harvest, open, ship | E, Enter, right-click | A | **Act** button |
+| Change item | 1–9, 0, −, =, wheel, [ ] | LB / RB | Tap a hotbar slot |
+| Inventory | I or Tab | Y | **Bag** |
+| Map | M | View | **Map** |
+| Pause | Esc or P | Menu | ❚❚ |
+| Menus | Arrows, Enter, Esc | D-pad, A, B, LB/RB for tabs | Tap |
+
+Touch controls appear automatically on phones and hide when a controller or keyboard is used. You can force them on or off in Settings. Landscape is best, but portrait works too.
+
+## The pause menu
+
+Resume, Inventory, Map, Save Game, Settings (music and sound volume, camera zoom, touch controls, vibration, clock format, target highlight, fullscreen), Controls, **Unstuck** (move to the nearest open spot or back to your farmhouse), Quit to Title, and **Exit Game**.
+
+Browsers only let a page close its own tab in some cases. When they don't, Exit Game saves and shows a "you can close this tab" screen.
+
+## What's in it
+
+- A 140×100-tile open world: your farm, Fernhollow village, the Whispering Woods, the Moonwell, the Crystal Hills, Moonlake and Sunny Meadow
+- Farming: till, plant, water, harvest. Six fantasy crops, each with its own seasons (one regrows)
+- Four 14-day seasons with their own colours, rain and snow, and a day/night cycle with lanterns and glowing crops
+- Tools: hoe, watering can, axe, pickaxe and sword. Energy and health
+- The Market Crate sells goods overnight. Three shops, plus upgrades (bigger backpack, copper watering can)
+- Crafting: fences, lanterns, sprinklers, stew and tonics
+- Five villagers with daily dialogue, gifts and friendship hearts
+- A chain of tasks from Elder Oswin with rewards
+- Slimes in the woods and hills, and wisps at night (the farm and village are safe)
+
+## Code layout
+
+| File | What it does |
+| --- | --- |
+| `js/data.js` | Crops, items, recipes, villagers, shops, tasks and settings. Start here to tweak the game |
+| `js/sprites.js` | All pixel art, drawn in code. Swap in your own PNGs here |
+| `js/world.js` | Map generation, regions, buildings and daily respawns |
+| `js/game.js` | Player, tools, farming, NPCs, enemies, the day cycle, saving and rendering |
+| `js/ui.js` | Menus, HUD, inventory, shops and dialogue, with controller/keyboard navigation |
+| `js/input.js` | Keyboard, mouse, touch and gamepad input |
+| `js/audio.js` | Synthesized sound effects and music |
+| `js/main.js` | Startup, screen scaling and the main loop |

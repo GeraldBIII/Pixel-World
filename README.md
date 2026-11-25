@@ -1,3 +1,10 @@
+# Pixel World
+
+Two browser games live here:
+
+- **Emberwild** (`index.html`): an open-world pixel-art adventure. Details below.
+- **Fernhollow** (`fernhollow/`): a fantasy farming game with touch and Xbox controller support. See [`fernhollow/README.md`](fernhollow/README.md).
+
 # Emberwild
 
 A fantasy open-world 2D pixel-art game that runs in the browser. One self-contained `index.html`, no build step.
