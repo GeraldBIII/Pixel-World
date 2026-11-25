@@ -176,7 +176,7 @@ table.rec img{width:24px;height:24px;image-rendering:pixelated;vertical-align:mi
     <div id="panel" class="panel" hidden role="dialog" aria-label="Menu"><div class="ptop"><div id="pTabs" class="pTabs" role="tablist"></div><span id="pGold" class="pGold"></span><button id="pClose" class="pClose" type="button" aria-label="Close">✕</button></div><div id="pBody" class="pBody"></div></div>
     <div id="touch">
       <div id="joy" aria-label="Movement joystick"><div id="joyk"></div></div>
-      <button class="tb" id="tA" aria-label="Attack">A</button><button class="tb" id="tB" aria-label="Talk or open">B</button><button class="tb" id="tP" aria-label="Drink potion">P</button><button class="tb" id="tRun" aria-label="Sprint" aria-pressed="false">Run</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button>
+      <button class="tb" id="tA" aria-label="Attack">A</button><button class="tb" id="tB" aria-label="Talk or open">B</button><button class="tb" id="tP" aria-label="Drink potion">P</button><button class="tb" id="tRun" aria-label="Sprint" aria-pressed="false">Run</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button>
     </div>
     <div id="start">
       <div>
@@ -321,7 +321,7 @@ function addGate(t,a){const ex=t.gates.find(g=>angDiff(g.a,a)<.35);if(ex)return 
 // cut a path where it enters and leaves towns, and turn the crossing points into gates
 function connect(path,A_,Bt){const pts=[];for(const p of path){const inA=A_&&Math.hypot(p[0]-A_.x,p[1]-A_.y)<A_.R*1.15,inB=Bt&&Math.hypot(p[0]-Bt.x,p[1]-Bt.y)<Bt.R*1.15;if(inA||inB)continue;pts.push(p)}
   if(pts.length<2)return;if(A_){const g=addGate(A_,Math.atan2(pts[0][1]-A_.y,pts[0][0]-A_.x));pts.unshift([g.x,g.y])}if(Bt){const l=pts[pts.length-1],g=addGate(Bt,Math.atan2(l[1]-Bt.y,l[0]-Bt.x));pts.push([g.x,g.y])}
-  ROADS.push({pts:chaikin(pts,3),w:2.6,town:0})}
+  ROADS.push({pts:chaikin(pts,3),w:A_&&Bt?3.4:2.6,town:0,major:!!(A_&&Bt),ta:A_?A_.i:-1,tb:Bt?Bt.i:-1})}
 (function roadNet(){const done=new Set();
   for(const A_ of TOWNS){const near=TOWNS.filter(t=>t!==A_).sort((a,b)=>Math.hypot(a.x-A_.x,a.y-A_.y)-Math.hypot(b.x-A_.x,b.y-A_.y)).slice(0,2);
     for(const Bt of near){const k=[A_.i,Bt.i].sort().join();if(done.has(k))continue;done.add(k);connect(astar(A_.x,A_.y,Bt.x,Bt.y),A_,Bt)}}
@@ -331,7 +331,16 @@ function connect(path,A_,Bt){const pts=[];for(const p of path){const inA=A_&&Mat
   for(const t of TOWNS){for(const g of t.gates){const r=wallR(t,g.a),pts=[];for(let i=0;i<=10;i++){const u=i/10,off=Math.sin(u*Math.PI)*(fbmN(g.a*3,u*2,71+t.i,2)-.5)*14;pts.push([t.x+Math.cos(g.a)*r*u-Math.sin(g.a)*off,t.y+Math.sin(g.a)*r*u+Math.cos(g.a)*off])}ROADS.push({pts:chaikin(pts),w:3.2,town:1,ti:t.i})}
     for(const f of(t.R>50?[.78,.58,.42]:[.74,.5])){const ring=[];for(let i=0;i<=48;i++){const a=i/48*Math.PI*2,r=wallR(t,a)*f+(fbmN(Math.cos(a)*2,Math.sin(a)*2,80+f*10+t.i,2)-.5)*4;ring.push([t.x+Math.cos(a)*r,t.y+Math.sin(a)*r])}ROADS.push({pts:ring,w:2.2,town:1,ring:1,ti:t.i})}
     const ga=t.gates.map(g=>g.a).sort((a,b)=>a-b);for(let i=0;i<ga.length;i++)for(const fr of(t.R>50?[1/3,2/3]:[.5])){const span=((ga[(i+1)%ga.length]+(i===ga.length-1?Math.PI*2:0))-ga[i]),a=ga[i]+span*fr,pts=[];if(span<.6)continue;for(let k=0;k<=6;k++){const r=lerp(t.PR+t.R*.18,wallR(t,a)*.9,k/6),off=(fbmN(a*5,k,91,1)-.5)*6;pts.push([t.x+Math.cos(a)*r-Math.sin(a)*off,t.y+Math.sin(a)*r+Math.cos(a)*off])}ROADS.push({pts:chaikin(pts),w:2,town:1,ring:1,ti:t.i})}}
-  for(const R of ROADS){const hs=R.pts.map(([x,y])=>townFlat(x,y,baseH(x,y)));R.h=hs.map((_,i)=>{let s=0,n=0;for(let k=-6;k<=6;k++){s+=hs[clamp(i+k,0,hs.length-1)];n++}return Math.max(s/n,SEA+2.5)})}})();
+  for(const R of ROADS){const hs=R.pts.map(([x,y])=>townFlat(x,y,baseH(x,y)));R.h=hs.map((_,i)=>{let s=0,n=0;for(let k=-6;k<=6;k++){s+=hs[clamp(i+k,0,hs.length-1)];n++}return Math.max(s/n,SEA+2.5)});
+    R.cum=[0];for(let i=1;i<R.pts.length;i++)R.cum.push(R.cum[i-1]+Math.hypot(R.pts[i][0]-R.pts[i-1][0],R.pts[i][1]-R.pts[i-1][1]));R.len=R.cum[R.cum.length-1];
+    // arched stone bridges wherever a road crosses water
+    R.br=[];if(!R.town){let i=0;const n=R.pts.length;while(i<n){if(hs[i]>=SEA+1){i++;continue}let j=i;while(j+1<n&&(hs[j+1]<SEA+1||(j+4<n&&hs.slice(j+1,j+5).some(h=>h<SEA+1))))j++;
+      const s0=Math.max(0,i-3),s1=Math.min(n-1,j+3),len=R.cum[s1]-R.cum[s0];R.br.push({R,s0,s1,len,hA:R.h[s0],hB:R.h[s1],apex:Math.min(22,5+len*.7),arches:Math.max(1,Math.round(len/16))});i=j+1}}}})();
+// the bridge under a road hit (or null), and the height of its deck there
+function bridgeOf(r){if(!r)return null;const R=ROADS[r.ri];if(!R.br||!R.br.length)return null;for(const b of R.br)if(r.i>=b.s0&&r.i<b.s1)return b;return null}
+function deckH(b,r){const R=b.R,s=(R.cum[r.i]+r.t*(R.cum[r.i+1]-R.cum[r.i])-R.cum[b.s0])/b.len;return lerp(b.hA,b.hB,s)+b.apex*Math.sin(Math.PI*clamp(s,0,1))}
+const BRIDGES=[];
+for(const R of ROADS)if(R.br)BRIDGES.push(...R.br);
 const RG=new Map(),RGC=4;
 ROADS.forEach((R,ri)=>{for(let i=0;i<R.pts.length-1;i++){const[a,b]=R.pts[i],[c,d]=R.pts[i+1],m=R.w+4;
   for(let gy=Math.floor((Math.min(b,d)-m)/RGC);gy<=Math.floor((Math.max(b,d)+m)/RGC);gy++)for(let gx=Math.floor((Math.min(a,c)-m)/RGC);gx<=Math.floor((Math.max(a,c)+m)/RGC);gx++){const k=gx+','+gy;let L=RG.get(k);if(!L)RG.set(k,L=[]);L.push([ri,i])}}});
@@ -433,7 +442,7 @@ function dunCell(ci,cj){const k=ci+','+cj;if(DUNS.has(k))return DUNS.get(k);let 
 // ---------- final height at a tile corner ----------
 function vertexH(x,y){let h=townFlat(x,y,baseH(x,y));
   for(const[sx,sy]of SHR){const d=Math.hypot(x-sx,y-sy);if(d<14){const b=townFlat(sx,sy,baseH(sx,sy));h=lerp(h,Math.max(b,8),1-sstep(4,14,d))}}
-  const r=roadAt(x,y);if(r&&r.d<r.w/2+4){h=lerp(h,r.h,1-sstep(r.w/2,r.w/2+4,r.d))}
+  const r=roadAt(x,y);if(r&&r.d<r.w/2+4&&!bridgeOf(r)){h=lerp(h,r.h,1-sstep(r.w/2,r.w/2+4,r.d))}
   {const b=bldAt(x,y,1.2);if(b){if(b.h0===undefined)b.h0=Math.min(...obbCorners(b,.5).map(([cx,cy])=>townFlat(cx,cy,baseH(cx,cy))));h=lerp(h,b.h0,.85)}}
   return h}
 
@@ -442,7 +451,7 @@ const DEEP=0,WATER=1,SAND=2,GRASS=3,FOREST=4,HILL=5,ROCK=6,PATH=7,PLAZA=8,HOUSE=
 Object.assign(BIOPL,{[GRASS]:0,[FOREST]:4,[PINEF]:8,[TAIGA]:14,[TUNDRA]:12,[MARSH]:6,[DESERT]:10,[ASH]:22,[HILL]:8,[ROCK]:14,[SNOW]:20,[SAND]:0,[CLIFF]:14});
 const BIONAME={[GRASS]:'Plains',[FOREST]:'Woodland',[PINEF]:'Pine forest',[TAIGA]:'Snow forest',[TUNDRA]:'Tundra',[MARSH]:'Marsh',[DESERT]:'Desert',[ASH]:'Ashlands',[HILL]:'Highlands',[ROCK]:'Mountains',[SNOW]:'Peaks',[SAND]:'Coast',[CLIFF]:'Cliffs',[PATH]:'Road',[FARM]:'Farmland',[STREET]:'Town',[PLAZA]:'Town',[WATER]:'Shallows'};
 const O={none:0,tree:1,pine:2,bush:3,flower:4,boulder:5,chest:6,shrine:7,lamp:8,fountain:9,stall:10,crop:11,barrel:12,spine:13,reed:14,cactus:15,deadtree:16,mushroom:17,lavarock:18,deadbush:19,crate:20,hay:21,cart:22,bench:23,woodpile:24,fpot:25,well:26,dungeon:27,birch:28,hedge:29,fence:30,stone:31};
-const SOLIDT=new Set([DEEP,TWALL,CLIFF]);
+const SOLIDT=new Set([TWALL,CLIFF]);
 const SOLIDO=new Set([O.tree,O.pine,O.boulder,O.chest,O.shrine,O.lamp,O.fountain,O.stall,O.barrel,O.spine,O.cactus,O.deadtree,O.lavarock,O.crate,O.hay,O.cart,O.woodpile,O.well,O.birch,O.dungeon,O.hedge,O.fence]);
 function biomeTile(x,y,hc,sl){const tp=tempAt(x,y,hc),m=moistAt(x,y);
   if(sl>26)return CLIFF;if(hc>420)return SNOW;if(hc>300||sl>16)return ROCK;
@@ -466,7 +475,9 @@ function genChunk(cx,cy){const x0=cx*CH,y0=cy*CH,V=CH+1,hv=new Float32Array(V*V)
       if(nearW&&((wallDist(cx_,cy_,tw)<1.1&&!inGate(cx_,cy_,tw))||nearTower(tw,cx_,cy_)))T=TWALL;
       else if(inT&&bldAt(cx_,cy_,.2))T=HOUSE;
       else if(inT&&td<tw.PR+(fbmN(x*.3,y*.3,5,1)-.5)*2){T=PLAZA;if(Math.floor(cx_)===Math.floor(tw.x)&&Math.floor(cy_)===Math.floor(tw.y))ob=O.fountain;else if(td>tw.PR*.55&&td<tw.PR*.75&&hh>.93)ob=O.stall;else if(td>tw.PR*.8&&hh<.05)ob=O.lamp;else if(td>tw.PR*.8&&hh>.97)ob=O.bench}
-      else if(r&&r.d<r.w/2){T=r.town&&inT&&inWalls(cx_,cy_,tw)?STREET:PATH;if(r.town&&r.d>r.w/2-.8&&hash(Math.round(r.t*20),r.i,r.ri)<.08&&hh<.2&&!r.ring)ob=O.lamp;else if(r.town&&r.d>r.w/2-.6&&hh>.985)ob=O.cart}
+      else if(r&&r.d<r.w/2){const R_=ROADS[r.ri];T=r.town&&inT&&inWalls(cx_,cy_,tw)?STREET:R_.major&&r.d<r.w/2-.75?STREET:PATH;
+        if(R_.major&&r.d>=r.w/2-.75&&!(tw&&td<tw.R*1.25)){const[a_,b_]=R_.pts[r.i],[c_,d_]=R_.pts[r.i+1],s=R_.cum[r.i]+r.t*(R_.cum[r.i+1]-R_.cum[r.i]),side=(c_-a_)*(cy_-b_)-(d_-b_)*(cx_-a_)>0?1:-1,k=Math.floor(s/9);if(s-k*9<1.05&&(k&1?1:-1)===side)ob=O.lamp}
+        else if(r.town&&r.d>r.w/2-.8&&hash(Math.round(r.t*20),r.i,r.ri)<.08&&hh<.2&&!r.ring)ob=O.lamp;else if(r.town&&r.d>r.w/2-.6&&hh>.985)ob=O.cart}
       else if((es=estateAt(cx_,cy_))){const[u,v]=estLoc(es,cx_,cy_),au=Math.abs(u),k_=es.kind,hb=es.house;
         if(bldAt(cx_,cy_,.2))T=HOUSE;
         else if(k_==='home'){const bt=es.t.bt;T=sl>26?CLIFF:[FOREST,PINEF,TAIGA,TUNDRA,DESERT].includes(bt)?bt:GRASS;
@@ -725,6 +736,17 @@ function drawIcon(g,sh,a,b){switch(sh){
   case'elixir':R(g,'#9a6030',7,1,2,2);R(g,'#cfd8e0',7,3,2,3);for(let i=0;i<9;i++)R(g,i<2?'#2a1020':a,8-Math.min(i,4),6+i,2*Math.min(i,4)+1,1);R(g,'#fff',6,10,1,2);break}}
 const ICONS={};
 function iconFor(def){const k=def.icon.join('|');if(!ICONS[k]){const c=outline(mk(16,16,g=>drawIcon(g,...def.icon)));ICONS[k]={c,url:c.toDataURL()}}return ICONS[k]}
+
+// the leviathan of the outer sea, and its tentacles
+S.levi=outline(mk(40,52,g=>{R(g,'#1f4a5a',8,14,24,38);R(g,'#2a6070',10,16,20,36);ell(g,20,14,14,12,'#1f4a5a');ell(g,20,13,12,10,'#2a6070');R(g,'#18394a',4,20,6,8);R(g,'#18394a',30,20,6,8);
+  R(g,'#ffde5a',12,10,5,4);R(g,'#ffde5a',23,10,5,4);R(g,'#1a1a1a',14,11,2,2);R(g,'#1a1a1a',25,11,2,2);R(g,'#0e1a20',12,20,16,4);for(let x=13;x<28;x+=3)R(g,'#e8e4dc',x,20,1,3);
+  for(let y=28;y<50;y+=5)R(g,'#3a7a88',12,y,16,2);R(g,'#18394a',6,40,4,12);R(g,'#18394a',30,40,4,12)}),'#0a141a');
+S.tentacle=outline(mk(12,40,g=>{for(let y=0;y<40;y++){const w=2+Math.floor(y/10),x=6+Math.round(Math.sin(y*.25)*3)-w/2;R(g,'#2a6070',x,y,w,1);if(y%5===2)R(g,'#d88aa0',x+w-1,y,1,1)}}),'#0a141a');
+// caravans: a covered wagon and the horse that pulls it
+S.wagon=outline(mk(30,24,g=>{R(g,'#f1e6c8',4,1,22,11);R(g,'#d8ccb0',4,1,22,2);for(let x=8;x<26;x+=6)R(g,'#c9bc9c',x,2,1,10);R(g,'#7a4a24',2,12,26,6);R(g,'#5a361b',2,17,26,1);R(g,'#9a6a3a',3,13,24,1);
+  for(const cx of[7,23]){disc(g,cx,19.5,4,'#4a2c17');disc(g,cx,19.5,2.5,'#8a5a34');R(g,'#3a2210',cx,19,1,1)}R(g,'#5a361b',0,14,3,2)}));
+S.horse=[0,1].map(f=>outline(mk(24,18,g=>{const c='#7a4a2a',d='#5a3018';R(g,c,4,6,14,7);R(g,c,16,2,4,7);R(g,c,18,1,5,4);R(g,d,19,0,2,2);R(g,'#1a1a1a',21,2,1,1);R(g,d,15,2,2,6);R(g,d,2,6,3,6);
+  const L=f?[[5,13,0],[8,13,1],[14,13,1],[16,13,0]]:[[5,13,1],[8,13,0],[14,13,0],[16,13,1]];for(const[x,y,o]of L)R(g,o?d:c,x+(o?1:0),y,2,5);R(g,'#3a2210',5,8,13,1)})));
 // ---------- items ----------
 // t: type (weapon/shield/head/body/hands/feet/ring/amulet/use/loot). tier: how far from town it starts to drop (0-5).
 const ITEMS={
@@ -813,7 +835,7 @@ let INSIDE=null,INT=null,VR=6;const TERR=new Map();
 const SPAWN=[CAPITAL.x*16+8,(CAPITAL.y+4)*16+8];
 const ATTRS=[['str','Strength','Hit harder and carry more (+2 bag slots per point).'],['dex','Dexterity','Swing faster, land more critical hits, sprint faster and pick locks.'],['con','Constitution','More health (+2 per point) and stamina (+10 per point).'],['wis','Wisdom','Learn faster (+6% XP), potions heal more, stamina returns sooner.'],['cha','Charisma','Better prices at every shop, and smaller bounties.']];
 const newStats=()=>({kills:{},dist:0,sprint:0,gold:0,spent:0,chests:0,looted:0,sold:0,bought:0,potions:0,deaths:0,dealt:0,taken:0,best:0,play:0,quests:0,blocked:0,stolen:0,stolenV:0,folk:0,guards:0,bounties:0,peak:0,dungeons:0});
-function mkPlayer(name,idx){return{idx,name:name||(idx?'Player 2':'Ash'),x:SPAWN[0]+idx*24,y:SPAWN[1],dir:1,h:-Math.PI/2,anim:0,moving:false,hp:10,maxHp:10,lv:1,xp:0,gold:15,hpBonus:0,realm:'w',
+function mkPlayer(name,idx){return{isHero:true,idx,name:name||(idx?'Player 2':'Ash'),x:SPAWN[0]+idx*24,y:SPAWN[1],dir:1,h:-Math.PI/2,anim:0,moving:false,hp:10,maxHp:10,lv:1,xp:0,gold:15,hpBonus:0,realm:'w',
     attr:{str:5,dex:5,con:5,wis:5,cha:5},pts:0,sta:100,maxSta:100,staT:0,tired:false,wanted:0,out:null,god:false,deadT:0,
     bag:[{id:'potion',n:2},{id:'bread',n:3}],eq:{weapon:{id:'rusty',q:1,n:1},body:{id:'gamb',q:0,n:1}},buff:{atk:0,def:0,ta:0,td:0},lastPray:-1,
     atk:0,atkCd:0,inv:0,kb:0,kbx:0,kby:0,hits:new Set(),stats:newStats(),cam:null,useKb:idx===0,pad:null,inp:{},prev:[],_in:null,_int:null}}
@@ -1007,7 +1029,7 @@ function renderPanel(){const tabs=pCont?[['loot','Search']]:pShop?[['buy','Buy']
 function pauseHTML(){const c=CAM,on=v=>v?'On':'Off',p2=PLAYERS[1],b=(k,l,d)=>`<button type="button" data-pause="${k}"><b>${l}</b>${d?`<span>${d}</span>`:''}</button>`;
   return`<div class="pmenu"><h4>Paused</h4><div class="pgrid">${b('resume','Resume','Back to the game')}${b('unstuck','Unstuck me','Move to the nearest open ground')}${b('save','Save game','Progress also saves on its own')}</div>
   <h4>Camera</h4><div class="pgrid">${b('tiltDn','Tilt −',Math.round(c.tilt)+'°')}${b('tiltUp','Tilt +',Math.round(c.tilt)+'°')}${b('zoomDn','Zoom out',Math.round(c.zoom*100)+'%')}${b('zoomUp','Zoom in',Math.round(c.zoom*100)+'%')}${b('camreset','Reset camera')}</div>
-  <h4>Options</h4><div class="pgrid">${b('sound','Sound',on(soundOn))}${b('god','God mode',on(P.god))}${b('full','Fullscreen',on(!!(document.fullscreenElement||document.webkitFullscreenElement||document.body.classList.contains('pseudofs'))))}${b('p2',p2?'Remove player 2':'Add player 2',p2?'Back to one screen':'Split screen with a controller')}</div>
+  <h4>Options</h4><div class="pgrid">${b('sound','Sound',on(soundOn))}${b('god','God mode',on(P.god))}${P.god?b('fly','Fly',on(P.fly)+' · V to toggle'):''}${b('full','Fullscreen',on(!!(document.fullscreenElement||document.webkitFullscreenElement||document.body.classList.contains('pseudofs'))))}${b('p2',p2?'Remove player 2':'Add player 2',p2?'Back to one screen':'Split screen with a controller')}</div>
   <h4>Leave</h4><div class="pgrid">${b('exit','Save & exit','Return to the title screen')}</div></div>`}
 function pauseAct(k){const c=CAM;
   if(k==='resume')return closePanel();
@@ -1016,6 +1038,7 @@ function pauseAct(k){const c=CAM;
   else if(k==='tiltUp')c.tilt=clamp(c.tilt+6,5,86);else if(k==='tiltDn')c.tilt=clamp(c.tilt-6,5,86);
   else if(k==='zoomUp')c.zoom=clamp(c.zoom*1.15,.6,3.2);else if(k==='zoomDn')c.zoom=clamp(c.zoom/1.15,.6,3.2);
   else if(k==='camreset')Object.assign(c,CAM_DEF);
+  else if(k==='fly'){if(P.realm==='w'){P.fly=!P.fly;toast(P.fly?'Flying: Space or d-pad up to climb, X or d-pad down to descend':'Landing…',2.4)}}
   else if(k==='sound')soundOn=!soundOn;else if(k==='god')toggleGod();else if(k==='full')toggleFull();
   else if(k==='p2'){closePanel();$('bP2').click();return}
   else if(k==='exit')return exitToTitle();
@@ -1150,9 +1173,11 @@ const LINES2={'Brann the Smith':['Mind the forge, it bites.'],'Hilda the Armorer
 
 // ---------- collision: each realm (the open world, a building, a dungeon) has its own ----------
 function outdoorSolid(px,py){const tx=Math.floor(px/16),ty=Math.floor(py/16);if(Math.abs(tx)>=HW-3||Math.abs(ty)>=HW-3)return true;const t=tT(tx,ty);if(SOLIDT.has(t))return true;
+  if(t===WATER||t===DEEP){const r=roadAt(px/16,py/16);if(r&&bridgeOf(r)){if(r.d<r.w/2+.15)return false;if(r.d<r.w/2+.8)return true}}
   const o=tO(tx,ty);if(o&&SOLIDO.has(o)){const r=o===O.hedge||o===O.fence?8:o===O.fountain?11:o===O.stall||o===O.cart?8:o===O.dungeon?10:TRUNK.has(o)?3:o===O.boulder||o===O.lavarock?6:5;if(Math.abs(px-(tx*16+8))<r&&Math.abs(py-(ty*16+11))<r*.85)return true}
   if(t===HOUSE||nearAnyTown(tx,ty,1.5)){if(bldAt(px/16,py/16,.05))return true}
-  if(t===WATER&&hAt(px,py)<SEA-7)return true;return false}
+  // deep water: only heroes swim; everyone else keeps to the shallows and the bridges
+  if(t===DEEP||(t===WATER&&hAt(px,py)<SEA-7))return!(MOVER&&MOVER.isHero);return false}
 function interiorSolid(px,py){const I=INT;if(Math.abs(px)>I.W/2-5||py>I.D/2-5)return true;if(py<-I.D/2+5&&Math.abs(px)>9)return true;
   for(const f of I.furn)if(f.solid&&Math.abs(px-f.x)<f.w/2+3&&Math.abs(py-f.y)<f.d/2+3)return true;return false}
 const DLAY=new Map();
@@ -1175,6 +1200,15 @@ function heroUnstuck(){if(INSIDE&&!INSIDE.dun){P.x=0;P.y=-INT.D/2+14;P.h=Math.PI
     for(let r=12;r<=600&&!done;r+=8)for(let k=0;k<32;k++){const a=k/32*Math.PI*2,x=P.x+Math.cos(a)*r,y=P.y+Math.sin(a)*r;if(open(x,y)){P.x=x;P.y=y;done=true;break}}
     if(!done){const t=nearAnyTown(P.x/16,P.y/16,30)||CAPITAL,f=t.B.temple?t.B.temple.front:[t.x,t.y+4];P.x=f[0]*16;P.y=f[1]*16;unstick(P)}}
   P.roll=0;P.inv=Math.max(P.inv,1);burst(P.x,P.y+4,'#e8f0ff',10,40);toast('Unstuck!',1.4)}
+// swim too far from the island and the leviathan comes for you
+function seaCheck(dt){P.seaChk=(P.seaChk||0)-dt;if(P.seaChk<=0){P.seaChk=.5;const x=P.x/16,y=P.y/16;let far=P.swim&&hAt(P.x,P.y)<SEA-40;if(far)for(let k=0;k<8&&far;k++){const a=k/8*6.283;if(baseH(x+Math.cos(a)*40,y+Math.sin(a)*40)>=SEA-2)far=false}P.farSea=far}
+  if(P.farSea&&!P.god&&P.deadT<=0){P.seaT=(P.seaT||0)+dt;
+    if(!P.seaW1){P.seaW1=1;toast((PLAYERS.length>1?P.name+': ':'')+'The water turns cold and black beneath you… turn back!',2.8);sfx(90,.8,'sawtooth',.05,.6)}
+    if(P.seaT>4&&!P.seaW2){P.seaW2=1;P.levi={t:0,a:P.h+.35};toast('Something enormous rises from the deep!',2.4);shake=6;rumble(P,.6,400);sfx(55,1.2,'sawtooth',.07,.5)}
+    if(P.levi)P.levi.t+=dt;
+    if(P.seaT>7.5){P.hp=0;P.deadT=2.2;P.stats.deaths++;P.levi=null;P.seaT=0;P.seaW1=P.seaW2=0;P.farSea=false;burst(P.x,P.y,'#3a5a7a',30,90);shake=8;
+      toast((PLAYERS.length>1?P.name+': ':'')+'The leviathan dragged you into the deep… the healers find you on the temple steps.',3.2);sfx(60,1,'sawtooth',.07,.4)}}
+  else if(P.seaT>0){P.seaT=Math.max(0,P.seaT-dt*1.5);if(P.levi)P.levi.t=Math.max(0,P.levi.t-dt*2);if(P.seaT<=0){P.seaW1=P.seaW2=0;P.levi=null}}}
 const withP=(p,fn)=>{const me=P;usePlayer(p);try{return fn()}finally{usePlayer(me)}};
 function nearestPlayer(x,y,realm='w',pred){let best=null,bd=1e9;for(const p of PLAYERS){if(p.realm!==realm||p.deadT>0||(pred&&!pred(p)))continue;const d=Math.hypot(p.x-x,p.y-y);if(d<bd){bd=d;best=p}}return[best,bd]}
 
@@ -1234,7 +1268,7 @@ const CAPG=['Sergeant Corwin','Guard Edda','Guard Rolf','Guard Mira','Guard Bast
 const NPCPL={guard:75,shop:14,villager:5,elder:8,kid:1,settler:7};
 let NPCS=[],ANIMALS=[],ELDER=null;
 const sleepRot=c=>mk(c.height,c.width,g=>{g.translate(c.height,0);g.rotate(Math.PI/2);g.drawImage(c,0,0)});
-function initTowns(){NPCS=[];ANIMALS=[];for(const t of TOWNS)initTown(t);for(const h of HOMESTEADS)initHomestead(h)}
+function initTowns(){NPCS=[];ANIMALS=[];for(const t of TOWNS)initTown(t);for(const h of HOMESTEADS)initHomestead(h);initRoads()}
 const SETTLERS=[['the Homesteader',{shirt:'#7a6a3a',hat:'#8a6a3a',beard:'#5a3a2a'}],['the Woodcutter',{shirt:'#a83a2a',hair:'#3a2414',beard:'#3a2414'}],['the Trapper',{shirt:'#6a5a3a',hood:'#5a4a2a'}],
   ['the Herb-wife',{shirt:'#5a7a3a',dress:1,hair:'#bdb6aa',long:1}],['the Shepherd',{shirt:'#c9c2b0',hat:'#6a5a3a',staff:1}],['the Beekeeper',{shirt:'#e6c65a',dress:1,hair:'#7a3f1d',long:1,apron:'#f1e6c8'}]];
 const SETTLER_SAY=['Not many folk come out this far. Rest a while if you like.','The wolves have been bold this season. Keep your blade close.','I left the town for the quiet. The quiet suits me.','Mind the garden, traveller, those beans took me all spring.',
@@ -1288,22 +1322,60 @@ function goTo(n,tgt){const c=nearestWalk(n.town,n.x/16,n.y/16);n.path=findPath(n
 function crime(amount,msg){const a=amount*(1-.05*A('cha'));const first=P.wanted<=0;P.wanted+=Math.max(5,a);P.stats.peak=Math.max(P.stats.peak,P.wanted);hudSig='';
   if(msg)toast((PLAYERS.length>1?P.name+': ':'')+msg+(first?' The guards are after you!':''),2.4);for(const g of NPCS)if(g.role==='guard'&&!g.dead&&onShift(g)&&!g.inside&&Math.hypot(g.x-P.x,g.y-P.y)<420)g.alert=1}
 function hitNPC(n,dmg){if(n.role==='kid'){n.scared=3;return}
-  const wasCalm=!(n.role==='guard'&&n.hostile);n.hp-=n.role==='guard'?Math.max(1,dmg-2):dmg;n.flash=.12;n.scared=8;if(n.role==='guard')n.hostile=true;
-  if(wasCalm)crime(n.role==='guard'?60:40,n.role==='guard'?'You struck a guard!':'You attacked '+n.name.split(' ')[0]+'!');
+  const gd=n.role==='guard'||n.role==='patrol',wasCalm=!(gd&&n.hostile);n.hp-=gd?Math.max(1,dmg-2):dmg;n.flash=.12;n.scared=8;if(gd)n.hostile=true;
+  if(wasCalm)crime(gd?60:40,gd?'You struck a '+(n.role==='patrol'?'road warden':'guard')+'!':'You attacked '+n.name.split(' ')[0]+'!');
   float(n.x,n.y-16,''+dmg,'#fff3c4');sfx(380,.08,'square',.04,.6);if(n.hp<=0)killNPC(n)}
 function killNPC(n){n.dead=true;Q.dead[n.town.i+':'+n.name]=dayNum();burst(n.x,n.y-6,'#e0363c',14,60);
-  if(n.role==='guard'){P.stats.guards++;crime(250,'You killed '+n.name+'!');gainXp(40)}else{P.stats.folk++;crime(150,'You killed '+n.name+'!')}
+  if(n.role==='guard'||n.role==='patrol'){P.stats.guards++;crime(250,'You killed '+n.name+'!');gainXp(40)}else{P.stats.folk++;crime(150,'You killed '+n.name+'!')}
   pickups.push({k:'coin',x:n.x,y:n.y,v:3+Math.floor(Math.random()*12),t:0,vy:-60,z:0,realm:P.realm});if(n.role==='guard'&&Math.random()<.5)dropItem(n.x,n.y,{id:Math.random()<.5?'helm':'kite',q:2,n:1})}
 function payBounty(){const b=Math.ceil(P.wanted),paid=Math.min(P.gold,b);P.gold-=paid;P.stats.bounties+=paid;P.wanted=0;if(!PLAYERS.some(p=>p.wanted>0))for(const n of NPCS){n.hostile=false;n.alert=0}hudSig='';
   toast(paid<b?'You hand over every coin you have. The guards let it go, this time.':'Bounty paid: '+paid+'g. The guards stand down.',2.6);save()}
 // ---------- townsfolk update: only towns with a player nearby are simulated ----------
 const townActive=t=>PLAYERS.some(p=>{const x=(p.realm==='w'?p.x:p.out?p.out.x:p.x)/16,y=(p.realm==='w'?p.y:p.out?p.out.y:p.y)/16;return Math.hypot(x-t.x,y-t.y)<t.R+220});
-function updateNPCs(dt){const near=Math.hypot;
+// ---------- the highways: road wardens patrol between the towns, and trader caravans haul their wares from town to town ----------
+const ROADTOWN={i:'road',name:'the roads',active:true,capital:false,x:0,y:0,R:0,PR:0,bld:[],homes:[],B:{},gates:[],wall:[]};
+let GROUPS=[];
+function roadPt(R,s){s=clamp(s,0,R.len);let lo=0,hi=R.cum.length-1;while(hi-lo>1){const m=(lo+hi)>>1;if(R.cum[m]<=s)lo=m;else hi=m}const seg=R.cum[lo+1]-R.cum[lo]||1,t=(s-R.cum[lo])/seg,[a,b]=R.pts[lo],[c,d]=R.pts[Math.min(lo+1,R.pts.length-1)];return[(a+(c-a)*t)*16,(b+(d-b)*t)*16,Math.atan2(d-b,c-a)]}
+const TRADERS=[['Marek','#8a3a6a',0],['Sabine','#3a6a8a',1],['Orrin','#6a7a3a',0],['Yselde','#8a5a2a',1]];
+function restock(G){const pool=[...new Set([...SHOPS.smith.stock,...SHOPS.armor.stock,...SHOPS.potion.stock,...SHOPS.trade.stock,'amethyst','sapphire','locket'])].filter(id=>ITEMS[id]),st=new Set();while(st.size<Math.min(9,pool.length))st.add(pool[Math.floor(Math.random()*pool.length)]);SHOPS[G.shop].stock=[...st]}
+const destOf=G=>TOWNS.find(t=>t.i===(G.dir>0?G.R.tb:G.R.ta))||CAPITAL;
+function initRoads(){GROUPS=[];const r=rng(4242),hw=ROADS.filter(R=>R.major);if(!hw.length)return;
+  const mk=(name,role,look,extra)=>{const spr=[0,1].map(f=>person(look,f)),pl=role==='patrol'?75:NPCPL.shop;const n={name,role,spr,sprZ:sleepRot(spr[0]),speed:40,path:[],act:null,inside:false,wt:0,t:Math.random()*9,mv:false,cd:0,pl,hp:Math.round((4+pl*1.4)*(role==='patrol'?1.2:1)),dmg:Math.round((1+pl*.11)*1.1),flip:0,i:NPCS.length,town:ROADTOWN,realm:'w',trav:true,x:0,y:0,...extra};n.maxHp=n.hp;NPCS.push(n);if(Q.dead['road:'+name]>=dayNum())n.dead=true;return n};
+  hw.forEach((R,i)=>{const G={kind:'patrol',R,dir:r()<.5?1:-1,s:R.len*(.2+r()*.6),state:'move',members:[]};
+    for(let k=0;k<2;k++)G.members.push(mk('Road Warden '+FIRST[Math.floor(r()*FIRST.length)],'patrol',{...GUARD,hair:['#a45a2a','#2a1a10','#e6c65a','#3a2414'][(i+k)%4]},{grp:G,slot:k}));GROUPS.push(G)});
+  for(let k=0;k<4;k++){const R=hw[(k*3+1)%hw.length],[nm,col,f]=TRADERS[k],G={kind:'caravan',R,dir:k%2?1:-1,s:R.len*(.15+r()*.7),state:'move',members:[],shop:'car'+k};
+    SHOPS[G.shop]={name:nm+"'s wagon",stock:[],rate:.5,likes:['loot','ring','amulet','use']};restock(G);
+    G.trader=mk(nm+' the Trader','trader',f?{shirt:col,dress:1,hair:'#7a3f1d',long:1,hat:'#3a2a1a'}:{shirt:col,hat:'#3a2a1a',beard:'#5a3a2a'},{grp:G,slot:0,onCart:true});G.members.push(G.trader);
+    for(let j=0;j<2;j++)G.members.push(mk('Caravan Guard '+FIRST[Math.floor(r()*FIRST.length)],'patrol',{...GUARD,tabard:'#3a6a3a',hair:['#a45a2a','#2a1a10'][j]},{grp:G,slot:j+1}));GROUPS.push(G)}
+  for(const G of GROUPS)for(const n of G.members){const[x,y]=slotPos(G,n);n.x=x;n.y=y}}
+// where each member of a group belongs: wardens walk side by side; a caravan has its wagon in the middle, a guard ahead and one behind
+function slotPos(G,n){const R=G.R,[x,y,a]=roadPt(R,G.s),px=-Math.sin(a),py=Math.cos(a);
+  if(G.state!=='move'){const side=G.side||1;if(G.kind==='caravan'){const cx=x+px*side*44,cy=y+py*side*44;G.cart={x:cx,y:cy,a:a+(G.dir>0?0:Math.PI)};if(n.slot===0)return[cx,cy];return[cx+Math.cos(a)*(n.slot===1?34:-34)-px*side*10,cy+Math.sin(a)*(n.slot===1?34:-34)-py*side*10]}
+    return[x+px*side*(30+n.slot*16),y+py*side*(30+n.slot*16)]}
+  if(G.kind==='patrol'){const lat=n.slot?10:-10;return[x+px*lat,y+py*lat]}
+  G.cart={x,y,a:a+(G.dir>0?0:Math.PI)};if(n.slot===0)return[x,y];const[gx,gy,ga]=roadPt(R,G.s+G.dir*(n.slot===1?2.6:-2.8)),lat=n.slot===1?11:-11;return[gx-Math.sin(ga)*lat,gy+Math.cos(ga)*lat]}
+function updateGroups(dt){for(const G of GROUPS){const alive=G.members.filter(n=>!n.dead);if(!alive.length){G.moving=false;continue}const busy=alive.some(n=>n.fight),R=G.R;G.moving=false;
+    if(G.state==='move'&&!busy){G.s+=G.dir*(G.kind==='caravan'?30:36)/16*dt;G.moving=true;const end=G.dir>0?R.len-4:4;
+      if(G.dir>0?G.s>=end:G.s<=end){G.s=end;G.moving=false;G.at=destOf(G);if(G.kind==='caravan'){G.state='trade';G.until=time+DAY*.3;G.side=1;restock(G)}else{G.state='wait';G.until=time+DAY*.04}}}
+    else if(G.state!=='move'&&time>=G.until&&!busy){const ti=G.dir>0?R.tb:R.ta,opts=ROADS.filter(q=>q.major&&(q.ta===ti||q.tb===ti)),others=opts.filter(q=>q!==R),nr=others.length?others[Math.floor(Math.random()*others.length)]:R;
+      G.R=nr;G.dir=nr.ta===ti?1:-1;G.s=G.dir>0?4:nr.len-4;G.state='move';G.at=null}}}
+function updateTravNPC(n,dt,dP,wp,dW){const G=n.grp;n.inside=false;
+  if(n.role==='patrol'){let foe=null,fd=1e9,isP=false;
+    if(wp&&dW<260){foe=wp;fd=dW;isP=true}else for(const e of enemies){if(e.realm!=='w'||e.fade<.5||e.dead)continue;const d=Math.hypot(e.x-n.x,e.y-n.y);if(d<180&&d<fd){fd=d;foe=e}}
+    if(foe){n.fight=1;n.hostile=isP;if(fd>16){const s=(isP?62:52)*dt,ox=n.x;moveOut(n,(foe.x-n.x)/fd*s,(foe.y-n.y)/fd*s);n.mv=true;n.flip=n.x<ox?1:0}
+      else if(n.cd<=0){if(isP){n.cd=1.1;withP(foe,()=>hurtPlayer(n.dmg,n.x,n.y))}else{n.cd=.8;foe.hp-=n.dmg;foe.flash=.12;foe.kb=.16;foe.kbx=(foe.x-n.x)/fd*170;foe.kby=(foe.y-n.y)/fd*170;burst(foe.x,foe.y-6,'#ffffff',5,50);sfx(480,.07,'square',.03,.6);if(foe.hp<=0&&!foe.dead){foe.dead=1;killEnemy(foe,true)}}}
+      return}
+    n.fight=0;n.hostile=false}
+  const[tx,ty]=slotPos(G,n),d=Math.hypot(tx-n.x,ty-n.y),[,,a]=roadPt(G.R,G.s);
+  if(d>6&&(n.back||d>30)){n.back=true;const s=70*dt;n.x+=(tx-n.x)/d*Math.min(s,d);n.y+=(ty-n.y)/d*Math.min(s,d);n.mv=true;n.flip=tx<n.x?1:0}
+  else{n.back=false;n.x=tx;n.y=ty;n.mv=!!G.moving;n.flip=Math.cos(a)*G.dir<0?1:0}}
+function updateNPCs(dt){const near=Math.hypot;updateGroups(dt);
   if(dayNum()!==Q.lastDay){Q.lastDay=dayNum();for(const n of NPCS)if(n.dead&&!(Q.dead[n.town.i+':'+n.name]>=dayNum())){n.dead=false;n.hp=n.maxHp;n.inside=true;n.act=null;delete Q.dead[n.town.i+':'+n.name]}}
   for(const t of TOWNS)t.active=townActive(t);for(const h of HOMESTEADS)h.active=townActive(h);
   for(const n of NPCS){if(!n.town.active){n.act=null;continue}n.t+=dt;n.mv=false;n.flash=Math.max(0,(n.flash||0)-dt);n.cd=Math.max(0,n.cd-dt);n.scared=Math.max(0,(n.scared||0)-dt);if(n.dead)continue;
     const[np,dP]=nearestPlayer(n.x,n.y),[wp,dW]=nearestPlayer(n.x,n.y,'w',p=>p.wanted>0);
     if(n.role==='settler'){updateSettler(n,dt,dP,wp,dW);continue}
+    if(n.trav){updateTravNPC(n,dt,dP,wp,dW);continue}
     // children always outrun a hero who has turned on the townsfolk
     if(n.role==='kid'&&!n.inside&&((wp&&dW<170)||(n.scared>0&&np&&dP<170))){const thr=wp&&dW<170?wp:np,dd=wp&&dW<170?dW:dP,pMax=72*thr.spdV*sprintMul()*(thr.god?3:1),s=Math.max(60,pMax*1.35)*dt,ax=(n.x-thr.x)/(dd||1),ay=(n.y-thr.y)/(dd||1),ox=n.x,oy=n.y;
       moveOut(n,ax*s,ay*s);if(near(n.x-ox,n.y-oy)<s*.3){moveOut(n,-ay*s,ax*s);if(near(n.x-ox,n.y-oy)<s*.3)moveOut(n,ay*s,-ax*s)}
@@ -1516,6 +1588,10 @@ function exitDungeon(){const d=INSIDE.d;INSIDE=null;INT=null;P.realm='w';P.x=d.x
 
 // ---------- talking ----------
 function npcTalk(n){const N=n.name;
+  if(n.role==='patrol'){if(P.wanted>0)return talk(N,'You are wanted for your crimes. The bounty is '+Math.ceil(P.wanted)+' gold. Pay it, or answer to the wardens.',[['Pay the bounty ('+Math.ceil(P.wanted)+'g)',payBounty],['Resist',()=>{n.hostile=true}]]);
+    const G=n.grp,t=destOf(G);return talk(N,pick(G.kind==='caravan'?['We see this wagon safely to '+t.name+', or we do not get paid.','Keep your hands off the cargo, friend.','Bandits love a slow wagon. They do not love us.']:['We walk the road to '+t.name+'. Bandits think twice when they see us coming.','Roads are safer with wardens on them. Mind the woods after dark.','The lamps along the highway keep the worst of the night at bay.']),[['Carry on']])}
+  if(n.role==='trader'){const G=n.grp;if(G.state==='trade')return talk(N,'Wares from every corner of the island! I am camped outside '+(G.at?G.at.name:'town')+' a while longer, then back on the road.',[['Trade',()=>openPanel('buy',G.shop)],['Any news?',()=>talk(N,pick(RUMORS),[['Thanks']])],['Farewell']]);
+    return talk(N,'Cannot stop now, we are bound for '+destOf(G).name+'. Find my wagon by the gates there and I will show you my wares.',[['Safe travels']])}
   if(n.role==='guard'){if(P.wanted>0)return talk(N,'You\'re wanted for crimes against '+n.town.name+'. The bounty is '+Math.ceil(P.wanted)+' gold. Pay up, or face the consequences.',[['Pay the bounty ('+Math.ceil(P.wanted)+'g)',payBounty],['Resist',()=>{n.hostile=true;n.alert=1}]]);return talk(N,pick(darkness()>.3?GNIGHT:GLINES),[['Carry on']])}
   if(n.scared>0||P.wanted>0&&n.role!=='elder')return talk(N,pick(['Stay away from me!','Guards! Guards!','Please, I\'ve done nothing to you!']),[['Leave']]);
   if(n.role==='elder')return elderTalk();
@@ -1571,30 +1647,36 @@ function updatePlayer(dt){const I=P.inp;P.stats.play+=dt;
   if(!(P.god&&P.realm==='w')&&!freeAt(P,P.x,P.y))unstick(P);
   // bounties fade when no guard can see you
   if(P.wanted>0){const seen=P.realm==='w'&&NPCS.some(g=>g.role==='guard'&&g.hostile&&!g.inside&&!g.dead&&Math.hypot(g.x-P.x,g.y-P.y)<320);if(!seen){const far=!nearAnyTown(P.x/16,P.y/16,1.4);P.wanted=Math.max(0,P.wanted-(far&&P.realm==='w'?3:.4)*dt);if(P.wanted<=0)toast('The guards have stopped looking for '+(PLAYERS.length>1?P.name:'you')+'.',2)}}
-  P.h=(P.h+I.turn*2.6*dt)%(Math.PI*2);const fwd=I.fwd,back=fwd<0?.7:1,dx=Math.cos(P.h)*fwd*back,dy=Math.sin(P.h)*fwd*back;
+  P.h=(P.h+I.turn*2.6*dt)%(Math.PI*2);
+  // god-mode flight, and swimming wherever the water is too deep to wade
+  P.alt=P.alt||0;if(P.realm==='w'&&P.god&&P.fly)P.alt=clamp(P.alt+(I.up||0)*280*dt,0,1400);else if(P.alt>0)P.alt=Math.max(0,P.alt-320*dt);
+  P.swim=P.realm==='w'&&P.alt<=0&&hAt(P.x,P.y)<SEA-6&&gH(P.x,P.y)<SEA-5;
+  const fwd=I.fwd,back=fwd<0?.7:1,dx=Math.cos(P.h)*fwd*back,dy=Math.sin(P.h)*fwd*back;
   const pr=I.pr;
   if(pr.has('pause'))return openPanel('pause');if(pr.has('map'))return openPanel('map');if(pr.has('bag'))return openPanel('bag');if(pr.has('hero'))return openPanel('hero');
   if(pr.has('camreset')){Object.assign(CAM,CAM_DEF);camUI();saveCam();toast('Camera reset',1.2)}
   if(pr.has('sound')){soundOn=!soundOn;toast(soundOn?'Sound on':'Sound off',1.2)}
   if(pr.has('god'))toggleGod();
   if(pr.has('potion'))quickHeal();
-  if(pr.has('act')){const it=nearInteract();if(it)return interact(it)}
+  if(pr.has('fly')){if(P.god&&P.realm==='w'){P.fly=!P.fly;toast(P.fly?'Flying: Space (or d-pad up) to climb, X (or d-pad down) to descend, V to land':'Landing…',2.6)}else toast(P.god?'You can only fly outdoors':'Flying needs god mode (G)',1.6)}
+  if(pr.has('act')&&!(P.alt>20)){const it=nearInteract();if(it)return interact(it)}
   // dodge roll: a burst of speed you can't be hit during; forward, back, or sideways when only turning
-  if(pr.has('roll')&&!(P.roll>0)&&P.atk<=0){if(P.rollCd>0){}else if(P.sta<20&&!P.god)toast('Too tired to roll',1);else{const side=Math.abs(I.fwd)<.2&&Math.abs(I.turn)>.2,a=P.h+(side?Math.sign(I.turn)*Math.PI/2:I.fwd<-.2?Math.PI:0);
+  if(pr.has('roll')&&!(P.roll>0)&&P.atk<=0&&!P.swim&&!P.fly){if(P.rollCd>0){}else if(P.sta<20&&!P.god)toast('Too tired to roll',1);else{const side=Math.abs(I.fwd)<.2&&Math.abs(I.turn)>.2,a=P.h+(side?Math.sign(I.turn)*Math.PI/2:I.fwd<-.2?Math.PI:0);
     P.rdx=Math.cos(a);P.rdy=Math.sin(a);P.roll=0.42;P.rollCd=.75;P.inv=Math.max(P.inv,0.47);if(!P.god)P.sta-=20;P.staT=.7;burst(P.x,P.y+4,'#c8b48a',8,40);sfx(240,.14,'triangle',.04,.6);rumble(P,.15,90)}}
-  if(I.att&&!(P.roll>0))attack();
+  if(I.att&&!(P.roll>0)&&!P.swim)attack();
   // sprinting burns stamina; it comes back when you ease off
-  const run=I.run&&fwd>0&&(P.god||(!P.tired&&P.sta>0));
+  const run=I.run&&fwd>0&&!P.swim&&(P.god||(!P.tired&&P.sta>0));
   if(run&&!P.god){P.sta=Math.max(0,P.sta-26*dt);P.staT=.9;if(P.sta<=0){P.tired=true;toast('Out of breath!',1.2)}}
   else if(!run){if(P.staT>0)P.staT-=dt;else P.sta=Math.min(P.maxSta,P.sta+staRegen()*dt);if(P.tired&&P.sta>P.maxSta*.3)P.tired=false}
   if(P.god)P.sta=P.maxSta;
   P.moving=Math.abs(fwd)>.05;P.running=run&&P.moving;
   if(P.moving)P.anim+=dt*(run?13:8)*Math.abs(fwd);else P.anim=0;
   const h0=hAt(P.x,P.y);let sp=72*P.spdV*(run?sprintMul():1)*(P.atk>0?.45:1)*(P.god?(run?6:3):1);const ox=P.x,oy=P.y;
-  if(P.realm==='w'&&!P.god){const hx=hAt(P.x+dx*8,P.y+dy*8)-h0;sp*=1/(1+Math.max(0,hx/8)*.9)}
+  if(P.realm==='w'&&!P.god&&!P.swim){const hx=hAt(P.x+dx*8,P.y+dy*8)-h0;sp*=1/(1+Math.max(0,hx/8)*.9)}if(P.swim)sp*=.55;
   if(P.roll>0){P.roll-=dt;const rs=230*(P.god?2:1)*(.45+P.roll/0.42*.8);move(P,P.rdx*rs*dt,P.rdy*rs*dt);if(P.roll<=0)burst(P.x,P.y+4,'#c8b48a',5,30)}
   else if(P.kb>0){P.kb-=dt;move(P,P.kbx*dt,P.kby*dt)}else move(P,dx*sp*dt,dy*sp*dt);
   const moved=Math.hypot(P.x-ox,P.y-oy);P.stats.dist+=moved;if(run)P.stats.sprint+=moved;explore();
+  if(P.swim&&moved>.1){P.swimT=(P.swimT||0)+dt;if(P.swimT>.3){P.swimT=0;burst(P.x,P.y+2,'#d8ecff',3,22)}}seaCheck(dt);
   if(INSIDE&&!INSIDE.dun&&P.y<-INT.D/2+6)return exitBuilding();
   if(INSIDE&&INSIDE.dun&&P.y>(INT.exit[1]+.6)*16)return exitDungeon();
   P.inv=Math.max(0,P.inv-dt);P.atkCd=Math.max(0,P.atkCd-dt);P.rollCd=Math.max(0,(P.rollCd||0)-dt);
@@ -1615,7 +1697,7 @@ function updatePlayer(dt){const I=P.inp;P.stats.play+=dt;
       else p.full=1}}
   if(Q.stage===2&&P.realm==='w')SHR.forEach(([sx,sy],i)=>{if(!Q.shrines.has(i)&&Math.hypot(sx*16+8-P.x,sy*16+12-P.y)<26){Q.shrines.add(i);toast('A shrine awakens! ('+Q.shrines.size+'/3)');arp([392,523,659,784,1047],.09);burst(sx*16+8,sy*16,'#ffe27a',30,90);save()}})}
 function updateFx(dt){for(const p of parts){p.t+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.z=Math.max(0,p.z+p.vz*dt);p.vz-=160*dt}parts=parts.filter(p=>p.t<p.life);for(const t of texts){t.t+=dt;t.z+=18*dt}texts=texts.filter(t=>t.t<.9);shake=Math.max(0,shake-dt*20)}
-function toggleGod(){P.god=!P.god;recalc();toast((PLAYERS.length>1?P.name+': ':'')+(P.god?'God mode ON: invincible, fast, walks through anything outdoors, one-hit kills. Click the map to teleport.':'God mode off'),2.6);$('cGod').checked=PLAYERS[0].god;hudSig=''}
+function toggleGod(){P.god=!P.god;if(!P.god)P.fly=false;recalc();toast((PLAYERS.length>1?P.name+': ':'')+(P.god?'God mode ON: invincible, fast, walks through anything outdoors, one-hit kills. Click the map to teleport.':'God mode off'),2.6);$('cGod').checked=PLAYERS[0].god;hudSig=''}
 
 // =====================================================================
 // RENDERER (three.js): terrain chunks with LOD, billboard sprites, buildings, walls, water, sky,
@@ -1724,7 +1806,7 @@ function voxMaterial(map){return new THREE.ShaderMaterial({side:THREE.DoubleSide
   fragmentShader:`uniform sampler2D map;uniform vec3 tint;uniform vec3 fogColor;uniform float fogNear;uniform float fogFar;uniform float nearFade;uniform vec2 heroP;uniform float heroD;uniform float heroR;uniform vec3 sunDir;uniform float sunI;uniform float amb;
     varying vec2 vL;varying vec4 vT;varying vec3 vC;varying vec3 vN;varying float vDepth;
     void main(){vec4 c=texture2D(map,vT.xy+fract(vL)*vT.zw);if(c.a<.5)discard;
-      float fz=1.;if(vDepth<heroD-6.)fz=smoothstep(heroR*.8,heroR*1.5,distance(gl_FragCoord.xy,heroP));fz=min(fz,smoothstep(heroD*.3,heroD*.6,vDepth));if(fz<.999){vec2 q=mod(floor(gl_FragCoord.xy),4.);if(fz<mod(q.x*2.+q.y*3.+q.x*q.y,4.)/4.+.12)discard;}
+      float fz=1.;if(vDepth<heroD-6.)fz=smoothstep(heroR*.55,heroR,distance(gl_FragCoord.xy,heroP));fz=min(fz,smoothstep(heroD*.22,heroD*.45,vDepth));if(fz<.999){vec2 q=mod(floor(gl_FragCoord.xy),4.);if(fz<mod(q.x*2.+q.y*3.+q.x*q.y,4.)/4.+.12)discard;}
       float l=amb+sunI*max(dot(normalize(vN),sunDir),0.)+.12*vN.y;vec3 col=c.rgb*vC*l*tint;float f=smoothstep(fogNear,fogFar,vDepth);gl_FragColor=vec4(mix(col,fogColor,f),1.);
 #include <colorspace_fragment>
 }`})}
@@ -1920,6 +2002,12 @@ function buildTowns(){const M=new MB(),G=new MB(),tb=[];
   const FV=new VB();for(const t of TOWNS){const tx=Math.floor(t.x),ty=Math.floor(t.y),x=tx*16+8,y=ty*16+11,z=vertexH(tx,ty);
     for(const a of[0,Math.PI/4])FV.box(x,y,z-2,34,34,9,a,'brick','brick',[1,1,1],16);for(const a of[0,Math.PI/4])FV.box(x,y,z+6.5,28,28,.6,a,'water','water',[1,1,1],16);
     FV.box(x,y,z,7,7,22,0,'brick','brick',[1,1,1],16);FV.box(x,y,z+20,15,15,3,Math.PI/4,'brick','brick',[1,1,1],16);FV.box(x,y,z+22.5,11,11,.6,Math.PI/4,'water','water',[1.2,1.2,1.3],16);FV.box(x,y,z+23,3,3,6,0,'water','water',[1.3,1.3,1.4],8)}
+  // arched stone bridges: a humped deck on one or more arches, with parapets and a lamp at each end
+  for(const b of BRIDGES){const R=b.R,W2=R.w*16,st=.5;for(let s=0;s<=b.len;s+=st){let i=b.s0;const sc=R.cum[b.s0]+s;while(i<b.s1-1&&R.cum[i+1]<sc)i++;const seg=R.cum[i+1]-R.cum[i]||1,t=(sc-R.cum[i])/seg,[a,c]=R.pts[i],[d,e]=R.pts[i+1],x=(a+(d-a)*t)*16,y=(c+(e-c)*t)*16,ang=Math.atan2(e-c,d-a);
+      const u=s/b.len,z=lerp(b.hA,b.hB,u)+b.apex*Math.sin(Math.PI*u),fa=(u*b.arches)%1,arch=SEA-10+(z-9-(SEA-10))*Math.pow(Math.sin(Math.PI*fa),.45);
+      FV.box(x,y,arch,st*16+1.2,W2+2,z-arch,ang,'brick','stone',[1,1,1],16);for(const q of[-1,1])FV.box(x-Math.sin(ang)*q*(W2/2+1.5),y+Math.cos(ang)*q*(W2/2+1.5),z,st*16+1.2,3,9,ang,'brick','brick',[.95,.95,.95],16)}
+    for(const k of[b.s0,b.s1]){const[x,y]=R.pts[k],j=Math.min(k,R.pts.length-2),ang=Math.atan2(R.pts[j+1][1]-R.pts[j][1],R.pts[j+1][0]-R.pts[j][0]),z=k===b.s0?b.hA:b.hB;
+      for(const q of[-1,1]){const lx=x*16-Math.sin(ang)*q*(W2/2+4),ly=y*16+Math.cos(ang)*q*(W2/2+4);FV.box(lx,ly,z,4,4,34,0,'brick','brick',[1,1,1],16);FV.box(lx,ly,z+30,7,7,7,0,'glow','glow',[1.6,1.5,1.2],0);tb.push([S.torch,lx,ly,z+26])}}}
   scene.add(M.mesh(bMat),G.mesh(glowMat),FV.mesh(voxMat));townBills=tb}
 
 // ---------- water, sky and light through the day ----------
@@ -1962,10 +2050,13 @@ const v3=new THREE.Vector3();
 function toScreen(x,y,z){v3.set(x,z,y).project(camera);if(v3.z>1||v3.z<-1)return null;return[(v3.x+1)/2*VW,(1-v3.y)/2*VH]}
 function heroSprites(){if(!P.heroDirty)return;P.heroDirty=false;if(!P.heroSlots){P.heroSlots=P.HERO.map(row=>row.map(c=>sprite(c)))}else P.HERO.forEach((row,i)=>row.forEach((c,j)=>resprite(c,P.heroSlots[i][j])))}
 function heroDir(p=P){let r=(p.h-YAW)%(Math.PI*2);if(r>Math.PI)r-=Math.PI*2;if(r<-Math.PI)r+=Math.PI*2;const a=Math.abs(r);return a<Math.PI/4?1:a>Math.PI*3/4?0:r>0?3:2}
-const gH=(x,y)=>hAt(x,y);
+// ground height for things standing on it: bridge decks count as ground
+const gH=(x,y)=>{const h=hAt(x,y);if(h<SEA+4&&!INSIDE){const r=roadAt(x/16,y/16);if(r&&r.d<r.w/2+.3){const b=bridgeOf(r);if(b){const d=deckH(b,r);if(d>h)return d}}}return h};
+// where a hero is drawn: on the ground, chest-deep when swimming, or up in the sky when flying
+const heroZ=q=>{if(q.realm!=='w')return gH(q.x,q.y);const h=gH(q.x,q.y),base=q.swim?Math.max(h,SEA-11):q.alt>0?Math.max(h,SEA):h;return base+(q.alt||0)};
 function clearView(tx,ty,tz,t,dist){const cx=tx-Math.cos(YAW)*Math.cos(t)*dist,cy=ty-Math.sin(YAW)*Math.cos(t)*dist,cz=tz+Math.sin(t)*dist;for(let f=.08;f<=1;f+=.04){const x=tx+(cx-tx)*f,y=ty+(cy-ty)*f,z=tz+(cz-tz)*f;if(z<gH(x,y)+5)return f-.04}return 1}
 function renderView(dt,vi){const V_=VIEWS[vi];VW=V_.w;VH=V_.h;if(!P.camObj)P.camObj=new THREE.PerspectiveCamera(42,1.6,2,6000);camera=P.camObj;camera.aspect=VW/VH;
-  heroSprites();YAW=camYaw();const inside=!!INSIDE,dun=inside&&INSIDE.dun,dist=(dun?170:inside?170:250)/CAM.zoom,ph=gH(P.x,P.y);let tilt=clamp(CAM.tilt,dun?50:inside?28:5,86)*Math.PI/180;
+  heroSprites();YAW=camYaw();const inside=!!INSIDE,dun=inside&&INSIDE.dun,dist=(dun?170:inside?170:250)/CAM.zoom,ph=heroZ(P);let tilt=clamp(CAM.tilt,dun?50:inside?28:5,86)*Math.PI/180;
   const tx=P.x,ty=P.y,tz=ph+18;
   if(!inside){let best=clearView(tx,ty,tz,tilt,dist);if(best<.6)for(let t=tilt+.15;t<1.45;t+=.15){const c=clearView(tx,ty,tz,t,dist);if(c>best+.05){P.camT=lerp(P.camT??tilt,t,.15);break}}if(best>=.6)P.camT=lerp(P.camT??tilt,tilt,.1);tilt=P.camT??tilt}
   const cx=tx-Math.cos(YAW)*Math.cos(tilt)*dist,cy=ty-Math.sin(YAW)*Math.cos(tilt)*dist;let cz=tz+Math.sin(tilt)*dist;
@@ -1975,7 +2066,7 @@ function renderView(dt,vi){const V_=VIEWS[vi];VW=V_.w;VH=V_.h;if(!P.camObj)P.cam
   camera.position.set(fx+(Math.random()-.5)*shake,fz,fy+(Math.random()-.5)*shake);const look=46*(1-Math.sin(tilt));camera.lookAt(tx+Math.cos(YAW)*look,tz+look*.1,ty+Math.sin(YAW)*look);
   // where the hero is on screen: anything in front of them inside this circle is drawn see-through
   camera.updateProjectionMatrix();camera.updateMatrixWorld();v3.set(P.x,ph+9,P.y).applyMatrix4(camera.matrixWorldInverse);HD.value=-v3.z;v3.set(P.x,ph+9,P.y).project(camera);
-  HP.value.set(V_.x+(v3.x+1)/2*V_.w,(FH-V_.y-V_.h)+(v3.y+1)/2*V_.h);HR.value=Math.max(36,V_.h*.38);
+  HP.value.set(V_.x+(v3.x+1)/2*V_.w,(FH-V_.y-V_.h)+(v3.y+1)/2*V_.h);HR.value=Math.max(72,V_.h*.76);
   if(!inside){lighting();water.position.set(P.x,SEA-1.5,P.y);const s=camera.far*2.2;water.scale.set(s,s,1);wtex.repeat.set(s/64,s/64);wtex.offset.set(time*.01,time*.006)}
   else{const dk=darkness()/.8;P.sceneI.userData.amb.intensity=dun?1:1.1-dk*.4;billMat.uniforms.tint.value.setRGB(dun?.8:1,dun?.78:1,dun?.75:1);billMat.uniforms.fogNear.value=5000;billMat.uniforms.fogFar.value=6000;camera.far=3000;camera.updateProjectionMatrix();
     for(const w of P.intWalls){const[nx,ny,x,y]=w.userData.n;w.visible=(fx-x)*nx+(fy-y)*ny<0}}
@@ -1990,8 +2081,10 @@ function renderView(dt,vi){const V_=VIEWS[vi];VW=V_.w;VH=V_.h;if(!P.camObj)P.cam
       else if(o===O.lamp)lights.push([x,y,z+32,64]);else if(o===O.dungeon)lights.push([x,y,z+10,40])}}
     for(const[img,x,y,z]of townBills)if(near2(x,y)){bput(g,img,x,y,z);if(img===S.torch)lights.push([x,y,z+6,60])}
     for(const b of BLD)if(night&&Math.abs(b.x*16-P.x)<900&&Math.abs(b.y*16-P.y)<900){const c=Math.cos(b.a),s=Math.sin(b.a);lights.push([b.x*16+s*(b.d*8+2),b.y*16-c*(b.d*8+2),b.h0+18,34])}
-    for(const n of NPCS){if(n.inside||n.dead||!n.town.active||!near2(n.x,n.y))continue;const f=n.mv?Math.floor(n.t*7)%2:Math.floor(n.t*1.5)%2,z=gH(n.x,n.y)+(n.onWall?WALLTOP:0);bput(g,n.spr[f],n.x,n.y,z+(n.mv?0:f*.4),{flip:n.flip,flash:n.flash>0?1:0,keep:1});
-      if(n.role==='guard'&&night){bput(g,S.torch,n.x-7,n.y+1,z+8);lights.push([n.x,n.y,z+14,46])}}
+    for(const n of NPCS){if(n.inside||n.dead||!n.town.active||!near2(n.x,n.y))continue;const f=n.mv?Math.floor(n.t*7)%2:Math.floor(n.t*1.5)%2,z=gH(n.x,n.y)+(n.onWall?WALLTOP:0)+(n.onCart&&!n.back?10:0);bput(g,n.spr[f],n.x,n.y,z+(n.mv?0:f*.4),{flip:n.flip,flash:n.flash>0?1:0,keep:1});
+      if((n.role==='guard'||n.role==='patrol')&&night){bput(g,S.torch,n.x-7,n.y+1,z+8);lights.push([n.x,n.y,z+14,46])}}
+    for(const G of GROUPS)if(G.kind==='caravan'&&G.cart&&near2(G.cart.x,G.cart.y)){const c=G.cart,fl=Math.cos(c.a)*-Math.sin(YAW)+Math.sin(c.a)*Math.cos(YAW)<0?1:0,hx=c.x+Math.cos(c.a)*28,hy=c.y+Math.sin(c.a)*28;
+      bput(g,S.wagon,c.x,c.y,gH(c.x,c.y),{sc:1.35,flip:fl,keep:1});bput(g,S.horse[G.moving?Math.floor(time*6)%2:0],hx,hy,gH(hx,hy),{sc:1.2,flip:fl,keep:1});if(night)lights.push([c.x,c.y,gH(c.x,c.y)+20,50])}
     for(const a of ANIMALS){if(!a.town.active||!near2(a.x,a.y))continue;bput(g,ANSPR[a.kind][a.mv?Math.floor(a.t*8)%2:0],a.x,a.y,gH(a.x,a.y),{flip:a.flip,sc:ASC[a.kind],keep:1})}
     for(const p of projs)bput(g,S.spearP,p.x,p.y,gH(p.x,p.y)+p.z,{sc:1})}
   else if(!dun){for(const s of INT.sprites)bput(g,S[s.s],s.x,s.y,s.z,{sc:s.sc});
@@ -2004,7 +2097,10 @@ function renderView(dt,vi){const V_=VIEWS[vi];VW=V_.w;VH=V_.h;if(!P.camObj)P.cam
   for(const pk of pickups){if(pk.realm!==R0)continue;const img=pk.k==='coin'?S.coin:pk.k==='heart'?S.heart:pk.k==='item'?iconFor(ITEMS[pk.item.id]).c:S.pot,b=Math.sin(pk.t*5)*1.2;bput(g,img,pk.x,pk.y,gH(pk.x,pk.y)+2-pk.z+b,{sc:pk.k==='item'?.7:1})}
   for(const p of parts)if(p.realm===R0)bput(g,WHITE,p.x,p.y,gH(p.x,p.y)+p.z,{w:2,h:2,col:new THREE.Color(p.c).toArray(),a:1-p.t/p.life});
   // every player in this realm, each with their own colours
-  for(const q of PLAYERS){if(q.realm!==R0||(q!==P&&q._in!==INSIDE&&R0!=='w'))continue;if(q.inv>0&&!(q.roll>0)&&Math.floor(q.inv*14)%2)continue;const hs=q.heroSlots?q.HERO:null;if(!hs)continue;const hd=heroDir(q),fr=q.moving?Math.floor(q.anim)%2:2;bput(g,q.HERO[hd][q.roll>0?Math.floor(q.roll*20)%2:fr],q.x,q.y,gH(q.x,q.y),q.roll>0?{w:16*(1+.25*Math.sin((1-q.roll/0.42)*Math.PI)),h:16*(.5+.5*Math.abs(Math.cos((1-q.roll/0.42)*Math.PI*2))),keep:1}:{keep:1})}
+  for(const q of PLAYERS){if(q.realm!=='w'||R0!=='w')continue;if(q.alt>4)bput(g,WHITE,q.x,q.y,gH(q.x,q.y)+.5,{w:10,h:3,col:[0,0,0],a:.5,keep:1});
+    if(q.levi){const L=q.levi,rise=Math.min(1,L.t/2.5),lx=q.x+Math.cos(L.a)*80,ly=q.y+Math.sin(L.a)*80,z=SEA-70+rise*62;bput(g,S.levi,lx,ly,z,{sc:3.4,keep:1});
+      for(const s_ of[-1,1])bput(g,S.tentacle,q.x+Math.cos(L.a+s_*1.1)*46,q.y+Math.sin(L.a+s_*1.1)*46,SEA-60+rise*52+Math.sin(time*3+s_)*4,{sc:2.4,flip:s_>0?1:0,keep:1})}}
+  for(const q of PLAYERS){if(q.realm!==R0||(q!==P&&q._in!==INSIDE&&R0!=='w'))continue;if(q.inv>0&&!(q.roll>0)&&Math.floor(q.inv*14)%2)continue;const hs=q.heroSlots?q.HERO:null;if(!hs)continue;const hd=heroDir(q),fr=q.moving?Math.floor(q.anim)%2:2;bput(g,q.HERO[hd][q.roll>0?Math.floor(q.roll*20)%2:fr],q.x,q.y,heroZ(q),q.roll>0?{w:16*(1+.25*Math.sin((1-q.roll/0.42)*Math.PI)),h:16*(.5+.5*Math.abs(Math.cos((1-q.roll/0.42)*Math.PI*2))),keep:1}:{keep:1})}
   bdone(g);const sc=inside?P.sceneI:scene;sc.add(dyn);
   renderer.setViewport(V_.x,FH-V_.y-V_.h,V_.w,V_.h);renderer.setScissor(V_.x,FH-V_.y-V_.h,V_.w,V_.h);renderer.setScissorTest(true);renderer.render(sc,camera);
   ctx.save();ctx.translate(V_.x,V_.y);ctx.beginPath();ctx.rect(0,0,VW,VH);ctx.clip();overlay(lights,ph);ctx.restore()}
@@ -2055,12 +2151,12 @@ function claimPads(){for(const gp of pads()){if(PLAYERS.some(p=>p.pad===gp.index
   else if(PLAYERS[0].pad==null&&!joinWait){PLAYERS[0].pad=gp.index;PLAYERS[0].prev=b;toast('Controller connected to '+PLAYERS[0].name,1.6);padUI()}
   else if(b[9]&&running&&PLAYERS.length<2){addPlayer2();PLAYERS[1].pad=gp.index;PLAYERS[1].prev=b;toast('Player 2 joined!',2);padUI()}}}
 function buildInp(p){const I={fwd:0,turn:0,run:false,att:false,pr:new Set()};
-  if(p.useKb){I.fwd=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0);I.turn=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0);I.run=!!(keys.ShiftLeft||keys.ShiftRight||runToggle);I.att=!!keys.Mouse0;
+  if(p.useKb){I.fwd=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0);I.turn=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0);I.run=!!(keys.ShiftLeft||keys.ShiftRight||runToggle);I.att=!!keys.Mouse0;if(p.fly)I.up=(keys.Space?1:0)-(keys.KeyX||keys.ControlLeft?1:0);
     if(JOY.id!=null){I.fwd+=-JOY.y;I.turn+=JOY.x*.9;if(Math.hypot(JOY.x,JOY.y)>.95&&-JOY.y>.6&&runToggle)I.run=true}
-    const map={Escape:'pause',KeyE:'act',Enter:'act',KeyQ:'potion',KeyI:'bag',KeyC:'hero',KeyM:'map',KeyR:'camreset',KeyN:'sound',KeyG:'god',Space:'roll'};for(const c of pressed)if(map[c])I.pr.add(map[c])}
+    const map={Escape:'pause',KeyV:'fly',KeyE:'act',Enter:'act',KeyQ:'potion',KeyI:'bag',KeyC:'hero',KeyM:'map',KeyR:'camreset',KeyN:'sound',KeyG:'god',Space:'roll'};for(const c of pressed)if(map[c])I.pr.add(map[c])}
   const gp=p.pad!=null&&navigator.getGamepads()[p.pad];
   if(gp){const ax=gp.axes,dz=v=>Math.abs(v||0)<.18?0:v,b=padBtns(gp),prev=p.prev||[],edge=i=>b[i]&&!prev[i];
-    I.fwd+=-dz(ax[1])+(b[12]?1:0)-(b[13]?1:0);I.turn+=dz(ax[0])+(b[15]?1:0)-(b[14]?1:0);I.run=I.run||b[6]||b[4]||b[10];I.att=I.att||b[2]||b[7];
+    if(p.fly)I.up=(I.up||0)+(b[12]?1:0)-(b[13]?1:0);I.fwd+=-dz(ax[1])+(p.fly?0:(b[12]?1:0)-(b[13]?1:0));I.turn+=dz(ax[0])+(b[15]?1:0)-(b[14]?1:0);I.run=I.run||b[6]||b[4]||b[10];I.att=I.att||b[2]||b[7];
     if(edge(0))I.pr.add('act');if(edge(1))I.pr.add('roll');if(edge(3))I.pr.add('potion');if(edge(9))I.pr.add('pause');if(edge(8))I.pr.add('map');if(edge(5))I.pr.add('hero');if(edge(11))I.pr.add('camreset');
     const rx=dz(ax[2]),ry=dz(ax[3]);I.turn+=rx;if(ry)p.cam.tilt=clamp(p.cam.tilt+ry*70*dtLast,5,86);p.prev=b}
   I.fwd=clamp(I.fwd,-1,1);I.turn=clamp(I.turn,-1,1);p.inp=I}

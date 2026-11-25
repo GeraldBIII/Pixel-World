@@ -27,8 +27,9 @@ Open `index.html` in a browser, or turn on GitHub Pages (Settings → Pages → 
 | Reset camera | R |
 | Fullscreen | F |
 | God mode (for testing) | G |
+| Fly (god mode only): Space climbs, X descends, V again to land | V |
 
-On touch screens a joystick and buttons appear automatically (Run toggles sprinting, Roll dodges); drag the screen to turn and look up or down, and pinch to zoom. The ⛶ button goes fullscreen. The camera is locked behind your hero. Whenever a wall, roof or tree comes between the camera and your hero, a wide see-through circle opens around the hero so you can always see yourself. People and animals never fade out. If your hero ever gets stuck, open the pause menu (Esc, the Menu button, or Menu on a controller) and choose **Unstuck me**. The Camera panel under the game sets tilt, zoom and view distance. View distance is Auto by default: it grows as far as your device can draw while holding a smooth frame rate.
+On touch screens a joystick and buttons appear automatically (Run toggles sprinting, Roll dodges); drag the screen to turn and look up or down, and pinch to zoom. The ⛶ button goes fullscreen. The camera is locked behind your hero. Whenever a wall, roof or tree comes between the camera and your hero, a large see-through circle (about three quarters of the screen's height) opens around the hero so you can always see yourself. People and animals never fade out. If your hero ever gets stuck, open the pause menu (Esc, the Menu button, or Menu on a controller) and choose **Unstuck me**. The Camera panel under the game sets tilt, zoom and view distance. View distance is Auto by default: it grows as far as your device can draw while holding a smooth frame rate.
 
 ## Xbox controller and split screen
 
@@ -36,7 +37,7 @@ Any standard controller (Xbox, or others the browser maps the same way) works:
 
 | Action | Button |
 | --- | --- |
-| Walk / turn | Left stick or D-pad |
+| Walk / turn | Left stick or D-pad (while flying in god mode, D-pad up/down climbs and descends) |
 | Turn (sideways) and look up or down | Right stick |
 | Attack | X or RT |
 | Dodge roll | B |
@@ -56,7 +57,7 @@ Press **Menu** on a second controller (or use **Add player 2** under the game) t
 - **Over a hundred dungeons**: caves in the hills and barrows on the plains, with rooms, corridors, torches, monsters, treasure chests and a guardian with a hoard. Cleared dungeons stay cleared for three days
 - **A hidden power level (PL) from 1 to 100** behind every fight: the land gets more dangerous the farther you travel from Emberhold and the harsher the biome. Monster health, damage, XP and the quality of loot all follow PL. Guards are PL 75. Your own PL comes from your gear, level and attributes. God mode shows the numbers
 - **Monsters in their own biomes**: slimes, ember slimes, skeletons, ghosts, wolf packs, goblins, giant spiders, bears, trolls, scorpions, bandits on the roads and draugr in the barrows
-- **God mode** for playtesting: invincible, fast (very fast when sprinting), walks through anything outdoors, one-hit kills, infinite stamina, shows power levels, and teleports by clicking the world map
+- **God mode** for playtesting: invincible, fast (very fast when sprinting), walks through anything outdoors, one-hit kills, infinite stamina, shows power levels, teleports by clicking the world map, and can fly (V, or Fly in the pause menu)
 - **Two-player split screen** with Xbox controller support, and controller navigation for every menu
 - **Realistic proportions**: houses stand about four to five times your height under steep roofs, trees are 8–10 m tall, lampposts about twice your height, and barrels and crates waist high
 - **A solid 3D pixel world**: trees, rocks, hedges, fences, wells, stalls, carts, barrels and crates are built from pixel-textured blocks fixed in the world, so they no longer turn to face the camera. Every tree is its own size, some woods turn autumn-orange, and meadows drift between lush green, golden and russet patches carpeted with grass tufts and wildflowers. Far away, objects switch to lighter sprites to keep the frame rate up
@@ -64,6 +65,9 @@ Press **Menu** on a second controller (or use **Add player 2** under the game) t
 - **Rooms inside**: bigger buildings are divided into rooms joined by doorways: halls, kitchens with hearths, bedrooms, dining rooms, studies, storerooms behind the shops, guest rooms at the inn and an armory in the guardhouse
 - **Manors with their own grounds**: every town has a manor (the capital has two) outside its walls, with a hedged garden, lamplit drive, columned porch and corner towers. The lord or lady and their steward live there. Manor chests and strongboxes hold richer loot, and the doors are locked at night
 - **Farmsteads**: fenced farms around each town, each with a farmhouse, a big red barn you can enter, crop fields, hay and chickens, and a farming family working the land
+- **Highways between the towns**: cobbled roads lined with lampposts on alternating sides, crossing rivers on arched stone bridges with parapets and lamps at each end
+- **Road wardens and trader caravans**: pairs of wardens patrol every highway from town to town. Four traders drive covered wagons between the towns with two guards each; a caravan camps outside a town's gates for part of a day selling a fresh stock of gear, potions and gems, then sets off for the next town. Wardens and caravan guards (PL 75) fight off monsters, and go after anyone with a bounty
+- **Swimming**: wade or swim into any river, lake or the sea (slowly, and you can't sprint, roll or fight while swimming). Swim too far from the island and the water turns black: turn back quickly, or a leviathan rises from the deep and drags you under
 - **Homesteads in the wilds**: log cabins scattered across the island far from any town, each with a garden, a woodpile and one or two settlers who tend their clearing by day and bar the door at night
 - **Mobile friendly**: virtual joystick, touch camera and pinch zoom, and a fullscreen mode
 - **Lively towns**: crates, barrels, hay bales, carts, benches, woodpiles, flower pots and wells, plus cats, dogs and chickens (you can pet them)
