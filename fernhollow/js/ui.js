@@ -373,7 +373,7 @@ const UI = {
 
   // ---------- Map ----------
   openMap() {
-    const K = 4, img = mapImage();
+    const K = 3, img = mapImage();
     const s = this.open({
       kind: 'map',
       html: `<div class="panel big mapp"><h2>Map</h2><canvas class="mapc"></canvas><div class="menu-list"><button data-nav data-act="back">Close</button></div></div>`,
@@ -385,11 +385,11 @@ const UI = {
     const g = c.getContext('2d');
     g.imageSmoothingEnabled = false;
     g.drawImage(img, 0, 0, W * K, H * K);
-    g.font = 'bold 15px "Pixelify Sans", monospace'; g.textAlign = 'center'; g.lineWidth = 4;
+    g.font = 'bold 22px "Pixelify Sans", monospace'; g.textAlign = 'center'; g.lineWidth = 4;
     for (const [t, x, y] of MAP_LABELS) { g.strokeStyle = 'rgba(20,12,30,.85)'; g.strokeText(t, x * K, y * K); g.fillStyle = '#fff3d0'; g.fillText(t, x * K, y * K); }
     const px = P.x / TS * K, py = P.y / TS * K;
     g.fillStyle = '#ff4060'; g.strokeStyle = '#fff'; g.lineWidth = 2;
-    g.beginPath(); g.arc(px, py, 6, 0, Math.PI * 2); g.fill(); g.stroke();
+    g.beginPath(); g.arc(px, py, 8, 0, Math.PI * 2); g.fill(); g.stroke();
     g.fillStyle = '#fff'; g.fillText('You', px, py - 10);
   },
 

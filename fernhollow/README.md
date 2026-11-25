@@ -34,13 +34,13 @@ Browsers only let a page close its own tab in some cases. When they don't, Exit 
 
 ## What's in it
 
-- A 160×156-tile world built from a hand-drawn map (`MAP_REF` in `js/world.js`):
+- A 320×312-tile world built from a hand-drawn map (`MAP_REF` in `js/world.js`; `PXS` sets the scale):
   - **North:** sheer cliffs, with Moonfall, the waterfall where the river begins.
   - **West:** more cliffs. **East:** a dense, impassable forest. **South:** the sea.
   - **Your farm:** sits between the river's two arms, with a bridge on each side.
   - **Fernhollow:** the town, on the west coast, with the Whispering Woods and the Moonwell to its north.
   - **Sunny Meadow:** a peninsula south of town, joined to Fairy Isle by a bridge.
-  - **Crystal Hills:** to the east.
+  - **The Wolfwood:** a forest east of your farm, where wolves hunt and ore and crystal rocks are most common.
 - Farming: till, plant, water, harvest. Six fantasy crops, each with its own seasons (one regrows)
 - Four 14-day seasons with their own colours, rain and snow, and a day/night cycle with lanterns and glowing crops
 - Tools: hoe, watering can, axe, pickaxe and sword. Energy and health
@@ -48,7 +48,8 @@ Browsers only let a page close its own tab in some cases. When they don't, Exit 
 - Crafting: fences, lanterns, sprinklers, stew and tonics
 - Five villagers with daily dialogue, gifts and friendship hearts
 - A chain of tasks from Elder Oswin with rewards
-- Slimes in the woods and hills, and wisps at night (the farm and village are safe)
+- Slimes in the Whispering Woods, wolves in the Wolfwood, and wisps at night (the farm and village are safe)
+- Grass tufts and small sticks can be walked over, and still cut or chopped for fiber and wood
 
 ## Code layout
 

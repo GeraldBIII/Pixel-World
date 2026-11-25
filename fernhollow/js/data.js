@@ -1,7 +1,7 @@
 'use strict';
 // ---------- Settings (saved separately from the game) ----------
 const SETTINGS_KEY = 'fernhollow-settings-v1';
-const SAVE_KEY = 'fernhollow-save-v2'; // v2: new hand-drawn map
+const SAVE_KEY = 'fernhollow-save-v3'; // v3: hand-drawn map at double size
 const Settings = Object.assign(
   { music: 50, sfx: 80, zoom: 'normal', touch: 'auto', rumble: true, clock24: false, highlight: true },
   Store.get(SETTINGS_KEY, {})
@@ -34,9 +34,10 @@ const ITEMS = {
   wood: { name: 'Wood', cat: 'mat', sell: 2, desc: 'Sturdy timber for crafting.' },
   stone: { name: 'Stone', cat: 'mat', sell: 2, desc: 'A common stone. Useful for crafting.' },
   fiber: { name: 'Fiber', cat: 'mat', sell: 1, desc: 'Tough plant fiber from weeds.' },
-  shard: { name: 'Aether Shard', cat: 'mat', sell: 60, desc: 'A crystal humming with old magic. Found in the Crystal Hills.' },
+  shard: { name: 'Aether Shard', cat: 'mat', sell: 60, desc: 'A crystal humming with old magic. Mine crystal rocks in the forests, especially the Wolfwood.' },
   ore: { name: 'Star-Iron Ore', cat: 'mat', sell: 15, desc: 'Ore flecked with tiny stars.' },
   gel: { name: 'Moss Gel', cat: 'mat', sell: 6, desc: 'Squishy. Left behind by slimes.' },
+  pelt: { name: 'Wolf Pelt', cat: 'mat', sell: 45, desc: 'Thick, silver-grey fur from a Wolfwood wolf.' },
   gloom: { name: 'Gloom Essence', cat: 'mat', sell: 14, desc: 'The dim remains of a night wisp.' },
   cap: { name: 'Fairy Cap', cat: 'forage', sell: 30, food: 15, desc: 'A spotted mushroom from the Whispering Woods. Edible.' },
   dew: { name: 'Dewblossom', cat: 'forage', sell: 25, desc: 'A wildflower that is always wet with morning dew.' },
@@ -79,7 +80,7 @@ const LOOKS = {
 
 const NPCS = {
   thistle: {
-    name: 'Thistle', home: [27, 53], hours: [8, 20],
+    name: 'Thistle', home: [61, 108], hours: [8, 20],
     loves: ['bloom', 'dew'], likes: ['carrot', 'berry', 'cap'], hates: ['gloom', 'gel'],
     intro: "Oh! You must be the new farmer! I'm Thistle: seeds, sprouts and gossip, all sold right here at my stall. Open from 8 in the morning till 8 at night!",
     lines: [
@@ -100,7 +101,7 @@ const NPCS = {
     hearts: ["You know, you're my favorite customer. Don't tell the others!"],
   },
   mirabel: {
-    name: 'Mirabel', home: [43, 52], hours: [9, 21],
+    name: 'Mirabel', home: [83, 106], hours: [9, 21],
     loves: ['shard', 'glowcap'], likes: ['cap', 'gloom', 'bloom'], hates: ['fiber'],
     intro: "Ah. The new keeper of the old farm. Your grandmother was a dear friend of mine. I'm Mirabel: tonics, lanterns, and the occasional curse removal.",
     lines: [
@@ -120,11 +121,11 @@ const NPCS = {
     hearts: ["You've a kind heart. Rare, in my experience. Don't lose it."],
   },
   bram: {
-    name: 'Bram', home: [46, 67], hours: [8, 19],
-    loves: ['ore', 'stew'], likes: ['stone', 'pumpkin', 'ember'], hates: ['dew'],
+    name: 'Bram', home: [88, 125], hours: [8, 19],
+    loves: ['ore', 'stew'], likes: ['stone', 'pumpkin', 'ember', 'pelt'], hates: ['dew'],
     intro: "Hrm. New farmer, eh? Bram. I make tools, fences, sprinklers. If it's metal, it's mine.",
     lines: [
-      'Star-Iron Ore comes from the Crystal Hills, east past your farm. Mind the slimes.',
+      'Star-Iron Ore pokes out of the rocks in the Wolfwood, east past your farm. Mind the wolves.',
       'A Rune Sprinkler waters the eight tiles around it every morning. Saves your back.',
       'Crystal nodes take a few good swings. Put your shoulders into it.',
       'My copper watering can holds more than twice as much. Worth every coin.',
@@ -140,7 +141,7 @@ const NPCS = {
     hearts: ["You're alright, farmer. Better than alright. Don't make it weird."],
   },
   lumi: {
-    name: 'Lumi', home: [20, 40], hours: [10, 23],
+    name: 'Lumi', home: [37, 74], hours: [10, 23],
     loves: ['dew', 'berry'], likes: ['bloom', 'glowcap', 'carrot'], hates: ['ore', 'stone'],
     intro: "Hi hi! You can see me? Most big-folk can't! I'm Lumi. I live in the mushroom house in the woods!",
     lines: [
@@ -149,7 +150,7 @@ const NPCS = {
       'If you get lost in the woods, just follow the path. The trees always lead home.',
       'Have you seen Moonfall? The waterfall where the river begins, way up north. It sparkles at night!',
       'The Moonwell glows brightest on the darkest nights.',
-      "I'm not allowed in the hills. Too many rocks that bite!",
+      "I'm not allowed in the Wolfwood. The wolves there are SO grumpy!",
     ],
     rain: ['Puddles are tiny lakes for tiny people. Like me!'],
     season: [
@@ -161,7 +162,7 @@ const NPCS = {
     hearts: ["You're my best big-folk friend. I made you a secret handshake. It's mostly wiggling."],
   },
   oswin: {
-    name: 'Elder Oswin', home: [32, 60], hours: [7, 19],
+    name: 'Elder Oswin', home: [66, 121], hours: [7, 19],
     loves: ['pumpkin', 'stew'], likes: ['carrot', 'melon', 'cap'], hates: ['gel'],
     intro: 'So you made it. Welcome to Fernhollow, child. Your grandmother tended that farm for fifty years. The land has been waiting for you.',
     lines: [
@@ -176,7 +177,7 @@ const NPCS = {
       'Spring is for beginnings. Plant generously.',
       'Summer rewards those who water every day.',
       'Autumn harvests are the richest. Do not miss the Wisp Pumpkins.',
-      'Winter is quiet, but not idle. Mine the hills, mend your tools.',
+      'Winter is quiet, but not idle. Mine the forest rocks, mend your tools.',
     ],
     hearts: ['Your grandmother would be proud of you. I certainly am.'],
   },
@@ -226,7 +227,7 @@ const QUESTS = [
   { title: 'Clear the Way', desc: 'Gather 15 Wood by chopping branches, stumps or trees.', goal: 15, prog: s => s.stats.wood, reward: { gold: 150 } },
   { title: 'First Sprouts', desc: 'Harvest 5 crops from your farm.', goal: 5, prog: s => s.stats.harvest, reward: { gold: 200, items: [['seed_carrot', 10]] } },
   { title: 'Village Welcome', desc: 'Introduce yourself to Thistle, Mirabel, Bram and Lumi (Lumi lives in the woods).', goal: 4, prog: s => ['thistle', 'mirabel', 'bram', 'lumi'].filter(n => s.stats.talked.includes(n)).length, reward: { gold: 150 } },
-  { title: 'Shimmer Seeker', desc: 'Mine 3 Aether Shards in the Crystal Hills to the east.', goal: 3, prog: s => s.stats.shards, reward: { gold: 300 } },
+  { title: 'Shimmer Seeker', desc: 'Mine 3 Aether Shards from crystal rocks in the forests. The Wolfwood, east of your farm, has the most.', goal: 3, prog: s => s.stats.shards, reward: { gold: 300 } },
   { title: 'Market Day', desc: 'Earn 2,000g from the Market Crate.', goal: 2000, prog: s => s.stats.shipped, reward: { items: [['sprinkler', 2]] } },
   { title: 'Friend of Fernhollow', desc: 'Reach 3 hearts with any villager. Talk daily and give gifts they like.', goal: 3, prog: s => Math.max(0, ...Object.values(s.friends).map(f => heartsOf(f.pts))), reward: { gold: 800 } },
   { title: 'Moonlit Harvest', desc: 'Grow and harvest a Wisp Pumpkin (plant in Autumn).', goal: 1, prog: s => s.stats.pumpkin, reward: { gold: 2500 } },

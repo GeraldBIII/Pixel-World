@@ -593,6 +593,7 @@ const ENEMY = {
   slime: { hp: 18, dmg: 7, spr: 'slime', drops: [['gel', 0.7], ['shard', 0.02]] },
   rockslime: { hp: 30, dmg: 10, spr: 'rockslime', drops: [['gel', 0.6], ['ore', 0.25], ['shard', 0.06]] },
   wisp: { hp: 14, dmg: 9, spr: 'wisp', fly: true, drops: [['gloom', 0.75], ['shard', 0.04]] },
+  wolf: { hp: 34, dmg: 12, spr: 'wolf', drops: [['pelt', 0.6], ['shard', 0.05]] },
 };
 const safeZone = (x, y) => { const z = zoneAt(Math.floor(x / TS), Math.floor(y / TS)); return z === 'farm' || z === 'village'; };
 function enemyFree(e, x, y) {
@@ -612,7 +613,8 @@ function trySpawn() {
     const z = zoneAt(tx, ty);
     if (z === 'farm' || z === 'village' || z === 'lake') continue;
     let kind;
-    if (night && Math.random() < 0.55) kind = 'wisp';
+    if (z === 'wolfwood') kind = night && Math.random() < 0.3 ? 'wisp' : 'wolf';
+    else if (night && Math.random() < 0.55) kind = 'wisp';
     else if (z === 'hills') kind = 'rockslime';
     else if (z === 'woods' || Math.random() < 0.3) kind = 'slime';
     else continue;
@@ -633,6 +635,8 @@ function updateEnemies(dt) {
       const nx = e.x + e.kx * dt, ny = e.y + e.ky * dt;
       if (enemyFree(e, nx, e.y)) e.x = nx; if (enemyFree(e, e.x, ny)) e.y = ny;
       const f = Math.pow(0.004, dt); e.kx *= f; e.ky *= f;
+    } else if (e.kind === 'wolf') {
+      updateWolf(e, d, dt);
     } else if (e.fly) {
       if (d < 10 * TS) {
         const sp = 30 * dt, nx = e.x + (P.x - e.x) / d * sp, ny = e.y + (P.y - 6 - e.y) / d * sp + Math.sin(clock * 3 + e.t * 9) * 0.4;
@@ -657,6 +661,31 @@ function updateEnemies(dt) {
   }
   enemies = enemies.filter(e => !e.dead);
 }
+// Wolves prowl until they spot you, then chase and lunge.
+function updateWolf(e, d, dt) {
+  e.t -= dt; e.lunge = Math.max(0, (e.lunge || 0) - dt); e.cd = Math.max(0, (e.cd || 0) - dt);
+  let vx = 0, vy = 0;
+  e.detour = Math.max(0, (e.detour || 0) - dt);
+  if (d < 9 * TS) {
+    if (!e.alert) { e.alert = true; Sound.play('howl'); }
+    const a = Math.atan2(P.y - e.y, P.x - e.x) + (e.detour > 0 ? e.side * 1.4 : 0);
+    if (d < 2.6 * TS && e.cd <= 0) { e.lunge = 0.35; e.cd = 1.6; }
+    const sp = e.lunge > 0 ? 135 : d < 1.2 * TS ? 20 : 66;
+    vx = Math.cos(a) * sp; vy = Math.sin(a) * sp;
+  } else {
+    e.alert = false;
+    if (e.t <= 0) { e.t = 1 + Math.random() * 2; const a = Math.random() * Math.PI * 2, moving = Math.random() < 0.6; e.vx = moving ? Math.cos(a) * 26 : 0; e.vy = moving ? Math.sin(a) * 26 : 0; }
+    vx = e.vx; vy = e.vy;
+  }
+  const nx = e.x + vx * dt, ny = e.y + vy * dt;
+  let moved = false;
+  if (enemyFree(e, nx, e.y)) { e.x = nx; moved = true; }
+  if (enemyFree(e, e.x, ny)) { e.y = ny; moved = true; }
+  if (!moved && (vx || vy)) { e.t = 0; if (e.detour <= 0) { e.detour = 0.5; e.side = Math.random() < 0.5 ? -1 : 1; } }
+  if (Math.abs(vx) > 1) e.face = vx > 0 ? 1 : -1;
+  e.run = Math.abs(vx) + Math.abs(vy) > 1;
+}
+
 function swordHit() {
   const [dx, dy] = DIRV[P.dir], hx = P.x + dx * 12, hy = P.y - 7 + dy * 12;
   for (const e of enemies) {
@@ -664,9 +693,9 @@ function swordHit() {
     e.hp -= ri(10, 14); e.flash = 0.15;
     const k = dist(e.x, e.y, P.x, P.y) || 1;
     e.kx = (e.x - P.x) / k * 170; e.ky = (e.y - P.y) / k * 170;
-    e.hop = 0;
+    e.hop = 0; e.lunge = 0; e.cd = 0.8;
     Sound.play('hit'); Input.rumble(0.4, 70);
-    burst(e.x, e.y - 6, e.kind === 'wisp' ? '#b8a4ff' : e.kind === 'rockslime' ? '#7aa0d8' : '#6ac24a', 6);
+    burst(e.x, e.y - 6, { wisp: '#b8a4ff', rockslime: '#7aa0d8', wolf: '#c8ccd6' }[e.kind] || '#6ac24a', 6);
     if (e.hp <= 0) {
       e.dead = true; Sound.play('kill');
       burst(e.x, e.y - 6, '#ffffff', 10);
@@ -783,8 +812,8 @@ function followCamera(dt) {
 }
 function titleCamera() {
   const t = clock * 0.03;
-  cam.x = clamp(62 * TS + Math.sin(t) * 30 * TS - VW / 2, 0, W * TS - VW);
-  cam.y = clamp(56 * TS + Math.sin(t * 1.7) * 8 * TS - VH / 2, 0, H * TS - VH);
+  cam.x = clamp(126 * TS + Math.sin(t) * 60 * TS - VW / 2, 0, W * TS - VW);
+  cam.y = clamp(114 * TS + Math.sin(t * 1.7) * 14 * TS - VH / 2, 0, H * TS - VH);
 }
 
 // ---------- Rendering ----------
@@ -814,7 +843,7 @@ function render() {
 
   // Y-sorted drawables
   const list = [];
-  for (let ty = ty0; ty <= ty1 + 3; ty++) for (let tx = tx0 - 1; tx <= tx1 + 1; tx++) {
+  for (let ty = ty0; ty <= ty1 + 4; ty++) for (let tx = tx0 - 2; tx <= tx1 + 2; tx++) {
     if (!inb(tx, ty)) continue;
     const i = idx(tx, ty), o = World.obj[i];
     if (o && o !== OB.BLOCK) list.push({ y: ty * TS + 14, k: 0, o, tx, ty, i });
@@ -886,7 +915,7 @@ function drawGround(g, tx, ty) {
     case GND.FOREST: img = SEAS.forest[Math.floor(h * 3)]; break;
     case GND.PATH: img = SPR.path[Math.floor(h * 3)]; break;
     case GND.WATER: {
-      const deep = gAt(tx, ty - 3) === GND.WATER && gAt(tx, ty + 3) === GND.WATER && gAt(tx - 3, ty) === GND.WATER && gAt(tx + 3, ty) === GND.WATER;
+      const deep = gAt(tx, ty - 7) === GND.WATER && gAt(tx, ty + 7) === GND.WATER && gAt(tx - 7, ty) === GND.WATER && gAt(tx + 7, ty) === GND.WATER && gAt(tx - 5, ty - 5) === GND.WATER && gAt(tx + 5, ty + 5) === GND.WATER;
       img = (deep ? SPR.waterDeep : SPR.water)[(Math.floor(clock * 1.5) + ((tx * 7 + ty * 3) % 3)) % 3]; break;
     }
     case GND.FALLS: img = SPR.falls[Math.floor(clock * 8 + tx) % 3]; break;
@@ -925,8 +954,8 @@ function drawTree(g, img, x, y, baseY) {
 function drawObj(g, o, tx, ty, i) {
   const sh = shakes.get(i), ox = sh ? Math.round(Math.sin(sh * 70) * 1.5) : 0, X = tx * TS + ox, Y = ty * TS;
   switch (o) {
-    case OB.OAK: drawTree(g, SEAS.oak, X - 8, Y - 20, Y + 15); break;
-    case OB.PINE: case OB.DENSE: drawTree(g, SEAS.pine, X - 8, Y - 23, Y + 15); break;
+    case OB.OAK: drawTree(g, SEAS.oak, X - 16, Y - 39, Y + 15); break;
+    case OB.PINE: case OB.DENSE: drawTree(g, SEAS.pine, X - 12, Y - 43, Y + 15); break;
     case OB.STUMP: g.drawImage(SPR.stump, X, Y); break;
     case OB.ROCK: g.drawImage(SPR.rock, X, Y); break;
     case OB.BOULDER: g.drawImage(SPR.boulder, X, Y); break;
@@ -969,12 +998,15 @@ function drawPlayer(g) {
   if (P.dir !== 1) drawTool();
 }
 function drawEnemy(g, e) {
-  const t = ENEMY[e.kind], f = Math.floor(clock * 4 + e.t * 5) % 2;
-  const set = e.flash > 0 ? SPR[t.spr + 'W'] : SPR[t.spr];
+  const t = ENEMY[e.kind];
+  let f = Math.floor(clock * 4 + e.t * 5) % 2, key = t.spr;
+  if (e.kind === 'wolf') { key = e.face > 0 ? 'wolfR' : 'wolf'; f = e.run ? Math.floor(clock * 10) % 2 : 0; }
+  const set = e.flash > 0 ? SPR[key + 'W'] : SPR[key];
   g.globalAlpha = e.fade * (e.kind === 'wisp' ? 0.88 : 1);
   if (!e.fly) g.drawImage(SPR.shadow, Math.round(e.x) - 6, Math.round(e.y) - 2);
   const bob = e.fly ? Math.round(Math.sin(clock * 3 + e.t * 7) * 2) - 6 : e.hop > 0 ? -2 : 0;
-  g.drawImage(set[e.hop > 0 ? 0 : f], Math.round(e.x) - 8, Math.round(e.y) - 15 + bob);
+  const img = set[e.hop > 0 ? 0 : f];
+  g.drawImage(img, Math.round(e.x) - img.width / 2, Math.round(e.y) - 15 + bob);
   g.globalAlpha = 1;
   if (e.hp < e.max) { g.fillStyle = '#1a1020'; g.fillRect(Math.round(e.x) - 7, Math.round(e.y) - 19 + bob, 14, 3); g.fillStyle = '#e0404a'; g.fillRect(Math.round(e.x) - 6, Math.round(e.y) - 18 + bob, Math.max(0, Math.round(12 * e.hp / e.max)), 1); }
 }

@@ -91,42 +91,42 @@ function buildSeason(si) {
   return out;
 }
 
+// Trees are drawn big: a 48x56 oak and a 40x60 pine, rooted in a single tile.
 function oakSprite(p, si) {
-  return outlined(mk(32, 38, g => {
+  return outlined(mk(48, 56, g => {
     const T = '#6b4429', T2 = '#8c5a35', T3 = '#4b2e1c';
-    R(g, T, 13, 22, 6, 14); R(g, T2, 14, 22, 2, 14); R(g, T3, 18, 22, 1, 14);
-    R(g, T, 11, 34, 3, 2); R(g, T, 18, 34, 3, 2);
+    R(g, T, 20, 34, 8, 19); R(g, T2, 21, 34, 3, 19); R(g, T3, 27, 34, 1, 19);
+    R(g, T, 16, 51, 5, 3); R(g, T, 27, 51, 5, 3); R(g, T2, 17, 51, 2, 1);
     if (!p.leaf) {
-      line(g, T, 15, 22, 8, 9); line(g, T, 16, 22, 9, 9); line(g, T, 17, 22, 24, 8); line(g, T, 16, 22, 23, 8);
-      line(g, T, 16, 18, 16, 4); line(g, T, 15, 18, 15, 5); line(g, T, 11, 14, 5, 11); line(g, T, 20, 14, 27, 11);
-      R(g, '#ffffff', 7, 8, 3, 1); R(g, '#ffffff', 22, 7, 3, 1); R(g, '#ffffff', 15, 4, 2, 1); R(g, '#f0f6ff', 4, 10, 3, 1); R(g, '#f0f6ff', 25, 10, 3, 1);
+      for (const [a, b, c, d] of [[22, 36, 10, 14], [23, 36, 11, 14], [25, 36, 37, 12], [26, 36, 38, 12], [23, 30, 23, 6], [24, 30, 24, 6], [17, 22, 7, 17], [31, 21, 42, 17], [12, 17, 9, 9], [35, 15, 39, 8]]) line(g, T, a, b, c, d);
+      for (const [x, y, w] of [[9, 13, 4], [35, 11, 4], [22, 5, 3], [5, 16, 3], [40, 16, 3], [14, 8, 3]]) R(g, '#ffffff', x, y, w, 1);
       return;
     }
     const L = p.leaf, L2 = p.leaf2, LD = shade(L, -0.3);
-    disc(g, 16, 15, 12, LD); disc(g, 8, 17, 7, LD); disc(g, 24, 17, 7, LD);
-    disc(g, 16, 13, 11, L); disc(g, 9, 15, 6, L); disc(g, 23, 15, 6, L);
-    disc(g, 13, 9, 5, L2); disc(g, 20, 8, 3, L2); disc(g, 8, 13, 2, L2);
-    for (let i = 0; i < 46; i++) {
-      const x = 4 + Math.floor(hash2(i, 1, si) * 24), y = 3 + Math.floor(hash2(i, 2, si) * 22);
-      if ((x - 16) ** 2 + (y - 14) ** 2 < 90) R(g, hash2(i, 3, si) < 0.5 ? LD : L2, x, y);
+    disc(g, 24, 24, 18, LD); disc(g, 12, 28, 11, LD); disc(g, 36, 28, 11, LD);
+    disc(g, 24, 21, 17, L); disc(g, 13, 25, 10, L); disc(g, 35, 25, 10, L);
+    disc(g, 19, 14, 8, L2); disc(g, 31, 12, 5, L2); disc(g, 11, 21, 4, L2);
+    for (let i = 0; i < 110; i++) {
+      const x = 6 + Math.floor(hash2(i, 1, si) * 36), y = 4 + Math.floor(hash2(i, 2, si) * 34);
+      if ((x - 24) ** 2 + (y - 22) ** 2 < 250) R(g, hash2(i, 3, si) < 0.5 ? LD : L2, x, y, hash2(i, 4, si) < 0.3 ? 2 : 1, 1);
     }
-    if (p.blossom) for (let i = 0; i < 9; i++) R(g, p.blossom, 6 + Math.floor(hash2(i, 4, 1) * 20), 5 + Math.floor(hash2(i, 5, 1) * 16));
-    if (p.berries) for (let i = 0; i < 5; i++) R(g, p.berries, 7 + Math.floor(hash2(i, 6, 1) * 18), 8 + Math.floor(hash2(i, 7, 1) * 14), 2, 2);
+    if (p.blossom) for (let i = 0; i < 16; i++) R(g, p.blossom, 9 + Math.floor(hash2(i, 4, 1) * 30), 7 + Math.floor(hash2(i, 5, 1) * 26));
+    if (p.berries) for (let i = 0; i < 8; i++) R(g, p.berries, 10 + Math.floor(hash2(i, 6, 1) * 28), 12 + Math.floor(hash2(i, 7, 1) * 22), 2, 2);
   }));
 }
 
 function pineSprite(p) {
-  return outlined(mk(32, 40, g => {
-    R(g, '#5a3a24', 14, 32, 4, 7); R(g, '#734a2c', 15, 32, 1, 7);
+  return outlined(mk(40, 60, g => {
+    R(g, '#5a3a24', 18, 49, 5, 10); R(g, '#734a2c', 19, 49, 1, 10);
     const C = p.pine, CL = shade(C, 0.18), CD = shade(C, -0.28);
-    for (const [t, b, mw] of [[2, 15, 7], [10, 24, 11], [18, 33, 14]]) {
+    for (const [t, b, mw] of [[2, 21, 9], [13, 36, 14], [25, 50, 19]]) {
       for (let y = t; y <= b; y++) {
         const hw = Math.max(1, Math.round(mw * (y - t + 1) / (b - t + 1)));
-        R(g, C, 16 - hw, y, hw * 2, 1);
-        R(g, CL, 16 - hw, y, Math.max(1, Math.floor(hw * 0.6)), 1);
-        R(g, CD, 16 + Math.floor(hw * 0.4), y, hw - Math.floor(hw * 0.4), 1);
-        if (y === b) R(g, CD, 16 - hw, y, hw * 2, 1);
-        if (p.snow && y - t < 2) R(g, '#ffffff', 16 - hw, y, hw * 2, 1);
+        R(g, C, 20 - hw, y, hw * 2, 1);
+        R(g, CL, 20 - hw, y, Math.max(1, Math.floor(hw * 0.6)), 1);
+        R(g, CD, 20 + Math.floor(hw * 0.4), y, hw - Math.floor(hw * 0.4), 1);
+        if (y === b || y === b - 1) R(g, CD, 20 - hw, y, hw * 2, 1);
+        if (p.snow && y - t < 3) R(g, '#ffffff', 20 - hw, y, hw * 2, 1);
       }
     }
   }));
@@ -297,7 +297,19 @@ function buildStatic() {
     R(g, '#8a6aff', f ? 6 : 8, 11, 2, 2); R(g, '#8a6aff', f ? 8 : 6, 13, 1, 2);
     R(g, '#2a1050', 6, 7, 1, 2); R(g, '#2a1050', 9, 7, 1, 2);
   }), '#2a1050'));
-  for (const k of ['slime', 'rockslime', 'wisp']) SPR[k + 'W'] = SPR[k].map(whiteC);
+  // Wolf: side view, facing left (mirrored for right), two running frames
+  const wolf = f => outlined(mk(24, 16, g => {
+    const c = '#8a8f9e', d = '#5c6070', l = '#c8ccd6';
+    R(g, c, 6, 6, 13, 6); R(g, d, 7, 6, 11, 1); R(g, l, 8, 10, 9, 2);
+    R(g, c, 2, 4, 6, 5); R(g, c, 0, 6, 3, 2); R(g, '#1a1020', 0, 6); R(g, l, 1, 7, 3, 1);
+    R(g, c, 4, 2, 2, 2); R(g, d, 5, 2); R(g, '#ffcc40', 3, 5);
+    R(g, c, 19, 5, 3, 2); R(g, c, 21, 3, 2, 2); R(g, l, 22, 3);
+    const legs = f ? [6, 10, 14, 18] : [7, 9, 15, 17];
+    for (const x of legs) { R(g, d, x, 12, 1, 3); R(g, '#3a3a48', x, 14); }
+  }));
+  SPR.wolf = [wolf(0), wolf(1)];
+  SPR.wolfR = SPR.wolf.map(mirrorC);
+  for (const k of ['slime', 'rockslime', 'wisp', 'wolf', 'wolfR']) SPR[k + 'W'] = SPR[k].map(whiteC);
 
   // Crops in the field
   SPR.crop = {};
@@ -534,6 +546,7 @@ function buildIcons() {
     },
     tonic: g => { R(g, '#d6e8f0', 6, 3, 4, 2); R(g, '#d6e8f0', 4, 5, 8, 9); R(g, '#e0406a', 5, 8, 6, 5); R(g, '#ff8aa8', 5, 8, 6, 1); R(g, '#ffffff', 5, 6, 1, 2); R(g, '#8c5a35', 6, 1, 4, 2); },
     dust: g => { R(g, '#a8743e', 4, 6, 8, 8); R(g, '#8c5a35', 4, 13, 8, 1); R(g, '#6b4429', 5, 5, 6, 1); R(g, '#a8743e', 6, 3, 4, 2); R(g, '#ffe58a', 2, 3); R(g, '#ffe58a', 13, 4); R(g, '#ffe58a', 12, 1); R(g, '#6fe3c8', 8, 9, 2, 2); },
+    pelt: g => { R(g, '#8a8f9e', 3, 4, 10, 9); R(g, '#8a8f9e', 1, 6, 14, 5); R(g, '#c8ccd6', 4, 6, 8, 4); R(g, '#5c6070', 3, 4, 10, 1); R(g, '#8a8f9e', 2, 12, 2, 2); R(g, '#8a8f9e', 12, 12, 2, 2); R(g, '#8a8f9e', 6, 2, 4, 2); },
     bag: g => { R(g, '#8a5a30', 3, 5, 10, 9); R(g, '#a8743e', 3, 5, 10, 2); R(g, '#6a4222', 3, 13, 10, 1); R(g, '#5a3a22', 6, 2, 4, 1); R(g, '#5a3a22', 5, 3, 1, 2); R(g, '#5a3a22', 10, 3, 1, 2); R(g, '#f0c050', 7, 8, 2, 2); },
   };
   for (const [id, f] of Object.entries(fn)) ICONS[id] = outlined(mk(16, 16, f));

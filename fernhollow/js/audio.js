@@ -62,6 +62,7 @@ const Sound = {
       case 'magic': [523, 784, 1046, 1318, 1568].forEach((f, i) => this.tone(f, 0.4, 'sine', 0.1, null, i * 0.07)); break;
       case 'slime': this.tone(200, 0.12, 'sine', 0.12, 420); break;
       case 'kill': this.noise(0.2, 0.25, 1200); this.tone(500, 0.15, 'square', 0.08, 120); break;
+      case 'howl': this.tone(330, 0.5, 'sine', 0.09, 560); this.tone(560, 0.9, 'sine', 0.09, 360, 0.45); break;
       case 'ship': this.noise(0.1, 0.3, 500); this.tone(330, 0.1, 'triangle', 0.15, null, 0.05); break;
     }
   },
