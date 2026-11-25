@@ -63,7 +63,7 @@ Press **Menu** on a second controller (or use **Add player 2** under the game) t
 - Every building can be entered, furnished, and searched; taking things is theft if anyone sees you
 - Townsfolk with daily routines, guards on day and night shifts at the gates, on the walls and in the streets
 - Attack townsfolk and the guards fight back; children always outrun you; pay bounties to any guard
-- Sprinting with stamina; Strength, Dexterity, Constitution, Wisdom and Charisma with 3 points to spend each level
+- Sprinting and a dodge roll you can't be hit during, both using stamina; Strength, Dexterity, Constitution, Wisdom and Charisma with 3 points to spend each level
 - A 30-slot bag (more with Strength), 8 equipment slots and over 50 items with Worn to Legendary qualities
 - A character sheet and records: monsters slain by type, miles walked, dungeons entered, items stolen and more
 - A north-up minimap and a fog-of-war world map with towns, dungeons and shrines
