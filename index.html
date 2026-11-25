@@ -176,7 +176,7 @@ table.rec img{width:24px;height:24px;image-rendering:pixelated;vertical-align:mi
     <div id="panel" class="panel" hidden role="dialog" aria-label="Menu"><div class="ptop"><div id="pTabs" class="pTabs" role="tablist"></div><span id="pGold" class="pGold"></span><button id="pClose" class="pClose" type="button" aria-label="Close">✕</button></div><div id="pBody" class="pBody"></div></div>
     <div id="touch">
       <div id="joy" aria-label="Movement joystick"><div id="joyk"></div></div>
-      <button class="tb" id="tA" aria-label="Attack">A</button><button class="tb" id="tB" aria-label="Talk or open">B</button><button class="tb" id="tP" aria-label="Drink potion">P</button><button class="tb" id="tRun" aria-label="Sprint" aria-pressed="false">Run</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button>
+      <button class="tb" id="tA" aria-label="Attack">A</button><button class="tb" id="tB" aria-label="Talk or open">B</button><button class="tb" id="tP" aria-label="Drink potion">P</button><button class="tb" id="tRun" aria-label="Sprint" aria-pressed="false">Run</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button>
     </div>
     <div id="start">
       <div>
@@ -799,7 +799,7 @@ function drawIcon(g,sh,a,b){switch(sh){
   case'relic':R(g,'#c9a24a',4,3,8,11);R(g,'#f2dc7a',5,4,6,9);R(g,'#7a5a20',7,5,2,7);R(g,'#7a5a20',5,7,6,2);R(g,'#7fe0ff',7,7,2,2);break;
   case'elixir':R(g,'#9a6030',7,1,2,2);R(g,'#cfd8e0',7,3,2,3);for(let i=0;i<9;i++)R(g,i<2?'#2a1020':a,8-Math.min(i,4),6+i,2*Math.min(i,4)+1,1);R(g,'#fff',6,10,1,2);break}}
 const ICONS={};
-function iconFor(def){const k=def.icon.join('|');if(!ICONS[k]){const c=outline(mk(16,16,g=>drawIcon(g,...def.icon)));ICONS[k]={c,url:c.toDataURL()}}return ICONS[k]}
+function iconFor(def){if(def.art){if(!def._ic)def._ic={c:def.art,url:def.art.toDataURL()};return def._ic}const k=def.icon.join('|');if(!ICONS[k]){const c=outline(mk(16,16,g=>drawIcon(g,...def.icon)));ICONS[k]={c,url:c.toDataURL()}}return ICONS[k]}
 
 // the leviathan of the outer sea, and its tentacles
 S.levi=outline(mk(40,52,g=>{R(g,'#1f4a5a',8,14,24,38);R(g,'#2a6070',10,16,20,36);ell(g,20,14,14,12,'#1f4a5a');ell(g,20,13,12,10,'#2a6070');R(g,'#18394a',4,20,6,8);R(g,'#18394a',30,20,6,8);
@@ -2022,12 +2022,14 @@ function loadImg(src){return new Promise((res,rej)=>{const i=new Image();i.onloa
 // a horizontal strip of n frames (or a single image)
 const strip=(img,n,ppu,fw,fh)=>{fw=fw||Math.floor(img.width/n);fh=fh||img.height;return[...Array(n)].map((_,i)=>imgCanvas(img,i*fw,0,fw,fh,ppu))};
 async function loadArt(man,base=''){const den=man.density||2,errs=[],src=e=>{const s=typeof e==='string'?e:e.src;return/^(data:|https?:|\/)/.test(s)?s:base+s};
-  const each=async(obj,fn)=>{for(const[k,e]of Object.entries(obj||{})){try{await fn(k,e)}catch(x){errs.push(k+': '+x.message)}}};
+  const each=(obj,fn)=>Promise.all(Object.entries(obj||{}).map(async([k,e])=>{try{await fn(k,e)}catch(x){errs.push(k+': '+x.message)}}));
   const frames=async(e,n=2)=>{const img=await loadImg(src(e)),d=e.density||den,fr=strip(img,e.frames||n,d,e.frameW,e.frameH);if(d>1)ART.hd=true;return fr.length>1?fr:[fr[0],fr[0]]};
   await each(man.monsters,async(k,e)=>{if(!ESPR[k])throw new Error('unknown monster');ESPR[k]=await frames(e)});
   await each(man.animals,async(k,e)=>{if(!ANSPR[k])throw new Error('unknown animal');ANSPR[k]=await frames(e)});
   await each(man.objects,async(k,e)=>{if(!(k in S))throw new Error('unknown object');const img=await loadImg(src(e)),d=e.density||den,n=e.frames||(Array.isArray(S[k])?S[k].length:1),fr=strip(img,n,d,e.frameW,e.frameH);if(d>1)ART.hd=true;S[k]=Array.isArray(S[k])?fr:fr[0]});
-  await each(man.npcs,async(k,L)=>{ART.npcs[k]=[];for(const e of Array.isArray(L)?L:[L])ART.npcs[k].push(await frames(e))});
+  // inventory icons, by item id (see ITEMS)
+  await each(man.items,async(k,e)=>{if(!ITEMS[k])throw new Error('unknown item');const img=await loadImg(src(e));ITEMS[k].art=imgCanvas(img,0,0,img.width,img.height,(e.density||img.width/16))});
+  await each(man.npcs,async(k,L)=>{ART.npcs[k]=await Promise.all((Array.isArray(L)?L:[L]).map(e=>frames(e)))});
   // heroes: a sheet with rows down, up, left (and optionally right) and columns walk 1, walk 2, standing
   for(const hk of['hero','hero2'])if(man[hk])try{const e=man[hk],img=await loadImg(src(e)),d=e.density||den,fw=e.frameW||Math.floor(img.width/3),fh=e.frameH||Math.floor(img.height/(e.rows||3)),rows=Math.round(img.height/fh),cols=Math.max(1,Math.round(img.width/fw));
       const row=r=>[0,1,2].map(f=>imgCanvas(img,Math.min(f,cols-1)*fw,r*fh,fw,fh,d));const H=[row(0),row(1),row(2)];H[3]=rows>3?row(3):H[2].map(c=>{const m=mirror(c);m.ppu=d;return m});ART[hk]=H;if(d>1)ART.hd=true}catch(x){errs.push(hk+': '+x.message)}
@@ -2036,7 +2038,7 @@ async function loadArt(man,base=''){const den=man.density||2,errs=[],src=e=>{con
     cells.forEach(([x,y],i)=>{tag.clearRect(x,y,TS,TS);tag.drawImage(imgs[i%imgs.length],0,0,imgs[i%imgs.length].width,imgs[i%imgs.length].height,x,y,TS,TS)});terrTex.needsUpdate=true;if(imgs[0].width>16)ART.hd=true});
   ART.loaded=true;applyArt();if(errs.length)console.warn('Emberwild art:',errs);return errs}
 // which art an NPC uses: the most specific match in the manifest's npcs section
-function artFor(n){const r=n.role,keys=r==='shop'?['shop.'+n.shop,'shop','townsfolk']:r==='settler'&&n.town&&n.town.elves?['elf','settler','townsfolk']:r==='patrol'?[n.grp&&n.grp.kind==='caravan'?'caravanguard':'patrol','guard']:r==='kid'?['kid','townsfolk']:[r,'townsfolk'];
+function artFor(n){const r=n.role,keys=r==='shop'?['shop.'+n.shop,'shop','townsfolk']:r==='settler'&&n.town&&n.town.elves?['elf','settler','townsfolk']:r==='patrol'?[n.grp&&n.grp.kind==='caravan'?'caravanguard':'patrol','guard']:r==='kid'?['kid']:[r,'townsfolk'];
   for(const k of keys)if(ART.npcs[k]&&ART.npcs[k].length)return ART.npcs[k][Math.floor(hash(n.i,7,77)*ART.npcs[k].length)];return null}
 function applyArt(){for(const n of NPCS){const a=artFor(n);if(a){n.spr=a;n.sprZ=sleepRot(a[0])}}for(const p of PLAYERS)withP(p,()=>recalc());gfxApply()}
 (async()=>{let man=window.EMBERWILD_ART||null,base='';if(!man&&location.protocol!=='file:'){try{const r=await fetch('assets/art.json',{cache:'no-cache'});if(r.ok){man=await r.json();base='assets/'}}catch(e){}}

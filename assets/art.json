@@ -1,0 +1,264 @@
+{
+ "density": 2,
+ "monsters": {
+  "slime": {
+   "src": "monsters/slime.png",
+   "frames": 2
+  },
+  "redslime": {
+   "src": "monsters/redslime.png",
+   "frames": 2
+  },
+  "skeleton": {
+   "src": "monsters/skeleton.png",
+   "frames": 2
+  },
+  "ghost": {
+   "src": "monsters/ghost.png",
+   "frames": 2
+  },
+  "wolf": {
+   "src": "monsters/wolf.png",
+   "frames": 2
+  },
+  "goblin": {
+   "src": "monsters/goblin.png",
+   "frames": 2
+  },
+  "spider": {
+   "src": "monsters/spider.png",
+   "frames": 2
+  },
+  "bear": {
+   "src": "monsters/bear.png",
+   "frames": 2
+  },
+  "troll": {
+   "src": "monsters/troll.png",
+   "frames": 2
+  },
+  "scorpion": {
+   "src": "monsters/scorpion.png",
+   "frames": 2
+  },
+  "bandit": {
+   "src": "monsters/bandit.png",
+   "frames": 2
+  },
+  "draugr": {
+   "src": "monsters/draugr.png",
+   "frames": 2
+  }
+ },
+ "animals": {
+  "dog": {
+   "src": "animals/dog.png",
+   "frames": 2
+  }
+ },
+ "npcs": {
+  "guard": [
+   {
+    "src": "npcs/guard_0.png",
+    "frames": 2
+   },
+   {
+    "src": "npcs/guard_1.png",
+    "frames": 2
+   }
+  ],
+  "patrol": [
+   {
+    "src": "npcs/patrol_0.png",
+    "frames": 2
+   }
+  ],
+  "caravanguard": [
+   {
+    "src": "npcs/caravanguard_0.png",
+    "frames": 2
+   }
+  ],
+  "townsfolk": [
+   {
+    "src": "npcs/townsfolk_0.png",
+    "frames": 2
+   },
+   {
+    "src": "npcs/townsfolk_1.png",
+    "frames": 2
+   },
+   {
+    "src": "npcs/townsfolk_2.png",
+    "frames": 2
+   },
+   {
+    "src": "npcs/townsfolk_3.png",
+    "frames": 2
+   },
+   {
+    "src": "npcs/townsfolk_4.png",
+    "frames": 2
+   },
+   {
+    "src": "npcs/townsfolk_5.png",
+    "frames": 2
+   },
+   {
+    "src": "npcs/townsfolk_6.png",
+    "frames": 2
+   },
+   {
+    "src": "npcs/townsfolk_7.png",
+    "frames": 2
+   }
+  ],
+  "elder": [
+   {
+    "src": "npcs/elder_0.png",
+    "frames": 2
+   }
+  ],
+  "shop.smith": [
+   {
+    "src": "npcs/shop_smith_0.png",
+    "frames": 2
+   }
+  ],
+  "shop.armor": [
+   {
+    "src": "npcs/shop_armor_0.png",
+    "frames": 2
+   }
+  ],
+  "shop.potion": [
+   {
+    "src": "npcs/shop_potion_0.png",
+    "frames": 2
+   }
+  ],
+  "shop.trade": [
+   {
+    "src": "npcs/shop_trade_0.png",
+    "frames": 2
+   }
+  ],
+  "shop.inn": [
+   {
+    "src": "npcs/shop_inn_0.png",
+    "frames": 2
+   }
+  ],
+  "shop.temple": [
+   {
+    "src": "npcs/shop_temple_0.png",
+    "frames": 2
+   }
+  ],
+  "trader": [
+   {
+    "src": "npcs/trader_0.png",
+    "frames": 2
+   }
+  ],
+  "settler": [
+   {
+    "src": "npcs/settler_0.png",
+    "frames": 2
+   },
+   {
+    "src": "npcs/settler_1.png",
+    "frames": 2
+   }
+  ],
+  "elf": [
+   {
+    "src": "npcs/elf_0.png",
+    "frames": 2
+   },
+   {
+    "src": "npcs/elf_1.png",
+    "frames": 2
+   },
+   {
+    "src": "npcs/elf_2.png",
+    "frames": 2
+   },
+   {
+    "src": "npcs/elf_3.png",
+    "frames": 2
+   }
+  ]
+ },
+ "items": {
+  "rusty": "items/rusty.png",
+  "dagger": "items/dagger.png",
+  "short": "items/short.png",
+  "haxe": "items/haxe.png",
+  "spear": "items/spear.png",
+  "mace": "items/mace.png",
+  "long": "items/long.png",
+  "saber": "items/saber.png",
+  "rune": "items/rune.png",
+  "ember": "items/ember.png",
+  "buckler": "items/buckler.png",
+  "kite": "items/kite.png",
+  "tower": "items/tower.png",
+  "aegis": "items/aegis.png",
+  "cap": "items/cap.png",
+  "helm": "items/helm.png",
+  "ghelm": "items/ghelm.png",
+  "gamb": "items/gamb.png",
+  "jerkin": "items/jerkin.png",
+  "chain": "items/chain.png",
+  "plate": "items/plate.png",
+  "dragon": "items/dragon.png",
+  "gloves": "items/gloves.png",
+  "gaunt": "items/gaunt.png",
+  "boots": "items/boots.png",
+  "greaves": "items/greaves.png",
+  "swift": "items/swift.png",
+  "cring": "items/cring.png",
+  "vigor": "items/vigor.png",
+  "charm": "items/charm.png",
+  "ward": "items/ward.png",
+  "light": "items/light.png",
+  "bread": "items/bread.png",
+  "potion": "items/potion.png",
+  "gpotion": "items/gpotion.png",
+  "mightel": "items/mightel.png",
+  "stonel": "items/stonel.png",
+  "locket": "items/locket.png",
+  "relic": "items/relic.png"
+ },
+ "tiles": {
+  "grass": [
+   "tiles/grass_0.png",
+   "tiles/grass_1.png",
+   "tiles/grass_2.png"
+  ],
+  "forest": [
+   "tiles/forest_0.png",
+   "tiles/forest_1.png",
+   "tiles/forest_2.png"
+  ],
+  "hill": [
+   "tiles/hill_0.png",
+   "tiles/hill_1.png",
+   "tiles/hill_2.png"
+  ],
+  "path": [
+   "tiles/path_0.png",
+   "tiles/path_1.png"
+  ],
+  "sand": [
+   "tiles/sand_0.png",
+   "tiles/sand_1.png"
+  ],
+  "desert": [
+   "tiles/desert_0.png",
+   "tiles/desert_1.png"
+  ]
+ },
+ "credits": "Art: Dungeon Crawl Stone Soup 32x32 tiles, released under CC0 by their artists (github.com/crawl/tiles)."
+}

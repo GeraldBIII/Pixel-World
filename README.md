@@ -51,7 +51,7 @@ Press **Menu** on a second controller (or use **Add player 2** under the game) t
 
 ## Your own art
 
-You can swap in sprites and ground tiles from an art pack, including 32×32 art, which shows at the same size in the world with twice the detail. Put the images in `assets/` and list them in `assets/art.json`; see [ART.md](ART.md) for the format. The **Graphics** option in the pause menu (Auto, Classic, Sharp, Ultra) sets how sharply the 3D view is drawn; Auto switches to Ultra when detailed art is loaded.
+The game ships with a CC0 art pack built from the Dungeon Crawl Stone Soup 32×32 tiles (monsters, townsfolk, item icons, grass and dirt; see `assets/CREDITS.md`). It loads when the game is served from a web address such as GitHub Pages; opened straight from disk, the game uses its built-in art. You can swap in sprites and ground tiles from any other art pack, including 32×32 art, which shows at the same size in the world with twice the detail. Put the images in `assets/` and list them in `assets/art.json`; see [ART.md](ART.md) for the format. The **Graphics** option in the pause menu (Auto, Classic, Sharp, Ultra) sets how sharply the 3D view is drawn; Auto switches to Ultra when detailed art is loaded.
 
 ## Features
 

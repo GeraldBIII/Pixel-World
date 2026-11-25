@@ -2,6 +2,10 @@
 
 Emberwild draws all of its pixel art in code, but you can swap in sprites and ground tiles from an art pack (or your own drawings) without touching the game's code. Art of any size works: **32×32 art appears at the same size in the world as the built-in 16×16 art, just with twice the detail**, so you can switch styles a piece at a time.
 
+## The included pack
+
+`assets/` already holds a CC0 pack built from the Dungeon Crawl Stone Soup 32×32 tiles: all twelve monsters, the town dog, every kind of townsperson (guards, road wardens, caravan guards, shopkeepers, traders, settlers, elves and Elder Maren), item icons for most gear and potions, and brighter grass, dirt and sand. Your hero and the children keep their built-in sprites (the hero's look changes with the armor you wear). See `assets/CREDITS.md`. To go back to the built-in art, rename or delete `assets/art.json`.
+
 ## Quick start
 
 1. Put your image files (PNG) in the `assets/` folder.
@@ -70,6 +74,10 @@ Each key takes one image or a list of images (each a strip of 2 frames). Townsfo
 | `trader` | Caravan traders |
 | `settler`, `elf` | Homesteaders; the elves of the Elderwood |
 | `shop`, `shop.smith`, `shop.armor`, `shop.potion`, `shop.trade`, `shop.inn`, `shop.temple` | Shopkeepers, in general or by shop |
+
+### Item icons (`items`)
+
+Inventory icons by item id: `rusty`, `dagger`, `short`, `haxe`, `spear`, `mace`, `long`, `baxe`, `hammer`, `saber`, `rune`, `ember`, `buckler`, `kite`, `tower`, `aegis`, `cap`, `helm`, `ghelm`, `gamb`, `jerkin`, `chain`, `plate`, `dragon`, `gloves`, `gaunt`, `boots`, `greaves`, `swift`, `cring`, `vigor`, `might`, `charm`, `ward`, `light`, `bread`, `potion`, `gpotion`, `mightel`, `stonel`, `gel`, `egel`, `bone`, `ecto`, `pelt`, `fang`, `ear`, `trinket`, `locket`, `amethyst`, `sapphire`, `ruby`, `diamond`, `silk`, `trollfat`, `stinger`, `relic`. One image each (any size).
 
 ### Objects (`objects`)
 
