@@ -176,7 +176,7 @@ table.rec img{width:24px;height:24px;image-rendering:pixelated;vertical-align:mi
     <div id="panel" class="panel" hidden role="dialog" aria-label="Menu"><div class="ptop"><div id="pTabs" class="pTabs" role="tablist"></div><span id="pGold" class="pGold"></span><button id="pClose" class="pClose" type="button" aria-label="Close">✕</button></div><div id="pBody" class="pBody"></div></div>
     <div id="touch">
       <div id="joy" aria-label="Movement joystick"><div id="joyk"></div></div>
-      <button class="tb" id="tA" aria-label="Attack">A</button><button class="tb" id="tB" aria-label="Talk or open">B</button><button class="tb" id="tP" aria-label="Drink potion">P</button><button class="tb" id="tRun" aria-label="Sprint" aria-pressed="false">Run</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button>
+      <button class="tb" id="tA" aria-label="Attack">A</button><button class="tb" id="tB" aria-label="Talk or open">B</button><button class="tb" id="tP" aria-label="Drink potion">P</button><button class="tb" id="tRun" aria-label="Sprint" aria-pressed="false">Run</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button>
     </div>
     <div id="start">
       <div>
@@ -201,11 +201,10 @@ table.rec img{width:24px;height:24px;image-rendering:pixelated;vertical-align:mi
   </section>
   <section class="legend">
     <div><h3>Move &amp; fight</h3><ul>
-      <li><kbd>W</kbd><kbd>S</kbd><kbd>↑</kbd><kbd>↓</kbd> walk forward or back</li>
-      <li><kbd>A</kbd><kbd>D</kbd><kbd>←</kbd><kbd>→</kbd> turn</li>
+      <li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrows: walk in any of 8 directions</li>
       <li><kbd>Shift</kbd> sprint (uses stamina)</li>
       <li><kbd>Space</kbd> dodge roll: you can't be hit mid-roll</li>
-      <li><kbd>Left click</kbd> swing your weapon</li>
+      <li><kbd>Left click</kbd> swing your weapon toward the cursor</li>
       <li><kbd>Q</kbd> drink a healing potion</li></ul></div>
     <div><h3>Explore</h3><ul>
       <li><kbd>E</kbd><kbd>Enter</kbd> talk, trade, open doors, search</li>
@@ -214,12 +213,12 @@ table.rec img{width:24px;height:24px;image-rendering:pixelated;vertical-align:mi
       <li><kbd>Esc</kbd> pause menu (options, unstuck, exit) · <kbd>F</kbd> fullscreen</li>
       <li><kbd>G</kbd> god mode, for testing</li></ul></div>
     <div><h3>Xbox controller</h3><ul>
-      <li><kbd>L stick</kbd> walk and turn · <kbd>R stick</kbd> camera</li>
+      <li><kbd>L stick</kbd><kbd>D-pad</kbd> walk · <kbd>R stick</kbd> tilt the camera</li>
       <li><kbd>X</kbd><kbd>RT</kbd> attack · <kbd>B</kbd> dodge roll · <kbd>A</kbd> use · <kbd>Y</kbd> potion</li>
       <li><kbd>LT</kbd><kbd>LB</kbd> sprint · <kbd>Menu</kbd> pause menu · <kbd>View</kbd> map · <kbd>RB</kbd> hero</li>
       <li>Press <kbd>Menu</kbd> on a second controller for split screen</li></ul></div>
     <div><h3>Camera</h3><ul>
-      <li><kbd>Right-drag</kbd> orbit and tilt (third person by default)</li>
+      <li><kbd>Right-drag</kbd> up or down to tilt the camera (it always faces north)</li>
       <li><kbd>Scroll</kbd> zoom in or out</li>
       <li><kbd>R</kbd> reset the camera</li></ul></div>
     <div><h3>Tips</h3><ul>
@@ -990,7 +989,8 @@ addEventListener('mouseup',e=>{if(e.button===0)keys.Mouse0=false});
 let camDrag=null;
 ov.addEventListener('mousedown',e=>{if(e.button===2){e.preventDefault();camDrag=[e.clientX,e.clientY]}});
 addEventListener('mousemove',e=>{if(!camDrag)return;const dx=e.clientX-camDrag[0],dy=e.clientY-camDrag[1];camDrag=[e.clientX,e.clientY];
-  const p1=PLAYERS[0];if(p1)p1.h+=dx*.006;CAM1.tilt=clamp(CAM1.tilt+dy*.3,5,86);camUI()});
+  CAM1.tilt=clamp(CAM1.tilt+dy*.3,20,86);camUI()});
+addEventListener('mousemove',e=>{MOUSE.x=e.clientX;MOUSE.y=e.clientY;MOUSE.t=1});
 addEventListener('mouseup',e=>{if(e.button===2&&camDrag){camDrag=null;saveCam()}});
 frame.addEventListener('contextmenu',e=>e.preventDefault());
 frame.addEventListener('wheel',e=>{if(!running||uiOpen(PLAYERS[0]))return;e.preventDefault();CAM1.zoom=clamp(CAM1.zoom*Math.exp(-e.deltaY*.0012),.6,3.2);camUI();saveCam()},{passive:false});
@@ -998,13 +998,13 @@ addEventListener('blur',()=>{for(const k in keys)keys[k]=false});
 [['tA','Mouse0'],['tB','KeyE'],['tP','KeyQ'],['tDodge','Space']].forEach(([id,code])=>{const b=$(id);
   b.addEventListener('pointerdown',e=>{e.preventDefault();if(!UIS[0].dlg.hidden&&code==='KeyE'){const bs=UIS[0].dlgOpts.querySelectorAll('button');bs[bs.length-1]&&bs[bs.length-1].click();return}keys[code]=true;pressed.add(code)});
   ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>{keys[code]=false}))});
-// touch: a virtual joystick on the left, drag anywhere else to turn the camera, pinch to zoom
+// touch: a virtual joystick on the left, drag anywhere else to tilt the camera, pinch to zoom
 const JOY={x:0,y:0,id:null};{const j=$('joy'),k=$('joyk');const set=e=>{const r=j.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,R_=r.width/2;let dx=(e.clientX-cx)/R_,dy=(e.clientY-cy)/R_;const l=Math.hypot(dx,dy);if(l>1){dx/=l;dy/=l}JOY.x=dx;JOY.y=dy;k.style.transform=`translate(${dx*R_*.55}px,${dy*R_*.55}px)`};
   j.addEventListener('pointerdown',e=>{e.preventDefault();JOY.id=e.pointerId;j.setPointerCapture(e.pointerId);set(e)});j.addEventListener('pointermove',e=>{if(e.pointerId===JOY.id)set(e)});
   for(const ev of['pointerup','pointercancel'])j.addEventListener(ev,e=>{if(e.pointerId===JOY.id){JOY.id=null;JOY.x=JOY.y=0;k.style.transform=''}})}
 const TP=new Map();let pinch0=0;
 ov.addEventListener('pointerdown',e=>{if(e.pointerType!=='touch')return;TP.set(e.pointerId,[e.clientX,e.clientY]);ov.setPointerCapture(e.pointerId);if(TP.size===2){const[a,b]=[...TP.values()];pinch0=Math.hypot(a[0]-b[0],a[1]-b[1])}});
-ov.addEventListener('pointermove',e=>{if(!TP.has(e.pointerId))return;const o=TP.get(e.pointerId);if(TP.size===1){if(PLAYERS[0])PLAYERS[0].h+=(e.clientX-o[0])*.008;CAM1.tilt=clamp(CAM1.tilt+(e.clientY-o[1])*.3,5,86)}
+ov.addEventListener('pointermove',e=>{if(!TP.has(e.pointerId))return;const o=TP.get(e.pointerId);if(TP.size===1){CAM1.tilt=clamp(CAM1.tilt+(e.clientY-o[1])*.3,20,86)}
   TP.set(e.pointerId,[e.clientX,e.clientY]);if(TP.size===2){const[a,b]=[...TP.values()],d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(pinch0)CAM1.zoom=clamp(CAM1.zoom*d/pinch0,.5,3.2);pinch0=d}});
 for(const ev of['pointerup','pointercancel'])ov.addEventListener(ev,e=>{if(TP.delete(e.pointerId)){pinch0=0;saveCam();camUI()}});
 let runToggle=false;$('tRun').addEventListener('pointerdown',e=>{e.preventDefault();runToggle=!runToggle;$('tRun').setAttribute('aria-pressed',runToggle)});
@@ -1102,7 +1102,7 @@ function renderPanel(){const tabs=pCont?[['loot','Search']]:pShop?[['buy','Buy']
 function pauseHTML(){const c=CAM,on=v=>v?'On':'Off',p2=PLAYERS[1],b=(k,l,d)=>`<button type="button" data-pause="${k}"><b>${l}</b>${d?`<span>${d}</span>`:''}</button>`;
   return`<div class="pmenu"><h4>Paused</h4><div class="pgrid">${b('resume','Resume','Back to the game')}${b('unstuck','Unstuck me','Move to the nearest open ground')}${b('save','Save game','Progress also saves on its own')}</div>
   <h4>Camera</h4><div class="pgrid">${b('tiltDn','Tilt −',Math.round(c.tilt)+'°')}${b('tiltUp','Tilt +',Math.round(c.tilt)+'°')}${b('zoomDn','Zoom out',Math.round(c.zoom*100)+'%')}${b('zoomUp','Zoom in',Math.round(c.zoom*100)+'%')}${b('camreset','Reset camera')}</div>
-  <h4>Options</h4><div class="pgrid">${b('sound','Sound',on(soundOn))}${b('gfx','Graphics',GFXNAMES[GFXMODE]+' · '+(GQ===1?'chunky':GQ<2?'sharper':'sharpest'))}${b('god','God mode',on(P.god))}${P.god?b('fly','Fly',on(P.fly)+' · V to toggle'):''}${b('full','Fullscreen',on(!!(document.fullscreenElement||document.webkitFullscreenElement||document.body.classList.contains('pseudofs'))))}${b('p2',p2?'Remove player 2':'Add player 2',p2?'Back to one screen':'Split screen with a controller')}</div>
+  <h4>Options</h4><div class="pgrid">${b('sound','Sound',on(soundOn))}${b('fx','Diorama effects',on(FXON)+' · tilt-shift blur')}${b('gfx','Graphics',GFXNAMES[GFXMODE]+' · '+(GQ===1?'chunky':GQ<2?'sharper':'sharpest'))}${b('god','God mode',on(P.god))}${P.god?b('fly','Fly',on(P.fly)+' · V to toggle'):''}${b('full','Fullscreen',on(!!(document.fullscreenElement||document.webkitFullscreenElement||document.body.classList.contains('pseudofs'))))}${b('p2',p2?'Remove player 2':'Add player 2',p2?'Back to one screen':'Split screen with a controller')}</div>
   <h4>Leave</h4><div class="pgrid">${b('exit','Save & exit','Return to the title screen')}</div></div>`}
 function pauseAct(k){const c=CAM;
   if(k==='resume')return closePanel();
@@ -1113,6 +1113,7 @@ function pauseAct(k){const c=CAM;
   else if(k==='camreset')Object.assign(c,CAM_DEF);
   else if(k==='fly'){if(P.realm==='w'){P.fly=!P.fly;toast(P.fly?'Flying: Space or d-pad up to climb, X or d-pad down to descend':'Landing…',2.4)}}
   else if(k==='gfx'){const o=['auto','1','1.5','2'];GFXMODE=o[(o.indexOf(GFXMODE)+1)%o.length];try{localStorage.setItem(GFXKEY,GFXMODE)}catch(e){}gfxApply();toast('Graphics: '+GFXNAMES[GFXMODE],1.4)}
+  else if(k==='fx'){FXON=!FXON;try{localStorage.setItem(FXKEY,FXON?'on':'off')}catch(e){}}
   else if(k==='sound')soundOn=!soundOn;else if(k==='god')toggleGod();else if(k==='full')toggleFull();
   else if(k==='p2'){closePanel();$('bP2').click();return}
   else if(k==='exit')return exitToTitle();
@@ -1753,7 +1754,9 @@ function updatePlayer(dt){const I=P.inp;P.stats.play+=dt;
   if(!(P.god&&P.realm==='w')&&!freeAt(P,P.x,P.y))unstick(P);
   // bounties fade when no guard can see you
   if(P.wanted>0){const seen=P.realm==='w'&&NPCS.some(g=>g.role==='guard'&&g.hostile&&!g.inside&&!g.dead&&Math.hypot(g.x-P.x,g.y-P.y)<320);if(!seen){const far=!nearAnyTown(P.x/16,P.y/16,1.4);P.wanted=Math.max(0,P.wanted-(far&&P.realm==='w'?3:.4)*dt);if(P.wanted<=0)toast('The guards have stopped looking for '+(PLAYERS.length>1?P.name:'you')+'.',2)}}
-  P.h=(P.h+I.turn*2.6*dt)%(Math.PI*2);
+  // movement is relative to the screen: up the screen is away from the camera
+  if(I.fwd>.15){const Y=camYaw(),wx=-Math.sin(Y)*I.mx-Math.cos(Y)*I.my,wy=Math.cos(Y)*I.mx-Math.sin(Y)*I.my;P.h=Math.atan2(wy,wx)}
+  if(I.att&&I.aim!=null&&!(P.roll>0))P.h=I.aim;
   // god-mode flight, and swimming wherever the water is too deep to wade
   P.alt=P.alt||0;if(P.realm==='w'&&P.god&&P.fly)P.alt=clamp(P.alt+(I.up||0)*280*dt,0,1400);else if(P.alt>0)P.alt=Math.max(0,P.alt-320*dt);
   P.swim=P.realm==='w'&&P.alt<=0&&hAt(P.x,P.y)<SEA-6&&gH(P.x,P.y)<SEA-5;
@@ -1810,8 +1813,8 @@ function toggleGod(){P.god=!P.god;if(!P.god)P.fly=false;recalc();toast((PLAYERS.
 // one viewport per player for split screen
 // three.js axes: X = world x, Y = height, Z = world y
 // =====================================================================
-// third person: a low camera just behind the hero, looking ahead
-const CAM_DEF={tilt:14,orbit:0,zoom:2.2,follow:true,view:'auto'},CAMKEY='emberwild-cam4';
+// a fixed diorama camera, high and to the south, always facing north (indoors it looks in from the doorway)
+const CAM_DEF={tilt:40,orbit:0,zoom:1.2,follow:true,view:'auto'},CAMKEY='emberwild-cam5';
 const CAM1=Object.assign({},CAM_DEF);try{const c=JSON.parse(localStorage.getItem(CAMKEY));if(c)Object.assign(CAM1,c)}catch(e){}
 let CAM=CAM1;
 const saveCam=()=>{try{localStorage.setItem(CAMKEY,JSON.stringify(CAM1))}catch(e){}};
@@ -1821,12 +1824,12 @@ const NF={value:0},HP={value:new THREE.Vector2()},HD={value:0},HR={value:0};// h
 function seeThrough(mat){mat.onBeforeCompile=sh=>{sh.uniforms.nearFade=NF;sh.uniforms.heroP=HP;sh.uniforms.heroD=HD;sh.uniforms.heroR=HR;
   sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nvarying float vVZ;').replace('#include <project_vertex>','#include <project_vertex>\nvVZ=-mvPosition.z;');
   sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nvarying float vVZ;uniform float nearFade;uniform vec2 heroP;uniform float heroD;uniform float heroR;').replace('#include <clipping_planes_fragment>','#include <clipping_planes_fragment>\nfloat fz=1.;if(vVZ<heroD-6.)fz=smoothstep(heroR*.55,heroR,distance(gl_FragCoord.xy,heroP));fz=min(fz,smoothstep(heroD*.22,heroD*.45,vVZ));if(fz<.999){vec2 q=mod(floor(gl_FragCoord.xy),4.);if(fz<mod(q.x*2.+q.y*3.+q.x*q.y,4.)/4.+.12)discard;}')};return mat}
-const camYaw=()=>P.h;// locked behind the hero
+const camYaw=()=>INSIDE&&!INSIDE.dun?Math.PI/2:-Math.PI/2;// north-up outdoors and in dungeons; into the room indoors
 const camAng=()=>-Math.PI/2-YAW;
 const renderer=new THREE.WebGLRenderer({canvas:cv,antialias:false,powerPreference:'high-performance'});
 renderer.setPixelRatio(1);renderer.autoClear=true;
 const scene=new THREE.Scene();
-let camera=new THREE.PerspectiveCamera(42,1.6,2,6000);
+let camera=new THREE.PerspectiveCamera(30,1.6,2,6000);
 const hemi=new THREE.HemisphereLight(0xcfe6ff,0x5a6a3a,1.1),sun=new THREE.DirectionalLight(0xfff2d8,1.4);scene.add(hemi,sun,sun.target);
 scene.fog=new THREE.Fog(0xcfe6ef,800,3000);
 let FW=320,FH=200,VIEWS=[{x:0,y:0,w:320,h:200}];
@@ -2221,8 +2224,8 @@ const gH=(x,y)=>{const h=hAt(x,y);if(h<SEA+4&&!INSIDE){const r=roadAt(x/16,y/16)
 // where a hero is drawn: on the ground, chest-deep when swimming, or up in the sky when flying
 const heroZ=q=>{if(q.realm!=='w')return gH(q.x,q.y);const h=gH(q.x,q.y),base=q.swim?Math.max(h,SEA-11):q.alt>0?Math.max(h,SEA):h;return base+(q.alt||0)};
 function clearView(tx,ty,tz,t,dist){const cx=tx-Math.cos(YAW)*Math.cos(t)*dist,cy=ty-Math.sin(YAW)*Math.cos(t)*dist,cz=tz+Math.sin(t)*dist;for(let f=.08;f<=1;f+=.04){const x=tx+(cx-tx)*f,y=ty+(cy-ty)*f,z=tz+(cz-tz)*f;if(z<gH(x,y)+5)return f-.04}return 1}
-function renderView(dt,vi){const V_=VIEWS[vi];VW=V_.w;VH=V_.h;if(!P.camObj)P.camObj=new THREE.PerspectiveCamera(42,1.6,2,6000);camera=P.camObj;camera.aspect=VW/VH;
-  heroSprites();YAW=camYaw();const inside=!!INSIDE,dun=inside&&INSIDE.dun,dist=(dun?170:inside?170:250)/CAM.zoom,ph=heroZ(P);let tilt=clamp(CAM.tilt,dun?50:inside?28:5,86)*Math.PI/180;
+function renderView(dt,vi){const V_=VIEWS[vi];VW=V_.w;VH=V_.h;if(!P.camObj)P.camObj=new THREE.PerspectiveCamera(30,1.6,2,6000);camera=P.camObj;camera.aspect=VW/VH;
+  heroSprites();YAW=camYaw();const inside=!!INSIDE,dun=inside&&INSIDE.dun,dist=(dun?250:inside?230:340)/CAM.zoom,ph=heroZ(P);let tilt=clamp(CAM.tilt,dun?50:inside?38:20,86)*Math.PI/180;
   const tx=P.x,ty=P.y,tz=ph+18;
   if(!inside){let best=clearView(tx,ty,tz,tilt,dist);if(best<.6)for(let t=tilt+.15;t<1.45;t+=.15){const c=clearView(tx,ty,tz,t,dist);if(c>best+.05){P.camT=lerp(P.camT??tilt,t,.15);break}}if(best>=.6)P.camT=lerp(P.camT??tilt,tilt,.1);tilt=P.camT??tilt}
   const cx=tx-Math.cos(YAW)*Math.cos(tilt)*dist,cy=ty-Math.sin(YAW)*Math.cos(tilt)*dist;let cz=tz+Math.sin(tilt)*dist;
@@ -2271,8 +2274,24 @@ function renderView(dt,vi){const V_=VIEWS[vi];VW=V_.w;VH=V_.h;if(!P.camObj)P.cam
       for(const s_ of[-1,1])bput(g,S.tentacle,q.x+Math.cos(L.a+s_*1.1)*46,q.y+Math.sin(L.a+s_*1.1)*46,SEA-60+rise*52+Math.sin(time*3+s_)*4,{sc:2.4,flip:s_>0?1:0,keep:1})}}
   for(const q of PLAYERS){if(q.realm!==R0||(q!==P&&q._in!==INSIDE&&R0!=='w'))continue;if(q.inv>0&&!(q.roll>0)&&Math.floor(q.inv*14)%2)continue;const hs=q.heroSlots?q.HERO:null;if(!hs)continue;const hd=heroDir(q),fr=q.moving?Math.floor(q.anim)%2:2;bput(g,q.HERO[hd][q.roll>0?Math.floor(q.roll*20)%2:fr],q.x,q.y,heroZ(q),q.roll>0?{w:16*(1+.25*Math.sin((1-q.roll/0.42)*Math.PI)),h:16*(.5+.5*Math.abs(Math.cos((1-q.roll/0.42)*Math.PI*2))),keep:1}:{keep:1})}
   bdone(g);const sc=inside?P.sceneI:scene;sc.add(dyn);
-  const vx=Math.round(V_.x*GQ),vy=Math.round((FH-V_.y-V_.h)*GQ),vw=Math.round(V_.w*GQ),vh=Math.round(V_.h*GQ);renderer.setViewport(vx,vy,vw,vh);renderer.setScissor(vx,vy,vw,vh);renderer.setScissorTest(true);renderer.render(sc,camera);
+  const vx=Math.round(V_.x*GQ),vy=Math.round((FH-V_.y-V_.h)*GQ),vw=Math.round(V_.w*GQ),vh=Math.round(V_.h*GQ);renderer.setViewport(vx,vy,vw,vh);renderer.setScissor(vx,vy,vw,vh);renderer.setScissorTest(true);renderer.render(sc,camera);diorama(V_);
   ctx.save();ctx.translate(V_.x,V_.y);ctx.beginPath();ctx.rect(0,0,VW,VH);ctx.clip();overlay(lights,ph);ctx.restore()}
+// the diorama look: tilt-shift blur at the top and bottom of the view, a soft vignette and warm light
+const FXKEY='emberwild-fx';let FXON=true;try{FXON=localStorage.getItem(FXKEY)!=='off'}catch(e){}
+const DCV=document.createElement('canvas'),dcx=DCV.getContext('2d');
+function diorama(V_){if(!FXON)return;const w=Math.max(1,Math.round(V_.w)),h=Math.max(1,Math.round(V_.h));if(DCV.width!==w||DCV.height!==h){DCV.width=w;DCV.height=h}
+  dcx.globalCompositeOperation='source-over';dcx.clearRect(0,0,w,h);dcx.filter='blur('+(1.2+h/260)+'px)';
+  try{dcx.drawImage(cv,V_.x*GQ,V_.y*GQ,V_.w*GQ,V_.h*GQ,0,0,w,h)}catch(e){dcx.filter='none';return}dcx.filter='none';
+  const gr=dcx.createLinearGradient(0,0,0,h);gr.addColorStop(0,'rgba(0,0,0,1)');gr.addColorStop(.3,'rgba(0,0,0,0)');gr.addColorStop(.72,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(0,0,0,.9)');
+  dcx.globalCompositeOperation='destination-in';dcx.fillStyle=gr;dcx.fillRect(0,0,w,h);dcx.globalCompositeOperation='source-over';
+  ctx.drawImage(DCV,V_.x,V_.y);
+  const vg=ctx.createRadialGradient(V_.x+w/2,V_.y+h*.55,h*.35,V_.x+w/2,V_.y+h*.55,Math.hypot(w,h)*.62);vg.addColorStop(0,'rgba(40,20,0,0)');vg.addColorStop(1,'rgba(30,14,4,.42)');ctx.fillStyle=vg;ctx.fillRect(V_.x,V_.y,w,h);
+  ctx.save();ctx.globalCompositeOperation='soft-light';ctx.fillStyle='rgba(255,196,130,.22)';ctx.fillRect(V_.x,V_.y,w,h);ctx.restore()}
+// where on the ground the mouse is pointing, as a heading from the hero (for attacks)
+const MOUSE={x:0,y:0,t:0};
+function aimAngle(p){const cam=p.camObj;if(!cam||!MOUSE.t)return null;const r=frame.getBoundingClientRect(),V_=VIEWS[PLAYERS.indexOf(p)]||VIEWS[0],sx=(MOUSE.x-r.left)/SC,sy=(MOUSE.y-r.top)/SC;
+  const a=new THREE.Vector3((sx-V_.x)/V_.w*2-1,-((sy-V_.y)/V_.h*2-1),.5).unproject(cam),o=cam.position,d=a.sub(o).normalize(),hz=heroZ(p)+6;if(Math.abs(d.y)<1e-3)return null;const t=(hz-o.y)/d.y;if(t<0)return null;
+  return Math.atan2(o.z+d.z*t-p.y,o.x+d.x*t-p.x)}
 function render(dt){let pending=0;if(PLAYERS.some(p=>p.realm==='w'))pending=updateChunks();tuneView(dt,pending);ctx.clearRect(0,0,FW,FH);const me=P;
   PLAYERS.forEach((p,i)=>{usePlayer(p);renderView(dt,i)});usePlayer(me);VW=FW;VH=FH;
   if(PLAYERS.length>1){ctx.fillStyle='#000';const a=VIEWS[0],b=VIEWS[1];if(b.x>0)ctx.fillRect(a.w,0,b.x-a.w,FH);else ctx.fillRect(0,a.h,FW,b.y-a.h)}}
@@ -2320,15 +2339,16 @@ function claimPads(){for(const gp of pads()){if(PLAYERS.some(p=>p.pad===gp.index
   else if(PLAYERS[0].pad==null&&!joinWait){PLAYERS[0].pad=gp.index;PLAYERS[0].prev=b;toast('Controller connected to '+PLAYERS[0].name,1.6);padUI()}
   else if(b[9]&&running&&PLAYERS.length<2){addPlayer2();PLAYERS[1].pad=gp.index;PLAYERS[1].prev=b;toast('Player 2 joined!',2);padUI()}}}
 function buildInp(p){const I={fwd:0,turn:0,run:false,att:false,pr:new Set()};
-  if(p.useKb){I.fwd=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0);I.turn=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0);I.run=!!(keys.ShiftLeft||keys.ShiftRight||runToggle);I.att=!!keys.Mouse0;if(p.fly)I.up=(keys.Space?1:0)-(keys.KeyX||keys.ControlLeft?1:0);
-    if(JOY.id!=null){I.fwd+=-JOY.y;I.turn+=JOY.x*.9;if(Math.hypot(JOY.x,JOY.y)>.95&&-JOY.y>.6&&runToggle)I.run=true}
+  I.mx=0;I.my=0;
+  if(p.useKb){I.my=(keys.KeyS||keys.ArrowDown?1:0)-(keys.KeyW||keys.ArrowUp?1:0);I.mx=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0);I.run=!!(keys.ShiftLeft||keys.ShiftRight||runToggle);I.att=!!keys.Mouse0;if(p.fly)I.up=(keys.Space?1:0)-(keys.KeyX||keys.ControlLeft?1:0);
+    if(JOY.id!=null){I.mx+=JOY.x;I.my+=JOY.y}if(keys.Mouse0)I.aim=aimAngle(p);
     const map={Escape:'pause',KeyV:'fly',KeyE:'act',Enter:'act',KeyQ:'potion',KeyI:'bag',KeyC:'hero',KeyM:'map',KeyR:'camreset',KeyN:'sound',KeyG:'god',Space:'roll'};for(const c of pressed)if(map[c])I.pr.add(map[c])}
   const gp=p.pad!=null&&navigator.getGamepads()[p.pad];
   if(gp){const ax=gp.axes,dz=v=>Math.abs(v||0)<.18?0:v,b=padBtns(gp),prev=p.prev||[],edge=i=>b[i]&&!prev[i];
-    if(p.fly)I.up=(I.up||0)+(b[12]?1:0)-(b[13]?1:0);I.fwd+=-dz(ax[1])+(p.fly?0:(b[12]?1:0)-(b[13]?1:0));I.turn+=dz(ax[0])+(b[15]?1:0)-(b[14]?1:0);I.run=I.run||b[6]||b[4]||b[10];I.att=I.att||b[2]||b[7];
+    if(p.fly)I.up=(I.up||0)+(b[12]?1:0)-(b[13]?1:0);I.my+=dz(ax[1])+(p.fly?0:(b[13]?1:0)-(b[12]?1:0));I.mx+=dz(ax[0])+(b[15]?1:0)-(b[14]?1:0);I.run=I.run||b[6]||b[4]||b[10];I.att=I.att||b[2]||b[7];
     if(edge(0))I.pr.add('act');if(edge(1))I.pr.add('roll');if(edge(3))I.pr.add('potion');if(edge(9))I.pr.add('pause');if(edge(8))I.pr.add('map');if(edge(5))I.pr.add('hero');if(edge(11))I.pr.add('camreset');
-    const rx=dz(ax[2]),ry=dz(ax[3]);I.turn+=rx;if(ry)p.cam.tilt=clamp(p.cam.tilt+ry*70*dtLast,5,86);p.prev=b}
-  I.fwd=clamp(I.fwd,-1,1);I.turn=clamp(I.turn,-1,1);p.inp=I}
+    const ry=dz(ax[3]);if(ry)p.cam.tilt=clamp(p.cam.tilt+ry*70*dtLast,5,86);p.prev=b}
+  const ml=Math.hypot(I.mx,I.my);if(ml>1){I.mx/=ml;I.my/=ml}I.fwd=Math.min(1,ml);I.turn=0;p.inp=I}
 // controllers drive their own player's menus: d-pad/stick moves the cursor, A presses, X opens item options, B backs out, LB/RB switch tabs
 function menuNav(p){p.inp={fwd:0,turn:0,run:false,att:false,pr:new Set()};const gp=p.pad!=null&&navigator.getGamepads()[p.pad];if(!gp)return;const b=padBtns(gp),prev=p.prev||[],edge=i=>b[i]&&!prev[i];p.prev=b;
   const u=UI,root=!u.dlg.hidden?u.dlg:u.panel,items=[...root.querySelectorAll('button:not(:disabled)')].filter(e=>e.offsetParent);if(!items.length)return;

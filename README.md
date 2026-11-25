@@ -1,6 +1,6 @@
 # Emberwild
 
-A fantasy open-world pixel-art RPG in true 3D that runs in the browser, solo or two-player split screen. One `index.html`, no build step; it loads [three.js](https://threejs.org) from a CDN.
+A fantasy open-world pixel-art RPG with a top-down, Octopath-style diorama view (2D pixel characters in a 3D world) that runs in the browser, solo or two-player split screen. One `index.html`, no build step; it loads [three.js](https://threejs.org) from a CDN.
 
 ## Play
 
@@ -10,11 +10,10 @@ Open `index.html` in a browser, or turn on GitHub Pages (Settings → Pages → 
 
 | Action | Keys |
 | --- | --- |
-| Walk forward / back | W S / ↑ ↓ |
-| Turn | A D / ← → |
+| Walk (up, down, left, right and diagonals, relative to the screen) | W A S D / arrow keys |
 | Sprint (uses stamina) | Shift |
 | Dodge roll: forward, back (hold back), or sideways (hold only a turn key); you can't be hit mid-roll | Space |
-| Attack | Left click |
+| Attack (swings toward the mouse cursor) | Left click |
 | Talk, trade, enter buildings, search, open chests | E / Enter |
 | Drink potion | Q |
 | Bag (inventory): point at an item for its stats, click gear to equip it, right-click for more options | I |
@@ -22,14 +21,14 @@ Open `index.html` in a browser, or turn on GitHub Pages (Settings → Pages → 
 | World map | M |
 | Pause menu: resume, Unstuck me, camera, sound, god mode, fullscreen, player 2, save, Save & exit (closes a menu if one is open) | Esc |
 | Toggle sound | N |
-| Turn (drag sideways) and look up or down; the camera stays locked behind you | Right-drag |
+| Tilt the camera (it always faces north) | Right-drag up or down |
 | Zoom | Scroll wheel |
 | Reset camera | R |
 | Fullscreen | F |
 | God mode (for testing) | G |
 | Fly (god mode only): Space climbs, X descends, V again to land | V |
 
-On touch screens a joystick and buttons appear automatically (Run toggles sprinting, Roll dodges); drag the screen to turn and look up or down, and pinch to zoom. The ⛶ button goes fullscreen. The camera is locked behind your hero. Whenever a wall, roof or tree comes between the camera and your hero, a large see-through circle (about three quarters of the screen's height) opens around the hero so you can always see yourself. People and animals never fade out. If your hero ever gets stuck, open the pause menu (Esc, the Menu button, or Menu on a controller) and choose **Unstuck me**. The Camera panel under the game sets tilt, zoom and view distance. View distance is Auto by default: it grows as far as your device can draw while holding a smooth frame rate.
+On touch screens a joystick and buttons appear automatically (Run toggles sprinting, Roll dodges); drag the screen up or down to tilt the camera, and pinch to zoom. The ⛶ button goes fullscreen. The view is a fixed diorama in the style of Octopath Traveler: the camera hangs high to the south and always faces north (indoors it looks into the room from the doorway), with tilt-shift blur at the top and bottom of the screen, a soft vignette and warm light. Turn off the blur and vignette with **Diorama effects** in the pause menu. Whenever a wall, roof or tree comes between the camera and your hero, a large see-through circle (about three quarters of the screen's height) opens around the hero so you can always see yourself. People and animals never fade out. If your hero ever gets stuck, open the pause menu (Esc, the Menu button, or Menu on a controller) and choose **Unstuck me**. The Camera panel under the game sets tilt, zoom and view distance. View distance is Auto by default: it grows as far as your device can draw while holding a smooth frame rate.
 
 ## Xbox controller and split screen
 
@@ -37,8 +36,8 @@ Any standard controller (Xbox, or others the browser maps the same way) works:
 
 | Action | Button |
 | --- | --- |
-| Walk / turn | Left stick or D-pad (while flying in god mode, D-pad up/down climbs and descends) |
-| Turn (sideways) and look up or down | Right stick |
+| Walk | Left stick or D-pad (while flying in god mode, D-pad up/down climbs and descends) |
+| Tilt the camera | Right stick (up/down) |
 | Attack | X or RT |
 | Dodge roll | B |
 | Talk, trade, open, search | A |
