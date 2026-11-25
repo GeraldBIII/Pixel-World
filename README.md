@@ -13,6 +13,7 @@ Open `index.html` in a browser, or turn on GitHub Pages (Settings → Pages → 
 | Walk forward / back | W S / ↑ ↓ |
 | Turn | A D / ← → |
 | Sprint (uses stamina) | Shift |
+| Dodge roll: forward, back (hold back), or sideways (hold only a turn key); you can't be hit mid-roll | Space |
 | Attack | Left click |
 | Talk, trade, enter buildings, search, open chests | E / Enter |
 | Drink potion | Q |
@@ -27,7 +28,7 @@ Open `index.html` in a browser, or turn on GitHub Pages (Settings → Pages → 
 | Fullscreen | F |
 | God mode (for testing) | G |
 
-On touch screens a joystick and buttons appear automatically (Run toggles sprinting); drag the screen to turn and look up or down, and pinch to zoom. The ⛶ button goes fullscreen. The camera is locked behind your hero. The Camera panel under the game sets tilt, zoom and view distance. View distance is Auto by default: it grows as far as your device can draw while holding a smooth frame rate.
+On touch screens a joystick and buttons appear automatically (Run toggles sprinting, Roll dodges); drag the screen to turn and look up or down, and pinch to zoom. The ⛶ button goes fullscreen. The camera is locked behind your hero. The Camera panel under the game sets tilt, zoom and view distance. View distance is Auto by default: it grows as far as your device can draw while holding a smooth frame rate.
 
 ## Xbox controller and split screen
 
@@ -38,6 +39,7 @@ Any standard controller (Xbox, or others the browser maps the same way) works:
 | Walk / turn | Left stick or D-pad |
 | Turn (sideways) and look up or down | Right stick |
 | Attack | X or RT |
+| Dodge roll | B |
 | Talk, trade, open, search | A |
 | Potion | Y |
 | Sprint | LT, LB or click the left stick |

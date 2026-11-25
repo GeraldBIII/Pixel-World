@@ -148,6 +148,7 @@ table.rec img{width:24px;height:24px;image-rendering:pixelated;vertical-align:mi
 .gpcur{outline:3px solid #7dde6a!important;outline-offset:2px;box-shadow:0 0 0 6px rgba(125,222,106,.25)!important}
 .split .panel .pcols{grid-template-columns:1fr}.split .panel .pBody{padding:8px}.split .panel .grid{grid-template-columns:repeat(auto-fill,44px)}.split .panel .slot{width:44px;height:44px}.split .panel .slot img{width:32px;height:32px}
 .split .dlg{transform:translateX(-50%)}
+.coarse #tDodge{right:104px;bottom:172px;border-radius:50%;font-size:9px}@media(max-height:500px){.coarse #tDodge{bottom:148px;right:52px}}
 </style>
 </head>
 <body>
@@ -174,7 +175,7 @@ table.rec img{width:24px;height:24px;image-rendering:pixelated;vertical-align:mi
     <div id="panel" class="panel" hidden role="dialog" aria-label="Menu"><div class="ptop"><div id="pTabs" class="pTabs" role="tablist"></div><span id="pGold" class="pGold"></span><button id="pClose" class="pClose" type="button" aria-label="Close">✕</button></div><div id="pBody" class="pBody"></div></div>
     <div id="touch">
       <div id="joy" aria-label="Movement joystick"><div id="joyk"></div></div>
-      <button class="tb" id="tA" aria-label="Attack">A</button><button class="tb" id="tB" aria-label="Talk or open">B</button><button class="tb" id="tP" aria-label="Drink potion">P</button><button class="tb" id="tRun" aria-label="Sprint" aria-pressed="false">Run</button>
+      <button class="tb" id="tA" aria-label="Attack">A</button><button class="tb" id="tB" aria-label="Talk or open">B</button><button class="tb" id="tP" aria-label="Drink potion">P</button><button class="tb" id="tRun" aria-label="Sprint" aria-pressed="false">Run</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button>
     </div>
     <div id="start">
       <div>
@@ -202,6 +203,7 @@ table.rec img{width:24px;height:24px;image-rendering:pixelated;vertical-align:mi
       <li><kbd>W</kbd><kbd>S</kbd><kbd>↑</kbd><kbd>↓</kbd> walk forward or back</li>
       <li><kbd>A</kbd><kbd>D</kbd><kbd>←</kbd><kbd>→</kbd> turn</li>
       <li><kbd>Shift</kbd> sprint (uses stamina)</li>
+      <li><kbd>Space</kbd> dodge roll: you can't be hit mid-roll</li>
       <li><kbd>Left click</kbd> swing your weapon</li>
       <li><kbd>Q</kbd> drink a healing potion</li></ul></div>
     <div><h3>Explore</h3><ul>
@@ -212,7 +214,7 @@ table.rec img{width:24px;height:24px;image-rendering:pixelated;vertical-align:mi
       <li><kbd>G</kbd> god mode, for testing</li></ul></div>
     <div><h3>Xbox controller</h3><ul>
       <li><kbd>L stick</kbd> walk and turn · <kbd>R stick</kbd> camera</li>
-      <li><kbd>X</kbd><kbd>RT</kbd> attack · <kbd>A</kbd> use · <kbd>Y</kbd> potion</li>
+      <li><kbd>X</kbd><kbd>RT</kbd> attack · <kbd>B</kbd> dodge roll · <kbd>A</kbd> use · <kbd>Y</kbd> potion</li>
       <li><kbd>LT</kbd><kbd>LB</kbd> sprint · <kbd>Menu</kbd> bag · <kbd>View</kbd> map · <kbd>RB</kbd> hero</li>
       <li>Press <kbd>Menu</kbd> on a second controller for split screen</li></ul></div>
     <div><h3>Camera</h3><ul>
@@ -840,7 +842,7 @@ addEventListener('mouseup',e=>{if(e.button===2&&camDrag){camDrag=null;saveCam()}
 frame.addEventListener('contextmenu',e=>e.preventDefault());
 frame.addEventListener('wheel',e=>{if(!running||uiOpen(PLAYERS[0]))return;e.preventDefault();CAM1.zoom=clamp(CAM1.zoom*Math.exp(-e.deltaY*.0012),.6,3.2);camUI();saveCam()},{passive:false});
 addEventListener('blur',()=>{for(const k in keys)keys[k]=false});
-[['tA','Mouse0'],['tB','KeyE'],['tP','KeyQ']].forEach(([id,code])=>{const b=$(id);
+[['tA','Mouse0'],['tB','KeyE'],['tP','KeyQ'],['tDodge','Space']].forEach(([id,code])=>{const b=$(id);
   b.addEventListener('pointerdown',e=>{e.preventDefault();if(!UIS[0].dlg.hidden&&code==='KeyE'){const bs=UIS[0].dlgOpts.querySelectorAll('button');bs[bs.length-1]&&bs[bs.length-1].click();return}keys[code]=true;pressed.add(code)});
   ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>{keys[code]=false}))});
 // touch: a virtual joystick on the left, drag anywhere else to turn the camera, pinch to zoom
@@ -1384,7 +1386,10 @@ function updatePlayer(dt){const I=P.inp;P.stats.play+=dt;
   if(pr.has('god'))toggleGod();
   if(pr.has('potion'))quickHeal();
   if(pr.has('act')){const it=nearInteract();if(it)return interact(it)}
-  if(I.att)attack();
+  // dodge roll: a burst of speed you can't be hit during; forward, back, or sideways when only turning
+  if(pr.has('roll')&&!(P.roll>0)&&P.atk<=0){if(P.rollCd>0){}else if(P.sta<20&&!P.god)toast('Too tired to roll',1);else{const side=Math.abs(I.fwd)<.2&&Math.abs(I.turn)>.2,a=P.h+(side?Math.sign(I.turn)*Math.PI/2:I.fwd<-.2?Math.PI:0);
+    P.rdx=Math.cos(a);P.rdy=Math.sin(a);P.roll=0.42;P.rollCd=.75;P.inv=Math.max(P.inv,0.47);if(!P.god)P.sta-=20;P.staT=.7;burst(P.x,P.y+4,'#c8b48a',8,40);sfx(240,.14,'triangle',.04,.6);rumble(P,.15,90)}}
+  if(I.att&&!(P.roll>0))attack();
   // sprinting burns stamina; it comes back when you ease off
   const run=I.run&&fwd>0&&(P.god||(!P.tired&&P.sta>0));
   if(run&&!P.god){P.sta=Math.max(0,P.sta-26*dt);P.staT=.9;if(P.sta<=0){P.tired=true;toast('Out of breath!',1.2)}}
@@ -1394,11 +1399,12 @@ function updatePlayer(dt){const I=P.inp;P.stats.play+=dt;
   if(P.moving)P.anim+=dt*(run?13:8)*Math.abs(fwd);else P.anim=0;
   const h0=hAt(P.x,P.y);let sp=72*P.spdV*(run?sprintMul():1)*(P.atk>0?.45:1)*(P.god?(run?6:3):1);const ox=P.x,oy=P.y;
   if(P.realm==='w'&&!P.god){const hx=hAt(P.x+dx*8,P.y+dy*8)-h0;sp*=1/(1+Math.max(0,hx/8)*.9)}
-  if(P.kb>0){P.kb-=dt;move(P,P.kbx*dt,P.kby*dt)}else move(P,dx*sp*dt,dy*sp*dt);
+  if(P.roll>0){P.roll-=dt;const rs=230*(P.god?2:1)*(.45+P.roll/0.42*.8);move(P,P.rdx*rs*dt,P.rdy*rs*dt);if(P.roll<=0)burst(P.x,P.y+4,'#c8b48a',5,30)}
+  else if(P.kb>0){P.kb-=dt;move(P,P.kbx*dt,P.kby*dt)}else move(P,dx*sp*dt,dy*sp*dt);
   const moved=Math.hypot(P.x-ox,P.y-oy);P.stats.dist+=moved;if(run)P.stats.sprint+=moved;explore();
   if(INSIDE&&!INSIDE.dun&&P.y<-INT.D/2+6)return exitBuilding();
   if(INSIDE&&INSIDE.dun&&P.y>(INT.exit[1]+.6)*16)return exitDungeon();
-  P.inv=Math.max(0,P.inv-dt);P.atkCd=Math.max(0,P.atkCd-dt);
+  P.inv=Math.max(0,P.inv-dt);P.atkCd=Math.max(0,P.atkCd-dt);P.rollCd=Math.max(0,(P.rollCd||0)-dt);
   // weapon hits: monsters in your realm, townsfolk (children always dodge)
   if(P.atk>0){P.atk-=dt;const vx=Math.cos(P.h),vy=Math.sin(P.h),r=P.reachV,hx=P.x+vx*r*.8,hy=P.y-6+vy*r*.8,rad=8+r*.5;
     const hit=(tx,ty,sc=1)=>Math.hypot(tx-hx,ty-6-hy)<rad+(sc-1)*10;const dmgRoll=()=>{const crit=Math.random()<critCh();let d=P.atkV+(crit?Math.ceil(P.atkV*.5):0);if(P.god)d*=100;return[d,crit]};
@@ -1632,7 +1638,7 @@ function renderView(dt,vi){const V_=VIEWS[vi];VW=V_.w;VH=V_.h;if(!P.camObj)P.cam
   for(const pk of pickups){if(pk.realm!==R0)continue;const img=pk.k==='coin'?S.coin:pk.k==='heart'?S.heart:pk.k==='item'?iconFor(ITEMS[pk.item.id]).c:S.pot,b=Math.sin(pk.t*5)*1.2;bput(g,img,pk.x,pk.y,gH(pk.x,pk.y)+2-pk.z+b,{sc:pk.k==='item'?.7:1})}
   for(const p of parts)if(p.realm===R0)bput(g,WHITE,p.x,p.y,gH(p.x,p.y)+p.z,{w:2,h:2,col:new THREE.Color(p.c).toArray(),a:1-p.t/p.life});
   // every player in this realm, each with their own colours
-  for(const q of PLAYERS){if(q.realm!==R0||(q!==P&&q._in!==INSIDE&&R0!=='w'))continue;if(q.inv>0&&Math.floor(q.inv*14)%2)continue;const hs=q.heroSlots?q.HERO:null;if(!hs)continue;const hd=heroDir(q),fr=q.moving?Math.floor(q.anim)%2:2;bput(g,q.HERO[hd][fr],q.x,q.y,gH(q.x,q.y))}
+  for(const q of PLAYERS){if(q.realm!==R0||(q!==P&&q._in!==INSIDE&&R0!=='w'))continue;if(q.inv>0&&!(q.roll>0)&&Math.floor(q.inv*14)%2)continue;const hs=q.heroSlots?q.HERO:null;if(!hs)continue;const hd=heroDir(q),fr=q.moving?Math.floor(q.anim)%2:2;bput(g,q.HERO[hd][q.roll>0?Math.floor(q.roll*20)%2:fr],q.x,q.y,gH(q.x,q.y),q.roll>0?{w:16*(1+.25*Math.sin((1-q.roll/0.42)*Math.PI)),h:16*(.5+.5*Math.abs(Math.cos((1-q.roll/0.42)*Math.PI*2)))}:{})}
   bdone(g);const sc=inside?P.sceneI:scene;sc.add(dyn);
   renderer.setViewport(V_.x,FH-V_.y-V_.h,V_.w,V_.h);renderer.setScissor(V_.x,FH-V_.y-V_.h,V_.w,V_.h);renderer.setScissorTest(true);renderer.render(sc,camera);
   ctx.save();ctx.translate(V_.x,V_.y);ctx.beginPath();ctx.rect(0,0,VW,VH);ctx.clip();overlay(lights,ph);ctx.restore()}
@@ -1685,11 +1691,11 @@ function claimPads(){for(const gp of pads()){if(PLAYERS.some(p=>p.pad===gp.index
 function buildInp(p){const I={fwd:0,turn:0,run:false,att:false,pr:new Set()};
   if(p.useKb){I.fwd=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0);I.turn=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0);I.run=!!(keys.ShiftLeft||keys.ShiftRight||runToggle);I.att=!!keys.Mouse0;
     if(JOY.id!=null){I.fwd+=-JOY.y;I.turn+=JOY.x*.9;if(Math.hypot(JOY.x,JOY.y)>.95&&-JOY.y>.6&&runToggle)I.run=true}
-    const map={KeyE:'act',Enter:'act',KeyQ:'potion',KeyI:'bag',KeyC:'hero',KeyM:'map',KeyR:'camreset',KeyN:'sound',KeyG:'god'};for(const c of pressed)if(map[c])I.pr.add(map[c])}
+    const map={KeyE:'act',Enter:'act',KeyQ:'potion',KeyI:'bag',KeyC:'hero',KeyM:'map',KeyR:'camreset',KeyN:'sound',KeyG:'god',Space:'roll'};for(const c of pressed)if(map[c])I.pr.add(map[c])}
   const gp=p.pad!=null&&navigator.getGamepads()[p.pad];
   if(gp){const ax=gp.axes,dz=v=>Math.abs(v||0)<.18?0:v,b=padBtns(gp),prev=p.prev||[],edge=i=>b[i]&&!prev[i];
     I.fwd+=-dz(ax[1])+(b[12]?1:0)-(b[13]?1:0);I.turn+=dz(ax[0])+(b[15]?1:0)-(b[14]?1:0);I.run=I.run||b[6]||b[4]||b[10];I.att=I.att||b[2]||b[7];
-    if(edge(0))I.pr.add('act');if(edge(3))I.pr.add('potion');if(edge(9))I.pr.add('bag');if(edge(8))I.pr.add('map');if(edge(5))I.pr.add('hero');if(edge(11))I.pr.add('camreset');
+    if(edge(0))I.pr.add('act');if(edge(1))I.pr.add('roll');if(edge(3))I.pr.add('potion');if(edge(9))I.pr.add('bag');if(edge(8))I.pr.add('map');if(edge(5))I.pr.add('hero');if(edge(11))I.pr.add('camreset');
     const rx=dz(ax[2]),ry=dz(ax[3]);I.turn+=rx;if(ry)p.cam.tilt=clamp(p.cam.tilt+ry*70*dtLast,5,86);p.prev=b}
   I.fwd=clamp(I.fwd,-1,1);I.turn=clamp(I.turn,-1,1);p.inp=I}
 // controllers drive their own player's menus: d-pad/stick moves the cursor, A presses, X opens item options, B backs out, LB/RB switch tabs
