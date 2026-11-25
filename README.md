@@ -49,6 +49,10 @@ Any standard controller (Xbox, or others the browser maps the same way) works:
 
 Press **Menu** on a second controller (or use **Add player 2** under the game) to start two-player split screen. The screen splits side by side on wide screens and top/bottom on tall ones. Split screen always fills the whole screen, including in fullscreen. Each player has their own hero, bag, gold, bounty, camera and menus: a menu opens over that player's half of the screen and only pauses that player, while the other keeps playing. The world, quests and time of day are shared.
 
+## Your own art
+
+You can swap in sprites and ground tiles from an art pack, including 32×32 art, which shows at the same size in the world with twice the detail. Put the images in `assets/` and list them in `assets/art.json`; see [ART.md](ART.md) for the format. The **Graphics** option in the pause menu (Auto, Classic, Sharp, Ultra) sets how sharply the 3D view is drawn; Auto switches to Ultra when detailed art is loaded.
+
 ## Features
 
 - **A Skyrim-sized island**: 4096 × 4096 tiles with real elevation, a mountain spine with snowy peaks and cliffs, river networks and lakes

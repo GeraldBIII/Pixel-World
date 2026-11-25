@@ -1,0 +1,16 @@
+{
+  "density": 2,
+  "hero": { "src": "hero.png" },
+  "monsters": {
+    "goblin": { "src": "goblin.png", "frames": 2 },
+    "skeleton": "skeleton.png"
+  },
+  "animals": { "dog": "dog.png" },
+  "npcs": {
+    "guard": ["guard.png"],
+    "townsfolk": ["villager1.png", "villager2.png", "villager3.png"],
+    "shop.smith": "smith.png"
+  },
+  "objects": { "chest": "chest.png", "chestOpen": "chest_open.png" },
+  "tiles": { "grass": ["grass1.png", "grass2.png"], "path": "dirt.png" }
+}

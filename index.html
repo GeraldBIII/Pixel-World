@@ -176,7 +176,7 @@ table.rec img{width:24px;height:24px;image-rendering:pixelated;vertical-align:mi
     <div id="panel" class="panel" hidden role="dialog" aria-label="Menu"><div class="ptop"><div id="pTabs" class="pTabs" role="tablist"></div><span id="pGold" class="pGold"></span><button id="pClose" class="pClose" type="button" aria-label="Close">✕</button></div><div id="pBody" class="pBody"></div></div>
     <div id="touch">
       <div id="joy" aria-label="Movement joystick"><div id="joyk"></div></div>
-      <button class="tb" id="tA" aria-label="Attack">A</button><button class="tb" id="tB" aria-label="Talk or open">B</button><button class="tb" id="tP" aria-label="Drink potion">P</button><button class="tb" id="tRun" aria-label="Sprint" aria-pressed="false">Run</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button>
+      <button class="tb" id="tA" aria-label="Attack">A</button><button class="tb" id="tB" aria-label="Talk or open">B</button><button class="tb" id="tP" aria-label="Drink potion">P</button><button class="tb" id="tRun" aria-label="Sprint" aria-pressed="false">Run</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button><button class="tb" id="tDodge" aria-label="Dodge roll">Roll</button>
     </div>
     <div id="start">
       <div>
@@ -934,13 +934,15 @@ const bagSize=()=>Math.min(50,30+Math.max(0,A('str'))*2);
 const xpMul=()=>1+.06*A('wis'),healMul=()=>1+.1*A('wis'),buyMul=()=>Math.max(.7,1-.03*A('cha')),sellMul=()=>1+.04*A('cha');
 const critCh=()=>clamp(.05+.015*A('dex'),.02,.4),sprintMul=()=>1.55+.02*A('dex'),staRegen=()=>24*(1+.06*A('wis'));
 const TUNICS={gamb:['#c8b48a','#9a8660'],jerkin:['#8a5a34','#5a3a1a'],chain:['#8a8d97','#5d5f68',1],plate:['#c9d0d8','#8a8d97'],dragon:['#b8322e','#7a1e1a',1]};
+// loaded art (see ART.md): hero sheets, NPC looks, and whether any of it is high-detail
+const ART={hd:false,loaded:false,npcs:{},hero:null,hero2:null};
 function recalc(){let atk=0,def=0,hp=0,spd=0;const w=P.eq.weapon?itemStats(P.eq.weapon):{atk:1,cd:.34,reach:12};
   for(const[s]of SLOTS){const it=P.eq[s];if(!it)continue;const st=itemStats(it);if(s!=='weapon')atk+=st.atk||0;def+=st.def||0;hp+=st.hp||0;spd+=st.spd||0}
   P.maxHp=10+2*(P.lv-1)+P.hpBonus+hp+2*A('con');P.hp=Math.min(P.hp,P.maxHp);P.maxSta=100+10*A('con');P.sta=Math.min(P.sta,P.maxSta);
   P.atkV=Math.max(1,w.atk+atk+Math.floor((P.lv-1)/2)+Math.floor(A('str')*.6)+(P.buff.ta>0?P.buff.atk:0));P.cdV=Math.max(.15,(w.cd||.34)*(1-.025*A('dex')));P.reachV=w.reach||12;P.defV=def+(P.buff.td>0?P.buff.def:0);P.spdV=1+spd;
   const b=P.eq.body&&TUNICS[P.eq.body.id],hd=P.eq.head&&ITEMS[P.eq.head.id].icon,sh=P.eq.shield&&ITEMS[P.eq.shield.id].icon;
   const L={tun:b?b[0]:(P.idx?'#3c8a5a':'#3566c4'),tunD:b?b[1]:(P.idx?'#2a6a3a':'#264c96'),mail:b&&b[2],cape:P.idx?'#2a5ab0':'#b8322e',helm:hd?hd[1]:null,helmL:hd?hd[2]:null,shield:sh?sh[1]:null,shieldL:sh?sh[2]:null};
-  P.HERO=[0,1,2].map(d=>[0,1,2].map(f=>hero(d,f,L)));P.HERO[3]=P.HERO[2].map(mirror);P.heroDirty=true;hudSig=''}
+  const AH=P.idx&&ART.hero2?ART.hero2:ART.hero;if(AH){P.HERO=AH;P.heroSlots=null}else{P.HERO=[0,1,2].map(d=>[0,1,2].map(f=>hero(d,f,L)));P.HERO[3]=P.HERO[2].map(mirror)}P.heroDirty=true;hudSig=''}
 const reduction=()=>P.defV/(P.defV+12);
 // the hidden power level, 1 (weak) to 100 (mightiest)
 const plOf=(p=P)=>clamp(Math.round(1+p.atkV*1.5+p.defV*1.1+p.maxHp*.3-7.2),1,100);
@@ -953,6 +955,9 @@ const arp=(notes,gap=.07)=>notes.forEach((n,i)=>setTimeout(()=>sfx(n,.12,'square
 const frame=$('frame'),cv=$('cv'),ov=$('ov'),ctx=ov.getContext('2d'),lcv=document.createElement('canvas'),lg=lcv.getContext('2d');
 const mini=$('mini'),mg=mini.getContext('2d');
 let VW=320,VH=200,SC=3;
+// graphics: how many screen pixels the 3D view draws per game pixel (more = sharper, for detailed art)
+const GFXKEY='emberwild-gfx';let GFXMODE='auto';try{GFXMODE=localStorage.getItem(GFXKEY)||'auto'}catch(e){}let GQ=1;
+const GFXNAMES={auto:'Auto',1:'Classic','1.5':'Sharp',2:'Ultra'};
 function resize(){const r=frame.getBoundingClientRect();SC=Math.max(2,Math.round(r.width/420));VW=Math.ceil(r.width/SC);VH=Math.ceil(r.height/SC);ov.width=lcv.width=VW;ov.height=lcv.height=VH;
   for(const c of[cv,ov]){c.style.width=VW*SC+'px';c.style.height=VH*SC+'px'}ctx.imageSmoothingEnabled=false;if(typeof onResize==='function')onResize()}
 const ro=new ResizeObserver(()=>resize());
@@ -1091,13 +1096,13 @@ function renderPanel(){const tabs=pCont?[['loot','Search']]:pShop?[['buy','Buy']
   UI.gold.innerHTML=`<img class="ico" alt="" src="${S.coin.toDataURL()}"> ${P.gold}`;
   const body=UI.body;body.innerHTML=pCont?lootHTML():pShop?shopHTML():pTab==='bag'?bagHTML():pTab==='hero'?heroHTML():pTab==='records'?recordsHTML():pTab==='pause'?pauseHTML():mapHTML();
   if(pTab==='map')drawWorldMap();
-  const pc=UI.body.querySelector('#portrait');if(pc){const g=pc.getContext('2d');g.drawImage(P.HERO[0][2],0,0)}
+  const pc=UI.body.querySelector('#portrait');if(pc){const g=pc.getContext('2d'),im=P.HERO[0][2];g.imageSmoothingEnabled=false;g.clearRect(0,0,pc.width,pc.height);g.drawImage(im,0,0,im.width,im.height,0,0,pc.width,pc.height)}
   body.querySelectorAll('.slot').forEach(b=>{if(sel&&((sel.where==='bag'&&+b.dataset.bag===sel.i&&b.dataset.bag!==undefined)||(sel.where==='eq'&&b.dataset.eq===sel.slot)))b.classList.add('sel')})}
 // pause menu: the game stops for this player; options, a rescue for a stuck hero, and a way back to the title screen
 function pauseHTML(){const c=CAM,on=v=>v?'On':'Off',p2=PLAYERS[1],b=(k,l,d)=>`<button type="button" data-pause="${k}"><b>${l}</b>${d?`<span>${d}</span>`:''}</button>`;
   return`<div class="pmenu"><h4>Paused</h4><div class="pgrid">${b('resume','Resume','Back to the game')}${b('unstuck','Unstuck me','Move to the nearest open ground')}${b('save','Save game','Progress also saves on its own')}</div>
   <h4>Camera</h4><div class="pgrid">${b('tiltDn','Tilt −',Math.round(c.tilt)+'°')}${b('tiltUp','Tilt +',Math.round(c.tilt)+'°')}${b('zoomDn','Zoom out',Math.round(c.zoom*100)+'%')}${b('zoomUp','Zoom in',Math.round(c.zoom*100)+'%')}${b('camreset','Reset camera')}</div>
-  <h4>Options</h4><div class="pgrid">${b('sound','Sound',on(soundOn))}${b('god','God mode',on(P.god))}${P.god?b('fly','Fly',on(P.fly)+' · V to toggle'):''}${b('full','Fullscreen',on(!!(document.fullscreenElement||document.webkitFullscreenElement||document.body.classList.contains('pseudofs'))))}${b('p2',p2?'Remove player 2':'Add player 2',p2?'Back to one screen':'Split screen with a controller')}</div>
+  <h4>Options</h4><div class="pgrid">${b('sound','Sound',on(soundOn))}${b('gfx','Graphics',GFXNAMES[GFXMODE]+' · '+(GQ===1?'chunky':GQ<2?'sharper':'sharpest'))}${b('god','God mode',on(P.god))}${P.god?b('fly','Fly',on(P.fly)+' · V to toggle'):''}${b('full','Fullscreen',on(!!(document.fullscreenElement||document.webkitFullscreenElement||document.body.classList.contains('pseudofs'))))}${b('p2',p2?'Remove player 2':'Add player 2',p2?'Back to one screen':'Split screen with a controller')}</div>
   <h4>Leave</h4><div class="pgrid">${b('exit','Save & exit','Return to the title screen')}</div></div>`}
 function pauseAct(k){const c=CAM;
   if(k==='resume')return closePanel();
@@ -1107,6 +1112,7 @@ function pauseAct(k){const c=CAM;
   else if(k==='zoomUp')c.zoom=clamp(c.zoom*1.15,.6,3.2);else if(k==='zoomDn')c.zoom=clamp(c.zoom/1.15,.6,3.2);
   else if(k==='camreset')Object.assign(c,CAM_DEF);
   else if(k==='fly'){if(P.realm==='w'){P.fly=!P.fly;toast(P.fly?'Flying: Space or d-pad up to climb, X or d-pad down to descend':'Landing…',2.4)}}
+  else if(k==='gfx'){const o=['auto','1','1.5','2'];GFXMODE=o[(o.indexOf(GFXMODE)+1)%o.length];try{localStorage.setItem(GFXKEY,GFXMODE)}catch(e){}gfxApply();toast('Graphics: '+GFXNAMES[GFXMODE],1.4)}
   else if(k==='sound')soundOn=!soundOn;else if(k==='god')toggleGod();else if(k==='full')toggleFull();
   else if(k==='p2'){closePanel();$('bP2').click();return}
   else if(k==='exit')return exitToTitle();
@@ -1337,7 +1343,7 @@ const CAPG=['Sergeant Corwin','Guard Edda','Guard Rolf','Guard Mira','Guard Bast
 const NPCPL={guard:75,shop:14,villager:5,elder:8,kid:1,settler:7};
 let NPCS=[],ANIMALS=[],ELDER=null;
 const sleepRot=c=>mk(c.height,c.width,g=>{g.translate(c.height,0);g.rotate(Math.PI/2);g.drawImage(c,0,0)});
-function initTowns(){NPCS=[];ANIMALS=[];FAIRIES=[];for(const t of TOWNS)initTown(t);for(const h of HOMESTEADS)initHomestead(h);initRoads()}
+function initTowns(){NPCS=[];ANIMALS=[];FAIRIES=[];for(const t of TOWNS)initTown(t);for(const h of HOMESTEADS)initHomestead(h);initRoads();if(ART.loaded)for(const n of NPCS){const a=artFor(n);if(a){n.spr=a;n.sprZ=sleepRot(a[0])}}}
 const SETTLERS=[['the Homesteader',{shirt:'#7a6a3a',hat:'#8a6a3a',beard:'#5a3a2a'}],['the Woodcutter',{shirt:'#a83a2a',hair:'#3a2414',beard:'#3a2414'}],['the Trapper',{shirt:'#6a5a3a',hood:'#5a4a2a'}],
   ['the Herb-wife',{shirt:'#5a7a3a',dress:1,hair:'#bdb6aa',long:1}],['the Shepherd',{shirt:'#c9c2b0',hat:'#6a5a3a',staff:1}],['the Beekeeper',{shirt:'#e6c65a',dress:1,hair:'#7a3f1d',long:1,apron:'#f1e6c8'}]];
 const SETTLER_SAY=['Not many folk come out this far. Rest a while if you like.','The wolves have been bold this season. Keep your blade close.','I left the town for the quiet. The quiet suits me.','Mind the garden, traveller, those beans took me all spring.',
@@ -1828,17 +1834,18 @@ let FW=320,FH=200,VIEWS=[{x:0,y:0,w:320,h:200}];
 function layoutChanged(){FW=VW0;FH=VH0;const n=PLAYERS.length;VIEWS=n<2?[{x:0,y:0,w:FW,h:FH}]:FW>=FH*1.2?[{x:0,y:0,w:Math.floor(FW/2)-1,h:FH},{x:Math.ceil(FW/2)+1,y:0,w:Math.floor(FW/2)-1,h:FH}]:[{x:0,y:0,w:FW,h:Math.floor(FH/2)-1},{x:0,y:Math.ceil(FH/2)+1,w:FW,h:Math.floor(FH/2)-1}];
   document.body.classList.toggle('split',n>1);for(const u of UIS)if(!u.panel.hidden||!u.dlg.hidden)placeUI(u)}
 let VW0=320,VH0=200;
-function onResize(){VW0=VW;VH0=VH;renderer.setSize(VW,VH,false);layoutChanged()}
+function onResize(){VW0=VW;VH0=VH;GQ=GFXMODE==='auto'?(ART.hd?2:1):+GFXMODE;renderer.setSize(Math.round(VW*GQ),Math.round(VH*GQ),false);layoutChanged()}
+function gfxApply(){onResize()}
 resize();ro.observe(frame);// keep the canvas matched to the frame, including fullscreen and window changes
 // ---------- texture atlases ----------
 const texOf=(c,rep)=>{const t=new THREE.CanvasTexture(c);t.magFilter=t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;t.colorSpace=THREE.SRGBColorSpace;if(rep){t.wrapS=t.wrapT=THREE.RepeatWrapping}else t.flipY=false;return t};
 // terrain atlas: one 16px cell per tile variant
-const TA=document.createElement('canvas');TA.width=TA.height=256;const tag=TA.getContext('2d'),TUV=[];let tai=0;
-for(let t=0;t<TI.length;t++){if(!TI[t])continue;TUV[t]=TI[t].map(c=>{const x=(tai%16)*16,y=Math.floor(tai/16)*16;tag.drawImage(c,x,y);tai++;return[(x+.5)/256,(y+.5)/256,(x+15.5)/256,(y+15.5)/256]})}
+const TS=32,TA=document.createElement('canvas');TA.width=TA.height=512;const tag=TA.getContext('2d'),TUV=[],TCELLS=[];let tai=0;tag.imageSmoothingEnabled=false;
+for(let t=0;t<TI.length;t++){if(!TI[t])continue;TCELLS[t]=[];TUV[t]=TI[t].map(c=>{const x=(tai%16)*TS,y=Math.floor(tai/16)*TS;tag.drawImage(c,0,0,c.width,c.height,x,y,TS,TS);TCELLS[t].push([x,y]);tai++;return[(x+.5)/512,(y+.5)/512,(x+TS-.5)/512,(y+TS-.5)/512]})}
 const terrTex=texOf(TA);
 // sprite atlas with a simple shelf packer
 const SA=document.createElement('canvas');SA.width=SA.height=2048;const sag=SA.getContext('2d');let shX=1,shY=1,shH=0;const SPR=new Map();
-function sprite(c){let r=SPR.get(c);if(r)return r;const w=c.width,h=c.height;if(shX+w+2>2048){shX=1;shY+=shH+2;shH=0}sag.drawImage(c,shX,shY);r={u:shX/2048,v:shY/2048,uw:w/2048,vh:h/2048,w,h,x:shX,y:shY};shX+=w+2;shH=Math.max(shH,h);SPR.set(c,r);sprTex&&(sprTex.needsUpdate=true);return r}
+function sprite(c){let r=SPR.get(c);if(r)return r;const w=c.width,h=c.height,k=c.ppu||1;if(shX+w+2>2048){shX=1;shY+=shH+2;shH=0}sag.drawImage(c,shX,shY);r={u:shX/2048,v:shY/2048,uw:w/2048,vh:h/2048,w,h,x:shX,y:shY,k};shX+=w+2;shH=Math.max(shH,h);SPR.set(c,r);sprTex&&(sprTex.needsUpdate=true);return r}
 function resprite(c,old){sag.clearRect(old.x,old.y,old.w,old.h);sag.drawImage(c,old.x,old.y);SPR.set(c,old);sprTex.needsUpdate=true;return old}
 let sprTex=null;
 const WHITE=mk(2,2,g=>R(g,'#fff',0,0,2,2));
@@ -1861,7 +1868,7 @@ const billMat=new THREE.ShaderMaterial({uniforms:{map:{value:sprTex},tint:{value
 function billGeo(n){const g=new THREE.BufferGeometry(),A_=(k,s)=>{const a=new THREE.BufferAttribute(new Float32Array(n*4*s),s);a.setUsage(THREE.DynamicDrawUsage);g.setAttribute(k,a)};
   A_('position',3);A_('corner',2);A_('size',2);A_('uvr',4);A_('col',3);A_('fx',2);const idx=new Uint32Array(n*6);for(let i=0;i<n;i++){idx.set([i*4,i*4+1,i*4+2,i*4,i*4+2,i*4+3],i*6)}g.setIndex(new THREE.BufferAttribute(idx,1));
   const C=g.attributes.corner.array;for(let i=0;i<n;i++)C.set([-.5,0,.5,0,.5,1,-.5,1],i*8);g.cap=n;g.cnt=0;return g}
-function bput(g,img,x,y,z,o={}){if(g.cnt>=g.cap)return;const r=sprite(img),i=g.cnt++,A_=g.attributes,sc=o.sc||1,w=(o.w||r.w)*sc,h=(o.h||r.h)*sc,flip=o.flip;
+function bput(g,img,x,y,z,o={}){if(g.cnt>=g.cap)return;const r=sprite(img),i=g.cnt++,A_=g.attributes,sc=o.sc||1,w=(o.w||r.w/r.k)*sc,h=(o.h||r.h/r.k)*sc,flip=o.flip;
   for(let k=0;k<4;k++){const j=i*4+k;A_.position.array.set([x,z,y],j*3);A_.size.array.set([w,h],j*2);A_.uvr.array.set(flip?[r.u+r.uw,r.v,-r.uw,r.vh]:[r.u,r.v,r.uw,r.vh],j*4);A_.col.array.set(o.col||[1,1,1],j*3);A_.fx.array.set([o.a??1,(o.flash||0)+(o.keep?2:0)],j*2)}}
 function bdone(g){for(const k of['position','size','uvr','col','fx'])g.attributes[k].needsUpdate=true;g.setDrawRange(0,g.cnt*6)}
 const dynG=billGeo(9000),dyn=new THREE.Mesh(dynG,billMat);dyn.frustumCulled=false;scene.add(dyn);
@@ -1933,7 +1940,7 @@ class VB{constructor(){this.p=[];this.n=[];this.l=[];this.t=[];this.c=[]}
     this.q(P_(-w/2,-d/2,z1),P_(w/2,-d/2,z1),P_(w/2,d/2,z1),P_(-w/2,d/2,z1),[0,0,1],ts?w/ts:1,ts?d/ts:1,TT,col);
     if(bottom)this.q(P_(-w/2,-d/2,z0),P_(-w/2,d/2,z0),P_(w/2,d/2,z0),P_(w/2,-d/2,z0),[0,0,-1],ts?w/ts:1,ts?d/ts:1,ST,[col[0]*.7,col[1]*.7,col[2]*.7])}
   // two crossed cards showing a sprite, fixed in the world
-  cross(img,x,y,z,sc,yaw,col=[1,1,1]){const r=sprite(img),w=r.w*sc,h=r.h*sc,tl=[r.u,r.v,r.uw,r.vh];
+  cross(img,x,y,z,sc,yaw,col=[1,1,1]){const r=sprite(img),w=r.w/r.k*sc,h=r.h/r.k*sc,tl=[r.u,r.v,r.uw,r.vh];
     for(const a of[yaw,yaw+Math.PI/2]){const cx=Math.cos(a)*w/2,cy=Math.sin(a)*w/2;this.q([x-cx,y-cy,z+h],[x+cx,y+cy,z+h],[x+cx,y+cy,z],[x-cx,y-cy,z],[0,0,1],.9999,.9999,tl,col)}}
   mesh(mat){if(!this.p.length)return null;const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(this.p,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(this.n,3));
     g.setAttribute('luv',new THREE.Float32BufferAttribute(this.l,2));g.setAttribute('tile',new THREE.Float32BufferAttribute(this.t,4));g.setAttribute('col',new THREE.Float32BufferAttribute(this.c,3));g.computeBoundingSphere();const m=new THREE.Mesh(g,mat);m.matrixAutoUpdate=false;return m}}
@@ -2006,6 +2013,34 @@ function buildVox(c){const V=new VB(),C=new VB(),X=(tx,ty)=>tO(tx,ty);
     if(GRASSY.has(T_)&&!o){const n=hash(tx,ty,13);if(n<.42){const fl=fbmN(tx*.07,ty*.07,303,2)>.62&&n<.16,img=fl?WFLOW[Math.floor(hash(tx,ty,14)*5)]:TUFT[Math.floor(hash(tx,ty,15)*4)],px=tx*16+2+hash(tx,ty,16)*12,py=ty*16+2+hash(tx,ty,17)*12;
       C.cross(img,px,py,hAtFast(c,px,py)-.5,.7+hash(tx,ty,18)*.4,hash(tx,ty,19)*3,fl?[1,1,1]:meadow(tx,ty))}}}
   return{V,C}}
+
+// ---------- art packs: load your own sprites and tiles (any size; 32x32 art draws at the same size in the world as 16x16) ----------
+// See ART.md. The game looks for assets/art.json next to the page, or a manifest object in window.EMBERWILD_ART.
+const TILENAMES={grass:GRASS,forest:FOREST,sand:SAND,hill:HILL,rock:ROCK,path:PATH,plaza:PLAZA,street:STREET,farm:FARM,snow:SNOW,cliff:CLIFF,tundra:TUNDRA,pine:PINEF,taiga:TAIGA,marsh:MARSH,desert:DESERT,ash:ASH,water:WATER,deep:DEEP,house:HOUSE,townwall:TWALL};
+function imgCanvas(img,sx,sy,w,h,ppu){const c=mk(w,h,g=>{g.imageSmoothingEnabled=false;g.drawImage(img,sx,sy,w,h,0,0,w,h)});c.ppu=ppu;return c}
+function loadImg(src){return new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>rej(new Error('could not load '+src));i.src=src})}
+// a horizontal strip of n frames (or a single image)
+const strip=(img,n,ppu,fw,fh)=>{fw=fw||Math.floor(img.width/n);fh=fh||img.height;return[...Array(n)].map((_,i)=>imgCanvas(img,i*fw,0,fw,fh,ppu))};
+async function loadArt(man,base=''){const den=man.density||2,errs=[],src=e=>{const s=typeof e==='string'?e:e.src;return/^(data:|https?:|\/)/.test(s)?s:base+s};
+  const each=async(obj,fn)=>{for(const[k,e]of Object.entries(obj||{})){try{await fn(k,e)}catch(x){errs.push(k+': '+x.message)}}};
+  const frames=async(e,n=2)=>{const img=await loadImg(src(e)),d=e.density||den,fr=strip(img,e.frames||n,d,e.frameW,e.frameH);if(d>1)ART.hd=true;return fr.length>1?fr:[fr[0],fr[0]]};
+  await each(man.monsters,async(k,e)=>{if(!ESPR[k])throw new Error('unknown monster');ESPR[k]=await frames(e)});
+  await each(man.animals,async(k,e)=>{if(!ANSPR[k])throw new Error('unknown animal');ANSPR[k]=await frames(e)});
+  await each(man.objects,async(k,e)=>{if(!(k in S))throw new Error('unknown object');const img=await loadImg(src(e)),d=e.density||den,n=e.frames||(Array.isArray(S[k])?S[k].length:1),fr=strip(img,n,d,e.frameW,e.frameH);if(d>1)ART.hd=true;S[k]=Array.isArray(S[k])?fr:fr[0]});
+  await each(man.npcs,async(k,L)=>{ART.npcs[k]=[];for(const e of Array.isArray(L)?L:[L])ART.npcs[k].push(await frames(e))});
+  // heroes: a sheet with rows down, up, left (and optionally right) and columns walk 1, walk 2, standing
+  for(const hk of['hero','hero2'])if(man[hk])try{const e=man[hk],img=await loadImg(src(e)),d=e.density||den,fw=e.frameW||Math.floor(img.width/3),fh=e.frameH||Math.floor(img.height/(e.rows||3)),rows=Math.round(img.height/fh),cols=Math.max(1,Math.round(img.width/fw));
+      const row=r=>[0,1,2].map(f=>imgCanvas(img,Math.min(f,cols-1)*fw,r*fh,fw,fh,d));const H=[row(0),row(1),row(2)];H[3]=rows>3?row(3):H[2].map(c=>{const m=mirror(c);m.ppu=d;return m});ART[hk]=H;if(d>1)ART.hd=true}catch(x){errs.push(hk+': '+x.message)}
+  // ground tiles: one or more variants per terrain, any size (they are drawn into 32 px cells)
+  await each(man.tiles,async(k,L)=>{const T_=TILENAMES[k];if(T_===undefined)throw new Error('unknown tile');const imgs=[];for(const e of Array.isArray(L)?L:[L])imgs.push(await loadImg(src(e)));const cells=TCELLS[T_]||[];
+    cells.forEach(([x,y],i)=>{tag.clearRect(x,y,TS,TS);tag.drawImage(imgs[i%imgs.length],0,0,imgs[i%imgs.length].width,imgs[i%imgs.length].height,x,y,TS,TS)});terrTex.needsUpdate=true;if(imgs[0].width>16)ART.hd=true});
+  ART.loaded=true;applyArt();if(errs.length)console.warn('Emberwild art:',errs);return errs}
+// which art an NPC uses: the most specific match in the manifest's npcs section
+function artFor(n){const r=n.role,keys=r==='shop'?['shop.'+n.shop,'shop','townsfolk']:r==='settler'&&n.town&&n.town.elves?['elf','settler','townsfolk']:r==='patrol'?[n.grp&&n.grp.kind==='caravan'?'caravanguard':'patrol','guard']:r==='kid'?['kid','townsfolk']:[r,'townsfolk'];
+  for(const k of keys)if(ART.npcs[k]&&ART.npcs[k].length)return ART.npcs[k][Math.floor(hash(n.i,7,77)*ART.npcs[k].length)];return null}
+function applyArt(){for(const n of NPCS){const a=artFor(n);if(a){n.spr=a;n.sprZ=sleepRot(a[0])}}for(const p of PLAYERS)withP(p,()=>recalc());gfxApply()}
+(async()=>{let man=window.EMBERWILD_ART||null,base='';if(!man&&location.protocol!=='file:'){try{const r=await fetch('assets/art.json',{cache:'no-cache'});if(r.ok){man=await r.json();base='assets/'}}catch(e){}}
+  if(man)loadArt(man,base)})();
 
 // ---------- terrain chunks ----------
 const terrMat=new THREE.MeshLambertMaterial({map:terrTex,vertexColors:true}),lodMat=new THREE.MeshLambertMaterial({vertexColors:true});
@@ -2195,7 +2230,7 @@ function renderView(dt,vi){const V_=VIEWS[vi];VW=V_.w;VH=V_.h;if(!P.camObj)P.cam
   camera.position.set(fx+(Math.random()-.5)*shake,fz,fy+(Math.random()-.5)*shake);const look=46*(1-Math.sin(tilt));camera.lookAt(tx+Math.cos(YAW)*look,tz+look*.1,ty+Math.sin(YAW)*look);
   // where the hero is on screen: anything in front of them inside this circle is drawn see-through
   camera.updateProjectionMatrix();camera.updateMatrixWorld();v3.set(P.x,ph+9,P.y).applyMatrix4(camera.matrixWorldInverse);HD.value=-v3.z;v3.set(P.x,ph+9,P.y).project(camera);
-  HP.value.set(V_.x+(v3.x+1)/2*V_.w,(FH-V_.y-V_.h)+(v3.y+1)/2*V_.h);HR.value=Math.max(72,V_.h*.76);
+  HP.value.set((V_.x+(v3.x+1)/2*V_.w)*GQ,((FH-V_.y-V_.h)+(v3.y+1)/2*V_.h)*GQ);HR.value=Math.max(72,V_.h*.76)*GQ;
   if(!inside){lighting();water.position.set(P.x,SEA-1.5,P.y);const s=camera.far*2.2;water.scale.set(s,s,1);wtex.repeat.set(s/64,s/64);wtex.offset.set(time*.01,time*.006)}
   else{const dk=darkness()/.8;P.sceneI.userData.amb.intensity=dun?1:1.1-dk*.4;billMat.uniforms.tint.value.setRGB(dun?.8:1,dun?.78:1,dun?.75:1);billMat.uniforms.fogNear.value=5000;billMat.uniforms.fogFar.value=6000;camera.far=3000;camera.updateProjectionMatrix();
     for(const w of P.intWalls){const[nx,ny,x,y]=w.userData.n;w.visible=(fx-x)*nx+(fy-y)*ny<0}}
@@ -2234,7 +2269,7 @@ function renderView(dt,vi){const V_=VIEWS[vi];VW=V_.w;VH=V_.h;if(!P.camObj)P.cam
       for(const s_ of[-1,1])bput(g,S.tentacle,q.x+Math.cos(L.a+s_*1.1)*46,q.y+Math.sin(L.a+s_*1.1)*46,SEA-60+rise*52+Math.sin(time*3+s_)*4,{sc:2.4,flip:s_>0?1:0,keep:1})}}
   for(const q of PLAYERS){if(q.realm!==R0||(q!==P&&q._in!==INSIDE&&R0!=='w'))continue;if(q.inv>0&&!(q.roll>0)&&Math.floor(q.inv*14)%2)continue;const hs=q.heroSlots?q.HERO:null;if(!hs)continue;const hd=heroDir(q),fr=q.moving?Math.floor(q.anim)%2:2;bput(g,q.HERO[hd][q.roll>0?Math.floor(q.roll*20)%2:fr],q.x,q.y,heroZ(q),q.roll>0?{w:16*(1+.25*Math.sin((1-q.roll/0.42)*Math.PI)),h:16*(.5+.5*Math.abs(Math.cos((1-q.roll/0.42)*Math.PI*2))),keep:1}:{keep:1})}
   bdone(g);const sc=inside?P.sceneI:scene;sc.add(dyn);
-  renderer.setViewport(V_.x,FH-V_.y-V_.h,V_.w,V_.h);renderer.setScissor(V_.x,FH-V_.y-V_.h,V_.w,V_.h);renderer.setScissorTest(true);renderer.render(sc,camera);
+  const vx=Math.round(V_.x*GQ),vy=Math.round((FH-V_.y-V_.h)*GQ),vw=Math.round(V_.w*GQ),vh=Math.round(V_.h*GQ);renderer.setViewport(vx,vy,vw,vh);renderer.setScissor(vx,vy,vw,vh);renderer.setScissorTest(true);renderer.render(sc,camera);
   ctx.save();ctx.translate(V_.x,V_.y);ctx.beginPath();ctx.rect(0,0,VW,VH);ctx.clip();overlay(lights,ph);ctx.restore()}
 function render(dt){let pending=0;if(PLAYERS.some(p=>p.realm==='w'))pending=updateChunks();tuneView(dt,pending);ctx.clearRect(0,0,FW,FH);const me=P;
   PLAYERS.forEach((p,i)=>{usePlayer(p);renderView(dt,i)});usePlayer(me);VW=FW;VH=FH;
