@@ -3,7 +3,7 @@
 Two browser games live here:
 
 - **Emberwild** (`index.html`): an open-world pixel-art adventure. Details below.
-- **Fernhollow** (`fernhollow/`): a fantasy farming game with touch and Xbox controller support. See [`fernhollow/README.md`](fernhollow/README.md).
+- **Fernhollow**: a fantasy farming game with touch and Xbox controller support. It now has its own repository: [GeraldBIII/Fernhollow](https://github.com/GeraldBIII/Fernhollow).
 
 # Emberwild
 
