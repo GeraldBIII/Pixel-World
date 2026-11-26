@@ -34,6 +34,13 @@ const Input = {
       Sound.init();
       this.setMode('kb');
       const c = e.code;
+      // While typing in a text box, let keys type; only Enter and Escape act
+      const tgt = e.target;
+      if (tgt && (tgt.tagName === 'TEXTAREA' || (tgt.tagName === 'INPUT' && tgt.type === 'text'))) {
+        if (c === 'Escape') { e.preventDefault(); this.push('back', 'kb'); }
+        else if (c === 'Enter' || c === 'NumpadEnter') { e.preventDefault(); this.push('submit', 'kb'); }
+        return;
+      }
       const handled = DIRS[c] || HOT.includes(c) || ['Space', 'Enter', 'NumpadEnter', 'Escape', 'Tab', 'KeyE', 'KeyJ', 'KeyK', 'KeyI', 'KeyM', 'KeyP', 'Backspace', 'BracketLeft', 'BracketRight', 'KeyF', 'KeyQ', 'KeyR', 'KeyC', 'ShiftLeft', 'ShiftRight'].includes(c);
       if (handled) e.preventDefault();
       if (DIRS[c]) this.push(DIRS[c], 'kb');

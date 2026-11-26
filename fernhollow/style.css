@@ -282,3 +282,15 @@ table.stats { font-size: 14px; } table.stats th { width: 55%; }
 #clock .god { background: #e7b85a; color: #2a2040; font-weight: 700; font-size: 11px; border-radius: 4px; padding: 1px 6px; margin-bottom: 3px; display: inline-block; }
 #clock .god.hidden { display: none; }
 h3.sect { font-size: 16px; color: var(--accent); margin: 14px 0 6px; }
+
+/* Heart sign */
+.lovesign { width: min(440px, 100%); text-align: center; }
+.signpic { width: 64px; height: 80px; }
+.signtext { font-size: 22px; color: #ffe3a3; margin: 10px 0 4px; overflow-wrap: anywhere; }
+.signedit { width: min(620px, 100%); }
+.signedit input { width: 100%; font: inherit; font-size: 20px; padding: 10px 12px; margin-top: 12px; border-radius: 8px; border: 2px solid #5a4880; background: #1a1428; color: var(--ink); user-select: text; -webkit-user-select: text; touch-action: manipulation; }
+.osk { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; align-items: center; }
+.osk.hidden { display: none; }
+.krow { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; }
+.key { min-width: 38px; min-height: 36px; background: var(--panel2); border: 2px solid #5a4880; border-radius: 6px; font-size: 16px; }
+.key.wide { min-width: 70px; } .key.space { min-width: 180px; }

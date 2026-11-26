@@ -16,7 +16,8 @@ const UI = {
     });
     this.root.addEventListener('mouseover', e => {
       const el = e.target.closest('[data-nav]');
-      if (el && Input.mode === 'kb' && document.activeElement !== el) el.focus({ preventScroll: true });
+      const typing = document.activeElement && document.activeElement.type === 'text';
+      if (el && Input.mode === 'kb' && !typing && document.activeElement !== el) el.focus({ preventScroll: true });
     });
     this.root.addEventListener('focusin', e => { const s = this.top(); if (s && s.onFocus) s.onFocus(e.target); });
     this.root.addEventListener('input', e => { const s = this.top(); if (s && s.onInput) s.onInput(e.target); });
@@ -104,6 +105,7 @@ const UI = {
       return;
     }
     if (a === 'menu' && s.kind === 'pause') { Sound.play('ok'); this.close(); return; }
+    if (a === 'submit') { if (s.onSubmit) s.onSubmit(); return; }
     if (a === 'back' || a === 'menu') { if (s.onBack) { Sound.play('ok'); s.onBack(); } return; }
     if (a === 'hotPrev' || a === 'hotNext') { if (s.onTab) { s.onTab(a === 'hotPrev' ? -1 : 1); Sound.play('move'); } return; }
     if (a === 'inventory' && s.kind === 'inventory') { this.close(); return; }
@@ -544,6 +546,60 @@ const UI = {
           <button data-nav data-act="close" class="small">Close</button></div>`;
         const f = body.querySelector('[data-nav]'); if (f) f.focus({ preventScroll: true });
       }
+    }
+  },
+
+  // ---------- The heart sign: read it, or change its message ----------
+  openLoveSign() {
+    const pic = SPR.lovesign.toDataURL();
+    const s = this.open({
+      kind: 'lovesign',
+      html: `<div class="panel lovesign"><img class="px signpic" src="${pic}" alt=""><p class="signtext">${esc(loveText())}</p>
+        <div class="menu-list two"><button data-nav data-act="close">Close</button><button data-nav data-act="edit">Edit message</button></div></div>`,
+      onBack: () => UI.close(s),
+      actions: { close: () => UI.close(s), edit: () => { UI.close(s); UI.openSignEditor(); } },
+    });
+  },
+  openSignEditor() {
+    const MAX = 80;
+    let shift = false, s = null;
+    const rows = ['1234567890', 'QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM', ".,!?'♥-"];
+    const keys = () => rows.map(r => `<div class="krow">${[...r].map(ch => { const k = /[A-Z]/.test(ch) && !shift ? ch.toLowerCase() : ch; return `<button class="key" data-nav data-act="key" data-k="${esc(k)}">${esc(k)}</button>`; }).join('')}</div>`).join('')
+      + `<div class="krow"><button class="key wide" data-nav data-act="shift">${shift ? 'abc' : 'ABC'}</button><button class="key space" data-nav data-act="key" data-k=" ">Space</button><button class="key wide" data-nav data-act="bksp">⌫</button></div>`;
+    s = this.open({
+      kind: 'signedit',
+      html: `<div class="panel signedit"><h2>Edit the sign</h2>
+        <input type="text" id="sign-input" maxlength="${MAX}" data-nav autocomplete="off" spellcheck="false" value="${esc(loveText())}">
+        <p class="muted small count"></p>
+        <div class="osk ${Input.mode === 'pad' ? '' : 'hidden'}">${keys()}</div>
+        <div class="menu-list two"><button data-nav data-act="cancel">Cancel</button><button data-nav data-act="save">Save</button></div></div>`,
+      onBack: () => UI.close(s),
+      onSubmit: () => save(),
+      onInput: () => count(),
+      actions: {
+        cancel: () => UI.close(s),
+        save: () => save(),
+        key: el => { const inp = s.el.querySelector('#sign-input'); if (inp.value.length < MAX) inp.value += el.dataset.k; if (shift) { shift = false; redraw(el.dataset.k); } count(); },
+        bksp: () => { const inp = s.el.querySelector('#sign-input'); inp.value = inp.value.slice(0, -1); count(); },
+        shift: () => { shift = !shift; redraw(null, true); },
+      },
+      init: x => {
+        s = x; count();
+        const target = Input.mode === 'pad' ? s.el.querySelector('.key') : s.el.querySelector('#sign-input');
+        target.focus({ preventScroll: true });
+        if (target.tagName === 'INPUT') target.setSelectionRange(target.value.length, target.value.length);
+      },
+    });
+    function count() { const n = s.el.querySelector('#sign-input').value.length; s.el.querySelector('.count').textContent = `${n} / ${MAX}`; }
+    function redraw(k, keepShift) {
+      const osk = s.el.querySelector('.osk'); osk.innerHTML = keys();
+      const f = keepShift ? osk.querySelector('[data-act="shift"]') : osk.querySelector(`[data-k="${CSS.escape(k || 'a')}"]`) || osk.querySelector('.key');
+      if (f) f.focus({ preventScroll: true });
+    }
+    function save() {
+      const v = s.el.querySelector('#sign-input').value.replace(/\s+/g, ' ').trim().slice(0, MAX);
+      S.loveText = v || LOVE_SIGN.text;
+      UI.close(s); Sound.play('harvest'); UI.toast('The sign has been updated.');
     }
   },
 

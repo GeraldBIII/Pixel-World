@@ -54,6 +54,7 @@ function giveItem(id, n) {
   const left = addItem(id, n);
   if (left > 0) dropItem(id, left, P.x, P.y - 4);
 }
+const loveText = () => (S && S.loveText) || LOVE_SIGN.text;
 function craft(r) {
   for (const [id, n] of Object.entries(r.need)) if (countItem(id) < n) { Sound.play('error'); UI.toastOnce("You don't have enough materials."); return; }
   if (!canAdd(r.id, r.qty)) { Sound.play('error'); UI.toastOnce('Your bag is full.'); return; }
@@ -567,7 +568,8 @@ function tileInteract(tx, ty, underfoot) {
     if (o === OB.STAIRS) return { label: `Descend to floor ${DUN.floor + 1}`, x: X, y: Y, run: () => enterDungeon(DUN.floor + 1) };
     if (o === OB.LADDER) return { label: 'Climb to the surface', x: X, y: Y - 16, run: () => exitDungeon() };
     if (o === OB.LOOT) return { label: 'Open', x: X, y: Y, run: () => openLootChest(tx, ty) };
-    if (o === OB.SIGN || o === OB.LOVESIGN) return { label: 'Read', x: X, y: Y, run: () => UI.say({ name: 'Signpost', portrait: o === OB.LOVESIGN ? SPR.lovesign.toDataURL() : ICON_URL.fence }, [World.signs.get(i) || '...']) };
+    if (o === OB.LOVESIGN) return { label: 'Read', x: X, y: Y, run: () => UI.openLoveSign() };
+    if (o === OB.SIGN) return { label: 'Read', x: X, y: Y, run: () => UI.say({ name: 'Signpost', portrait: o === OB.LOVESIGN ? SPR.lovesign.toDataURL() : ICON_URL.fence }, [World.signs.get(i) || '...']) };
     if (World.ground[i] === GND.WATER && S.inv[S.sel] && S.inv[S.sel].id === 'can' && S.water < S.canMax) return null;
   }
   const o = World.obj[i];
