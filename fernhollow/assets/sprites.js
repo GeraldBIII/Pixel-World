@@ -15,4 +15,5 @@ const SPRITE_FILES = {
   // 'char.player': 'player.png',        // 64x112 sheet: 4 walk frames x 4 rows (down, up, left, right)
   // 'crop.carrot': 'carrot.png',        // 80x20 sheet: 5 growth stages
   // 'enemy.slime': 'slime.png',         // 32x16 sheet: 2 animation frames
+  'obj.crystal': 'rainbowcrystal.png',   // crystal rocks in the forests and the Depths
 };
