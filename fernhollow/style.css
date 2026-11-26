@@ -278,3 +278,7 @@ table.sold tr.tot td { border-top: 2px solid #5a4880; padding-top: 8px; font-wei
 table.stats { font-size: 14px; } table.stats th { width: 55%; }
 @media (max-width: 640px) { .hero { grid-template-columns: 1fr; } }
 @media (max-height: 460px) { .hero-pv { width: 40px; height: 70px; } .attr { padding: 3px 8px; } .attr .muted.small { display: none; } table.stats { font-size: 12px; } table.stats th, table.stats td { padding: 2px 0; } }
+
+#clock .god { background: #e7b85a; color: #2a2040; font-weight: 700; font-size: 11px; border-radius: 4px; padding: 1px 6px; margin-bottom: 3px; display: inline-block; }
+#clock .god.hidden { display: none; }
+h3.sect { font-size: 16px; color: var(--accent); margin: 14px 0 6px; }

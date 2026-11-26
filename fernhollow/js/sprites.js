@@ -280,13 +280,16 @@ function buildStatic() {
     mushhouse: mushHouseSprite(),
     moonwell: moonwellSprite(),
     fountain: fountainSprite(),
+    cave: caveSprite(),
   };
+  buildDungeonStatic();
 
   // Characters
   for (const [k, L] of Object.entries(LOOKS)) {
     CHAR[k] = makeCharFrames(L);
     PORTRAIT_URL[k] = mk(16, 19, g => g.drawImage(CHAR[k][0][0], 0, 0)).toDataURL();
   }
+  SPR.bld.dstall = stallSprite();
 
   // Enemies
   SPR.slime = slimeFrames('#6ac24a');
@@ -539,6 +542,11 @@ function shirtIcon(g, c, kind) {
   if (kind === 'mail') for (let y = 5; y <= 12; y++) for (let x = 5 + (y % 2); x <= 11; x += 2) R(g, d, x, y);
   if (kind === 'tunic') { R(g, d, 4, 8, 8, 1); R(g, l, 6, 3, 4, 1); }
 }
+function gemIcon(g, c) {
+  const l = shade(c, 0.4), d = shade(c, -0.3);
+  R(g, c, 4, 5, 8, 6); R(g, c, 5, 4, 6, 1); R(g, c, 6, 11, 4, 2); R(g, c, 7, 13, 2, 1);
+  R(g, l, 5, 5, 3, 2); R(g, '#ffffff', 5, 5); R(g, d, 9, 8, 3, 3);
+}
 function bootIcon(g, c) {
   const d = shade(c, -0.3), l = shade(c, 0.25);
   R(g, c, 2, 3, 4, 8); R(g, c, 2, 9, 6, 4); R(g, d, 2, 13, 6, 1); R(g, l, 2, 3, 4, 1);
@@ -624,6 +632,20 @@ function buildIcons() {
     charm: g => { line(g, '#e7b85a', 4, 1, 8, 5); line(g, '#e7b85a', 12, 1, 8, 5); disc(g, 8, 10, 4, '#e8a23c'); R(g, '#5fbf4a', 7, 8, 3, 1); R(g, '#5fbf4a', 8, 7, 1, 4); R(g, '#5fbf4a', 6, 9); R(g, '#5fbf4a', 10, 9); },
     amulet: g => { line(g, '#e7b85a', 3, 1, 8, 7); line(g, '#e7b85a', 13, 1, 8, 7); disc(g, 8, 10, 4, '#e7b85a'); disc(g, 8, 10, 2, '#6fe3c8'); R(g, '#ffffff', 7, 9); },
     pendant: g => { line(g, '#c8ccd6', 3, 1, 8, 6); line(g, '#c8ccd6', 13, 1, 8, 6); R(g, '#e0406a', 5, 7, 3, 3); R(g, '#e0406a', 9, 7, 3, 3); R(g, '#e0406a', 6, 10, 5, 2); R(g, '#e0406a', 7, 12, 3, 1); R(g, '#e0406a', 8, 13); R(g, '#ff9ab0', 6, 8); },
+    rope: g => { for (let k = 0; k < 4; k++) { disc(g, 8, 8, 6 - k, k % 2 ? '#c8a060' : '#a8843e'); } disc(g, 8, 8, 1, '#5a3a22'); R(g, '#c8a060', 12, 11, 3, 4); },
+    salve: g => { R(g, '#c8ccd6', 4, 5, 8, 9); R(g, '#6ac24a', 5, 8, 6, 5); R(g, '#9ae87a', 5, 8, 6, 1); R(g, '#8c5a35', 3, 3, 10, 2); R(g, '#ffffff', 5, 6, 1, 2); },
+    bone: g => { line(g, '#e8e4d8', 4, 12, 12, 4); line(g, '#c8c4b8', 4, 13, 12, 5); disc(g, 4, 12, 2, '#e8e4d8'); disc(g, 12, 4, 2, '#e8e4d8'); R(g, '#e8e4d8', 2, 13); R(g, '#e8e4d8', 13, 2); },
+    batwing: g => { for (let x = 1; x < 15; x++) { const h = 3 + Math.abs(Math.sin(x * 0.9)) * 5; R(g, '#5a4a6a', x, 5, 1, h | 0); } R(g, '#3a2a4a', 1, 4, 14, 1); R(g, '#8a7a9a', 3, 6, 2, 2); },
+    gobtooth: g => { R(g, '#f0ead8', 6, 2, 5, 6); R(g, '#f0ead8', 7, 8, 3, 3); R(g, '#f0ead8', 8, 11, 1, 3); R(g, '#c8c0a8', 9, 2, 2, 8); R(g, '#e8a0a0', 6, 2, 5, 1); },
+    darkiron: g => { disc(g, 8, 9, 5, '#2a2834'); disc(g, 7, 8, 4, '#3a3848'); R(g, '#9a6aff', 5, 7, 2, 1); R(g, '#9a6aff', 9, 10, 2, 1); R(g, '#c8a8ff', 8, 6); },
+    ruby: g => gemIcon(g, '#e0302a'), sapphire: g => gemIcon(g, '#3a7ad8'),
+    relic: g => { R(g, '#c8a060', 5, 3, 6, 10); R(g, '#e8c870', 6, 2, 4, 1); R(g, '#a8843e', 5, 12, 6, 2); R(g, '#3a2a1a', 6, 5, 1, 2); R(g, '#3a2a1a', 9, 5, 1, 2); R(g, '#3a2a1a', 7, 9, 2, 1); R(g, '#6fe3c8', 7, 3, 2, 1); R(g, '#e8c870', 3, 6, 2, 3); R(g, '#e8c870', 11, 6, 2, 3); },
+    gobshiv: g => { line(g, '#b8b0a0', 7, 9, 13, 3); line(g, '#8a8070', 8, 9, 13, 4); R(g, '#b8b0a0', 12, 4, 2, 1); line(g, '#5a3a22', 5, 8, 8, 11); line(g, '#6b4429', 3, 13, 6, 10); R(g, '#7ac85a', 2, 13, 2, 2); },
+    dgreatsword: g => { line(g, '#4a4a5a', 3, 12, 14, 1); line(g, '#2a2834', 4, 12, 14, 2); line(g, '#6a6a7a', 4, 11, 13, 2); line(g, '#9a6aff', 1, 9, 6, 14); line(g, '#1a1820', 1, 14, 3, 12); R(g, '#e0302a', 0, 14, 2, 2); R(g, '#c8a8ff', 10, 4); },
+    bonehelm: g => { disc(g, 8, 8, 6, '#e8e4d8'); R(g, '#b8b4a8', 2, 9, 12, 1); R(g, '#2a2030', 4, 10, 8, 4); R(g, '#b8b4a8', 7, 9, 2, 5); R(g, '#e8e4d8', 2, 3, 2, 3); R(g, '#e8e4d8', 12, 3, 2, 3); },
+    batcloak: g => shirtIcon(g, '#4a3a5a', 'tunic'), dplate: g => shirtIcon(g, '#4a4a5a', 'mail'),
+    sward: g => { for (let y = 1; y <= 14; y++) { const hw = y < 8 ? 6 : Math.max(1, 6 - (y - 7)); R(g, '#3a3a4a', 8 - hw, y, hw * 2, 1); if (hw > 1 && y > 1 && y < 14) R(g, '#5a5a6a', 9 - hw, y, hw * 2 - 2, 1); } disc(g, 8, 6, 2, '#3a7ad8'); R(g, '#bfe0ff', 7, 5); },
+    rubyring: g => { disc(g, 8, 9, 5, '#e7b85a'); disc(g, 8, 9, 3, '#00000000'); g.clearRect(6, 8, 5, 4); disc(g, 8, 4, 2, '#e0302a'); R(g, '#ff9a8a', 7, 3); },
     bag: g => { R(g, '#8a5a30', 3, 5, 10, 9); R(g, '#a8743e', 3, 5, 10, 2); R(g, '#6a4222', 3, 13, 10, 1); R(g, '#5a3a22', 6, 2, 4, 1); R(g, '#5a3a22', 5, 3, 1, 2); R(g, '#5a3a22', 10, 3, 1, 2); R(g, '#f0c050', 7, 8, 2, 2); },
   };
   for (const [id, f] of Object.entries(fn)) ICONS[id] = outlined(mk(16, 16, f));
@@ -650,4 +672,126 @@ function buildIcons() {
     }));
   }
   for (const [id, c] of Object.entries(ICONS)) ICON_URL[id] = c.toDataURL();
+}
+
+// ---------- Moonfall Depths (dungeon) ----------
+const DTILE = [
+  { floor: '#5a5468', wall: '#241e2e', face: '#4a4258' },
+  { floor: '#4a5868', wall: '#18222e', face: '#3a4a5a' },
+  { floor: '#5a4a68', wall: '#1e1428', face: '#4a3a5a' },
+  { floor: '#684a4a', wall: '#2a1414', face: '#5a3a3a' },
+  { floor: '#3a3a44', wall: '#0e0c12', face: '#2a2832' },
+];
+const DPAL = [
+  { slime: '#6ac24a', bone: '#e8e4d8', eye: '#2a1a2a', gob: '#7ac85a', cloth: '#8a5a34', bat: '#5a4a6a', wing: '#7a6a8a' },
+  { slime: '#4aa0d8', bone: '#c8d4e8', eye: '#3a7ad8', gob: '#5aa86a', cloth: '#4a5a8a', bat: '#3a5a8a', wing: '#5a7aaa' },
+  { slime: '#a85ad8', bone: '#d8c8e8', eye: '#b04ad8', gob: '#c86a4a', cloth: '#3a3a4a', bat: '#6a2a6a', wing: '#9a4a9a' },
+  { slime: '#d84a4a', bone: '#e8d8a0', eye: '#ff6a2a', gob: '#8a8a9a', cloth: '#6a2a2a', bat: '#8a2a2a', wing: '#b84a3a' },
+  { slime: '#ffd04a', bone: '#3a3440', eye: '#ff2a2a', gob: '#5a3a7a', cloth: '#1a1a22', bat: '#1a1a2a', wing: '#3a2a4a' },
+];
+const TIER_NAMES = ['', 'Cave ', 'Deep ', 'Abyssal ', 'Ancient '];
+const dtileCache = {};
+function dungeonTiles(t) {
+  if (dtileCache[t]) return dtileCache[t];
+  const c = DTILE[t], out = {};
+  out.floor = [0, 1, 2].map(v => mk(16, 16, g => {
+    speckle(g, c.floor, 90 + v + t * 3, 0.15, 0.1, 0.08, 0.04);
+    R(g, shade(c.floor, -0.2), 0, 15, 16, 1); R(g, shade(c.floor, -0.2), 15, 0, 1, 16);
+    if (v === 1) { line(g, shade(c.floor, -0.3), 3, 4, 7, 7); line(g, shade(c.floor, -0.3), 7, 7, 6, 11); }
+    if (v === 2) { R(g, shade(c.floor, 0.15), 9, 4, 3, 2); R(g, '#e8e4d8', 4, 11, 2, 1); }
+  }));
+  out.top = mk(16, 16, g => { speckle(g, c.wall, 95 + t, 0.2, 0.15, 0.06, 0.03); });
+  out.face = mk(16, 16, g => {
+    R(g, c.face, 0, 0, 16, 16);
+    const m = shade(c.face, -0.35), l = shade(c.face, 0.18);
+    for (let row = 0; row < 4; row++) { const y = row * 4, off = row % 2 ? 4 : 0; R(g, m, 0, y + 3, 16, 1); R(g, l, 0, y, 16, 1); for (let x = off; x < 16; x += 8) R(g, m, x, y, 1, 3); }
+    R(g, c.wall, 0, 0, 16, 2); R(g, 'rgba(0,0,0,.35)', 0, 13, 16, 3);
+  });
+  return (dtileCache[t] = out);
+}
+function buildDungeonStatic() {
+  SPR.stairs = mk(16, 16, g => {
+    R(g, '#1a1424', 1, 1, 14, 14); R(g, '#6a4aa8', 0, 0, 16, 1); R(g, '#6a4aa8', 0, 15, 16, 1); R(g, '#6a4aa8', 0, 0, 1, 16); R(g, '#6a4aa8', 15, 0, 1, 16);
+    for (let k = 0; k < 4; k++) { R(g, shade('#5a5468', -k * 0.18), 2 + k, 3 + k * 3, 12 - k * 2, 2); }
+    R(g, '#b48cff', 2, 1, 12, 1);
+  });
+  SPR.ladder = outlined(mk(16, 32, g => {
+    R(g, '#8c5a35', 3, 0, 2, 32); R(g, '#8c5a35', 11, 0, 2, 32); R(g, '#a8743e', 3, 0, 1, 32);
+    for (let y = 2; y < 32; y += 5) R(g, '#b07a45', 3, y, 10, 2);
+    R(g, 'rgba(255,240,180,.5)', 4, 0, 8, 3);
+  }));
+  const chest = open => outlined(mk(16, 16, g => {
+    R(g, '#7a4a22', 1, 6, 14, 9); R(g, '#9a6a3a', 1, 7, 14, 1); R(g, '#e7b85a', 1, 10, 14, 1); R(g, '#e7b85a', 7, 6, 2, 9);
+    if (open) { R(g, '#3a2414', 2, 3, 12, 4); R(g, '#9a6a3a', 1, 1, 14, 3); R(g, '#ffe58a', 4, 5, 2, 1); }
+    else { R(g, '#9a6a3a', 0, 3, 16, 4); R(g, '#c08a50', 0, 3, 16, 1); R(g, '#e7b85a', 7, 3, 2, 4); R(g, '#ffe58a', 7, 6, 2, 2); }
+  }));
+  SPR.loot = chest(false); SPR.lootOpen = chest(true);
+  SPR.testchest = outlined(mk(16, 16, g => {
+    R(g, '#5a3a8a', 1, 6, 14, 9); R(g, '#7a5ab0', 1, 7, 14, 1); R(g, '#6a4aa8', 0, 3, 16, 4); R(g, '#9a7ad0', 0, 3, 16, 1);
+    R(g, '#e7b85a', 7, 3, 2, 12); R(g, '#e7b85a', 1, 10, 14, 1); R(g, '#fff2a0', 7, 7, 2, 2); R(g, '#6fe3c8', 3, 12, 2, 1); R(g, '#6fe3c8', 11, 12, 2, 1);
+  }));
+  SPR.torch = outlined(mk(16, 24, g => {
+    R(g, '#4a3a2a', 7, 10, 2, 13); R(g, '#3a2a2a', 5, 21, 6, 3); R(g, '#6a5040', 5, 8, 6, 3);
+    disc(g, 8, 5, 3, '#ff8a2a'); disc(g, 8, 6, 2, '#ffd04a'); R(g, '#fff8c0', 8, 6);
+  }), '#1a1010');
+  const rockB = (g, c) => { disc(g, 8, 10, 5, shade(c, -0.25)); disc(g, 7, 9, 5, c); disc(g, 6, 8, 2, shade(c, 0.2)); };
+  SPR.gemrock = outlined(mk(16, 16, g => { rockB(g, '#6a6478'); R(g, '#e0302a', 5, 6, 2, 3); R(g, '#ff9a8a', 5, 6); R(g, '#3a7ad8', 9, 9, 2, 3); R(g, '#bfe0ff', 9, 9); R(g, '#e0302a', 10, 5, 1, 2); }));
+  SPR.darkore = outlined(mk(16, 16, g => { rockB(g, '#3a3848'); R(g, '#9a6aff', 4, 7, 3, 1); R(g, '#9a6aff', 6, 8, 1, 2); R(g, '#c8a8ff', 9, 10, 2, 1); R(g, '#9a6aff', 10, 6, 1, 3); }));
+}
+function caveSprite() {
+  return outlined(mk(48, 40, g => {
+    R(g, '#7d7064', 2, 4, 44, 36); R(g, '#968878', 2, 4, 44, 2);
+    for (let y = 10; y < 40; y += 6) R(g, '#655a50', 2, y, 44, 1);
+    for (let y = 8; y < 40; y++) { const t = (y - 8) / 32, hw = Math.round(Math.min(15, 6 + Math.sqrt(t) * 12)); R(g, '#0c0a12', 24 - hw, y, hw * 2, 1); }
+    R(g, '#8c5a35', 7, 8, 4, 32); R(g, '#8c5a35', 37, 8, 4, 32); R(g, '#a8743e', 5, 6, 38, 4); R(g, '#6b4429', 5, 9, 38, 1);
+    R(g, '#9a6aff', 22, 0, 4, 6); R(g, '#c8a8ff', 22, 0, 2, 5); R(g, '#62d8ff', 26, 2, 2, 4);
+    R(g, '#ffd04a', 12, 14, 2, 3); R(g, '#ffd04a', 34, 14, 2, 3);
+  }));
+}
+function stallSprite() {
+  return outlined(mk(48, 52, g => {
+    R(g, '#5a3a22', 3, 10, 3, 42); R(g, '#5a3a22', 42, 10, 3, 42);
+    for (let x = 0; x < 48; x++) R(g, ((x >> 2) % 2) ? '#c0404a' : '#5fbf4a', x, 6, 1, 8);
+    for (let x = 0; x < 48; x += 4) R(g, '#c0404a', x, 14, 2, 1);
+    if (CHAR.grimble) g.drawImage(CHAR.grimble[0][0], 16, 14, 16, 28);
+    R(g, '#8a5a30', 0, 36, 48, 16); R(g, '#a8743e', 0, 36, 48, 3); R(g, '#6a4222', 0, 44, 48, 1);
+    R(g, '#e7b85a', 8, 32, 4, 4); R(g, '#e0302a', 36, 33, 3, 3); R(g, '#3a7ad8', 30, 33, 3, 3); R(g, '#c8ccd6', 14, 33, 6, 3);
+  }));
+}
+// Dungeon monsters: drawn per depth tier, so they look a little different every 5 floors.
+const enemyCache = {};
+function enemySet(kind, t) {
+  const key = kind + t;
+  if (enemyCache[key]) return enemyCache[key];
+  const p = DPAL[t];
+  let frames;
+  if (kind === 'dslime') frames = slimeFrames(p.slime);
+  else if (kind === 'bat') frames = [0, 1].map(f => outlined(mk(16, 12, g => {
+    disc(g, 8, 6, 3, p.bat); R(g, p.bat, 6, 2, 1, 2); R(g, p.bat, 9, 2, 1, 2); R(g, '#ff4040', 7, 5); R(g, '#ff4040', 9, 5);
+    if (t >= 2) { R(g, '#ffffff', 7, 8); R(g, '#ffffff', 9, 8); }
+    if (f === 0) { R(g, p.wing, 1, 2, 5, 3); R(g, p.wing, 10, 2, 5, 3); R(g, p.wing, 0, 1, 2, 2); R(g, p.wing, 14, 1, 2, 2); }
+    else { R(g, p.wing, 1, 6, 5, 3); R(g, p.wing, 10, 6, 5, 3); R(g, p.wing, 0, 8, 2, 2); R(g, p.wing, 14, 8, 2, 2); }
+  })));
+  else if (kind === 'skeleton') frames = [0, 1].map(f => outlined(mk(16, 24, g => {
+    const b = p.bone, d = shade(b, -0.3);
+    R(g, b, 5, 2, 6, 6); R(g, d, 5, 7, 6, 1); R(g, p.eye, 6, 4, 1, 2); R(g, p.eye, 9, 4, 1, 2); R(g, b, 6, 8, 4, 1); R(g, d, 7, 8);
+    R(g, b, 7, 9, 2, 7); R(g, b, 5, 10, 6, 1); R(g, b, 5, 12, 6, 1); R(g, b, 6, 14, 4, 1);
+    R(g, b, 4, 10 + f, 1, 5); R(g, b, 11, 10 - f + 1, 1, 5); R(g, b, 6, 16, 4, 1);
+    if (f === 0) { R(g, b, 6, 17, 1, 6); R(g, b, 9, 17, 1, 6); } else { R(g, b, 5, 17, 1, 6); R(g, b, 10, 17, 1, 5); }
+    R(g, b, 5, 23, 2, 1); R(g, b, 9, 23, 2, 1);
+    if (t >= 2) { R(g, '#8a6a4a', 4, 1, 8, 3); R(g, '#a8845a', 5, 1, 3, 1); }
+    if (t >= 3) { R(g, '#6a2a2a', 4, 10, 1, 7); R(g, '#6a2a2a', 11, 10, 1, 7); }
+  })));
+  else frames = [0, 1].map(f => outlined(mk(16, 20, g => { // goblin
+    const s = p.gob, sd = shade(s, -0.25);
+    R(g, s, 4, 3, 8, 6); R(g, s, 1, 4, 3, 2); R(g, s, 12, 4, 3, 2); R(g, sd, 4, 8, 8, 1);
+    R(g, '#ffe040', 5, 5, 2, 1); R(g, '#ffe040', 9, 5, 2, 1); R(g, '#1a1020', 6, 5); R(g, '#1a1020', 9, 5); R(g, '#3a1a1a', 6, 7, 4, 1); R(g, '#ffffff', 7, 7);
+    R(g, p.cloth, 4, 9, 8, 6); R(g, '#3a2a1a', 4, 13, 8, 1);
+    R(g, s, 3, 9 + f, 1, 4); R(g, s, 12, 9, 1, 4); R(g, '#c8ccd6', 13, 7, 1, 5); R(g, '#6b4429', 13, 12, 1, 1);
+    if (f === 0) { R(g, sd, 5, 15, 2, 4); R(g, sd, 9, 15, 2, 4); } else { R(g, sd, 4, 15, 2, 4); R(g, sd, 10, 15, 2, 3); }
+    if (t >= 2) { R(g, '#8a8a9a', 3, 9, 3, 2); R(g, '#8a8a9a', 10, 9, 3, 2); }
+    if (t >= 3) { R(g, '#6a6a7a', 4, 2, 8, 2); R(g, '#9a9aaa', 5, 2, 3, 1); }
+  })));
+  const L = frames, Rt = frames.map(mirrorC);
+  return (enemyCache[key] = { L, R: Rt, LW: L.map(whiteC), RW: Rt.map(whiteC) });
 }

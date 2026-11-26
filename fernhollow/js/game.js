@@ -146,11 +146,13 @@ function migrateSave() {
     S.equip.weapon = 'sword'; S.equip.shield = 'buckler';
   }
   if (S.sta == null) S.sta = 100;
+  if (S.dungeonMax == null) S.dungeonMax = 0;
 }
 
 // ---------- Game start / save / load ----------
 function freshFriends() { const f = {}; for (const id of Object.keys(NPCS)) f[id] = { pts: 0, talked: false, gifted: false, met: false, count: 0 }; return f; }
 function newGame() {
+  DUN.floor = 0;
   genWorld();
   S = {
     v: 1, day: 1, season: 0, year: 1, time: DAY_START, gold: 500, energy: 120, maxEnergy: 120, hp: 100, maxHp: 100,
@@ -172,18 +174,22 @@ function newGame() {
 }
 function serialize() {
   const enc = a => { let s = ''; for (let i = 0; i < a.length; i++) s += String.fromCharCode(48 + a[i]); return s; };
-  const wet = []; for (let i = 0; i < World.wet.length; i++) if (World.wet[i]) wet.push(i);
-  return { s: S, p: { x: P.x, y: P.y, dir: P.dir }, w: { g: enc(World.ground), o: enc(World.obj), wet, c: [...World.crops].map(([i, c]) => [i, c.id, c.age, c.ready ? 1 : 0]) }, savedAt: Date.now() };
+  const wet = []; for (let i = 0; i < OVERWORLD.wet.length; i++) if (OVERWORLD.wet[i]) wet.push(i);
+  // Always save the overworld; saving underground puts you back at the cave mouth
+  const Wd = OVERWORLD, p = inDungeon() ? { x: (CAVE.x + 1) * TS + 8, y: (CAVE.y + 2) * TS + 12, dir: 0 } : { x: P.x, y: P.y, dir: P.dir };
+  return { s: S, p, w: { g: enc(Wd.ground), o: enc(Wd.obj), wet, c: [...Wd.crops].map(([i, c]) => [i, c.id, c.age, c.ready ? 1 : 0]) }, savedAt: Date.now() };
 }
 function saveGame() { if (!S) return false; return Store.set(SAVE_KEY, serialize()); }
 function continueGame() {
   const d = Store.get(SAVE_KEY, null);
   if (!d || !d.s) { UI.toast('No save found.'); return; }
+  DUN.floor = 0;
   genWorld();
   const dec = (str, a) => { for (let i = 0; i < a.length && i < str.length; i++) a[i] = str.charCodeAt(i) - 48; };
   dec(d.w.g, World.ground); dec(d.w.o, World.obj);
   for (const i of d.w.wet) World.wet[i] = 1;
   for (const [i, id, age, ready] of d.w.c) if (CROPS[id]) World.crops.set(i, { id, age, ready: !!ready });
+  restampStatic();
   S = d.s;
   S.friends = Object.assign(freshFriends(), S.friends || {});
   S.stats = Object.assign({ wood: 0, harvest: 0, shards: 0, shipped: 0, talked: [], pumpkin: 0 }, S.stats || {});
@@ -252,6 +258,7 @@ function regionSize(sx, sy, cap) {
   return seen.size;
 }
 function unstuck(home) {
+  if (home) exitDungeon(true);
   P.kx = P.ky = 0; P.toolT = 0;
   if (!home) {
     const cx = Math.floor(P.x / TS), cy = Math.floor((P.y - 3) / TS);
@@ -274,8 +281,9 @@ function update(dt) {
   S.time += dt * MIN_PER_SEC;
   if (S.time >= DAY_END) { endDay(true); return; }
   updatePlayer(dt);
-  updateNPCs(dt);
+  if (!inDungeon()) updateNPCs(dt);
   updateEnemies(dt);
+  updateShots(dt);
   updateDrops(dt);
   updateFx(dt);
   for (const [k, v] of shakes) { if (v - dt <= 0) shakes.delete(k); else shakes.set(k, v - dt); }
@@ -339,6 +347,7 @@ function updatePlayer(dt) {
   // Stamina comes back when you're not spending it
   if (P.staDelay <= 0 && !P.sprinting && !P.blocking) S.sta = Math.min(S.maxSta, S.sta + 30 * dt);
 
+  if (Settings.god) { S.sta = S.maxSta; S.energy = S.maxEnergy; S.hp = S.maxHp; S.water = S.canMax; }
   // Hold-to-repeat for tools and attacks
   if (Input.useHeld()) {
     P.holdT += dt;
@@ -426,6 +435,7 @@ function useItem() {
   if (d.cat === 'seed') return plantSeed(tx, ty, it);
   if (d.place) return placeObj(tx, ty, it);
   if (it.id === 'dust') return useDust(tx, ty);
+  if (it.id === 'rope') { if (inDungeon()) { removeAt(S.sel, 1); exitDungeon(); } else UI.toastOnce('Escape Ropes only work in Moonfall Depths.'); return; }
   if (d.food) return eat(it);
   P.useCD = 0.6;
   UI.toastOnce('Ship this in the Market Crate, sell it at a shop, or give it to a villager.');
@@ -460,7 +470,7 @@ function hitObj(tx, ty, tool) {
   if (!inf || inf.forage) return;
   if (!inf.hp) { Sound.play('clink'); return; }
   if (!(inf.tool === tool || (inf.tool === 'any' && tool !== 'can'))) { Sound.play('clink'); shakes.set(i, 0.15); UI.toastOnce(`You need ${TOOL_NAMES[inf.tool]} for that.`); return; }
-  const hp = (World.hp.get(i) ?? inf.hp) - (tool === 'sword' ? 1 : ST.toolPow);
+  const hp = Settings.onehit ? 0 : (World.hp.get(i) ?? inf.hp) - (tool === 'sword' ? 1 : ST.toolPow);
   shakes.set(i, 0.22);
   Sound.play(tool === 'axe' ? 'chop' : tool === 'pick' ? 'pick' : 'swing');
   burst(tx * TS + 8, ty * TS + 8, inf.pc, 5);
@@ -471,6 +481,8 @@ function hitObj(tx, ty, tool) {
   World.obj[i] = inf.becomes || 0;
   if (inf.give) dropItem(inf.give, 1, tx * TS + 8, ty * TS + 8);
   for (const [id, a, b] of inf.drops || []) { const n = ri(a, b); if (n > 0) dropItem(id, n, tx * TS + 8, ty * TS + 8); }
+  if (inf.gems) { dropItem(Math.random() < (DUN.floor >= 10 ? 0.45 : 0.15) ? 'sapphire' : 'ruby', 1, tx * TS + 8, ty * TS + 8); gainXP(XP.gem); }
+  if (o === OB.DARKORE) gainXP(XP.darkore);
   Sound.play('break');
   burst(tx * TS + 8, ty * TS + 6, inf.pc, 12);
 }
@@ -487,6 +499,7 @@ function plantSeed(tx, ty, it) {
   burst(tx * TS + 8, ty * TS + 12, '#5a3b22', 4);
 }
 function placeObj(tx, ty, it) {
+  if (inDungeon()) { Sound.play('error'); UI.toastOnce("You can't build down here."); return; }
   const i = idx(tx, ty);
   if (!inb(tx, ty) || World.obj[i] || World.bmap[i] >= 0 || World.crops.has(i)) { Sound.play('error'); UI.toastOnce("You can't place that there."); return; }
   const g = World.ground[i];
@@ -550,6 +563,10 @@ function tileInteract(tx, ty, underfoot) {
       const it = S.inv[S.sel], ok = it && ITEMS[it.id].sell && !isTool(it.id);
       return { label: ok ? `Ship ${ITEMS[it.id].name}` : 'Market Crate', x: X, y: Y, run: shipSelected };
     }
+    if (o === OB.TESTCHEST) return { label: 'Playtest Chest', x: X, y: Y, run: () => UI.openTestChest() };
+    if (o === OB.STAIRS) return { label: `Descend to floor ${DUN.floor + 1}`, x: X, y: Y, run: () => enterDungeon(DUN.floor + 1) };
+    if (o === OB.LADDER) return { label: 'Climb to the surface', x: X, y: Y - 16, run: () => exitDungeon() };
+    if (o === OB.LOOT) return { label: 'Open', x: X, y: Y, run: () => openLootChest(tx, ty) };
     if (o === OB.SIGN) return { label: 'Read', x: X, y: Y, run: () => UI.say({ name: 'Signpost', portrait: ICON_URL.fence }, [World.signs.get(i) || '...']) };
     if (World.ground[i] === GND.WATER && S.inv[S.sel] && S.inv[S.sel].id === 'can' && S.water < S.canMax) return null;
   }
@@ -599,12 +616,13 @@ function buildingAction(b) {
       UI.confirm(S.time < 18 * 60 ? "It's still early. Go to bed and end the day?" : 'Go to bed and end the day?', [{ label: 'Sleep', run: () => endDay(false) }, { label: 'Not yet', cancel: true }]);
       break;
     case 'shop': {
-      const sh = SHOPS[b.shop], owner = npcs.find(n => n.id === sh.owner), h = NPCS[sh.owner].hours;
-      if (owner && owner.visible) { Sound.play('ok'); UI.openShop(b.shop); }
+      const sh = SHOPS[b.shop], owner = npcs.find(n => n.id === sh.owner), h = sh.always ? [0, 24] : NPCS[sh.owner].hours;
+      if (sh.always || (owner && owner.visible)) { Sound.play('ok'); UI.openShop(b.shop); }
       else UI.toast(`${sh.name} is closed. Open ${fmtTime(h[0] * 60)} to ${fmtTime(h[1] * 60)}.`);
       break;
     }
     case 'msg': UI.toast(b.msg); break;
+    case 'dungeon': dungeonPrompt(); break;
     case 'moonwell':
       if (S.wellDay === dayKey()) { UI.toast('The Moonwell is still. Come back tomorrow.'); return; }
       S.wellDay = dayKey(); S.energy = S.maxEnergy; S.hp = S.maxHp;
@@ -782,17 +800,21 @@ function trySpawn() {
 }
 function updateEnemies(dt) {
   spawnT -= dt;
-  if (spawnT <= 0) { spawnT = 1.6; trySpawn(); }
+  if (spawnT <= 0 && !inDungeon()) { spawnT = 1.6; trySpawn(); }
   for (const e of enemies) {
     const t = ENEMY[e.kind], d = dist(e.x, e.y, P.x, P.y);
     e.flash -= dt;
-    if (d > 26 * TS || (e.kind === 'wisp' && !isNight())) { e.dead = true; continue; }
+    if (!inDungeon() && (d > 26 * TS || (e.kind === 'wisp' && !isNight()))) { e.dead = true; continue; }
     if (e.fade < 1) e.fade = Math.min(1, e.fade + dt * 2);
     if (Math.abs(e.kx) + Math.abs(e.ky) > 4) {
       const nx = e.x + e.kx * dt, ny = e.y + e.ky * dt;
       if (enemyFree(e, nx, e.y)) e.x = nx; if (enemyFree(e, e.x, ny)) e.y = ny;
       const f = Math.pow(0.004, dt); e.kx *= f; e.ky *= f;
-    } else if (e.kind === 'wolf') {
+    } else if (e.kind === 'bat') {
+      updateBat(e, d, dt);
+    } else if (e.kind === 'skeleton') {
+      updateSkeleton(e, d, dt);
+    } else if (e.kind === 'wolf' || e.kind === 'goblin') {
       updateWolf(e, d, dt);
     } else if (e.fly) {
       if (d < 10 * TS) {
@@ -814,7 +836,7 @@ function updateEnemies(dt) {
         if (d < 9 * TS && Math.random() < 0.3) Sound.play('slime');
       }
     }
-    if (d < 11 && P.hurtT <= 0 && P.rollT <= 0 && e.fade > 0.5) hurtPlayer(t.dmg, e);
+    if (d < 11 && P.hurtT <= 0 && P.rollT <= 0 && e.fade > 0.5) hurtPlayer(e.dmg || t.dmg, e);
   }
   enemies = enemies.filter(e => !e.dead);
 }
@@ -824,10 +846,10 @@ function updateWolf(e, d, dt) {
   let vx = 0, vy = 0;
   e.detour = Math.max(0, (e.detour || 0) - dt);
   if (d < 9 * TS) {
-    if (!e.alert) { e.alert = true; Sound.play('howl'); }
+    if (!e.alert) { e.alert = true; Sound.play(e.kind === 'wolf' ? 'howl' : 'goblin'); }
     const a = Math.atan2(P.y - e.y, P.x - e.x) + (e.detour > 0 ? e.side * 1.4 : 0);
     if (d < 2.6 * TS && e.cd <= 0) { e.lunge = 0.35; e.cd = 1.6; }
-    const sp = e.lunge > 0 ? 135 : d < 1.2 * TS ? 20 : 66;
+    const sp = e.lunge > 0 ? (e.lspd || 135) : d < 1.2 * TS ? 20 : (e.spd || 66);
     vx = Math.cos(a) * sp; vy = Math.sin(a) * sp;
   } else {
     e.alert = false;
@@ -851,7 +873,7 @@ function weaponHit() {
   for (const e of enemies) {
     if (e.dead || dist(hx, hy, e.x, e.y - 6) > r) continue;
     const crit = Math.random() < ST.crit;
-    const dmg = Math.max(1, Math.round(ST.atk * (0.9 + Math.random() * 0.2) * (crit ? 1.75 : 1)));
+    const dmg = Settings.onehit ? 9999 : Math.max(1, Math.round(ST.atk * (0.9 + Math.random() * 0.2) * (crit ? 1.75 : 1)));
     e.hp -= dmg; e.flash = 0.15;
     const k = dist(e.x, e.y, P.x, P.y) || 1;
     e.kx = (e.x - P.x) / k * 170 * ST.knock; e.ky = (e.y - P.y) / k * 170 * ST.knock;
@@ -863,11 +885,17 @@ function weaponHit() {
       e.dead = true; Sound.play('kill');
       burst(e.x, e.y - 6, '#ffffff', 10);
       for (const [id, p] of ENEMY[e.kind].drops) if (Math.random() < p) dropItem(id, 1, e.x, e.y - 4);
-      gainXP(XP[e.kind] || 5, e.x, e.y - 30);
+      if (e.set) { // dungeon monsters: extra loot that improves with depth
+        const gd = DMOBS[e.kind].gold; if (gd) { const gold = ri(...gd) * (1 + e.tier); S.gold += gold; floatText(e.x, e.y - 40, `+${gold}g`, '#ffe58a'); }
+        if (Math.random() < 0.03 + e.tier * 0.02) dropItem(e.tier >= 2 && Math.random() < 0.5 ? 'sapphire' : 'ruby', 1, e.x, e.y - 4);
+        if (e.tier >= 2 && Math.random() < 0.25) dropItem('darkiron', 1, e.x, e.y - 4);
+      }
+      gainXP(Math.round((XP[e.kind] || 5) * (1 + (e.pow || 0) * 0.05)), e.x, e.y - 30);
     }
   }
 }
 function hurtPlayer(raw, e) {
+  if (Settings.god) { P.hurtT = 0.6; floatText(P.x, P.y - 30, 'God mode', '#ffe58a'); return; }
   // Armor soaks part of every hit; a raised shield stops much more but costs stamina
   let dmg = raw * (1 - ST.def / (ST.def + 20));
   const k = dist(e.x, e.y, P.x, P.y) || 1;
@@ -886,6 +914,7 @@ function hurtPlayer(raw, e) {
   if (S.hp <= 0) faint();
 }
 function faint() {
+  exitDungeon(true);
   const lost = Math.min(1000, Math.floor(S.gold * 0.1));
   S.gold -= lost; S.hp = Math.round(S.maxHp * 0.5); S.energy = Math.round(S.maxEnergy * 0.5); S.sta = S.maxSta;
   S.time = Math.min(S.time + 120, DAY_END - 30);
@@ -896,6 +925,7 @@ function faint() {
 
 // ---------- End of day ----------
 function endDay(passedOut) {
+  exitDungeon(true);
   // Collect any items still lying around
   for (const d of drops) { const left = addItem(d.id, d.n); if (d.id === 'wood') S.stats.wood += d.n - left; if (d.id === 'shard') S.stats.shards += d.n - left; }
   drops = [];
@@ -972,7 +1002,8 @@ function updateFx(dt) {
   if (ambT <= 0) {
     ambT = 0.25;
     const x = cam.x + Math.random() * VW, y = cam.y + Math.random() * VH * 0.5;
-    if (isNight() && Math.random() < 0.7) parts.push({ x, y: cam.y + Math.random() * VH, vx: (Math.random() - 0.5) * 10, vy: (Math.random() - 0.5) * 10, g: 0, life: 3, t: 0, c: '#e8ff8a', s: 1, fly: 1 });
+    if (inDungeon()) { /* no weather or wildlife underground */ }
+    else if (isNight() && Math.random() < 0.7) parts.push({ x, y: cam.y + Math.random() * VH, vx: (Math.random() - 0.5) * 10, vy: (Math.random() - 0.5) * 10, g: 0, life: 3, t: 0, c: '#e8ff8a', s: 1, fly: 1 });
     else if (S.season === 0 && Math.random() < 0.5) parts.push({ x, y: cam.y - 4, vx: 12, vy: 14, g: 0, life: 6, t: 0, c: '#ffc8e0', s: 2 });
     else if (S.season === 2 && Math.random() < 0.6) parts.push({ x, y: cam.y - 4, vx: 10, vy: 16, g: 0, life: 6, t: 0, c: Math.random() < 0.5 ? '#e8902c' : '#c8602c', s: 2 });
   }
@@ -995,7 +1026,7 @@ function render() {
   const g = ctx;
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.imageSmoothingEnabled = false;
-  g.fillStyle = '#10251a'; g.fillRect(0, 0, VW, VH);
+  g.fillStyle = inDungeon() ? '#08060c' : '#10251a'; g.fillRect(0, 0, VW, VH);
   const cx = Math.round(cam.x), cy = Math.round(cam.y);
   g.translate(-cx, -cy);
   const season = S && playing ? S.season : 0, time = S && playing ? S.time : 12 * 60;
@@ -1030,7 +1061,8 @@ function render() {
     list.push({ y: (b.y + b.h) * TS - 1, k: 2, b, spr, bx, by });
   }
   if (playing) {
-    for (const n of npcs) if (n.visible) list.push({ y: n.y, k: 3, n });
+    if (!inDungeon()) for (const n of npcs) if (n.visible) list.push({ y: n.y, k: 3, n });
+    for (const sh of shots) list.push({ y: sh.y + 10, k: 7, sh });
     for (const e of enemies) list.push({ y: e.y, k: 4, e });
     for (const d of drops) list.push({ y: d.y, k: 5, d });
     list.push({ y: P.y, k: 6 });
@@ -1045,6 +1077,7 @@ function render() {
       case 4: drawEnemy(g, d.e); break;
       case 5: g.drawImage(SPR.shadow, Math.round(d.d.x) - 6, Math.round(d.d.y) - 2); g.drawImage(ICONS[d.d.id], Math.round(d.d.x) - 8, Math.round(d.d.y + d.d.z - 14 + Math.sin(clock * 4 + d.d.x) * 1.5)); break;
       case 6: drawPlayer(g); break;
+      case 7: drawShot(g, d.sh); break;
     }
   }
 
@@ -1058,7 +1091,7 @@ function render() {
   g.globalAlpha = 1;
 
   // Weather
-  if (S && playing && S.weather === 'rain') {
+  if (S && playing && S.weather === 'rain' && !inDungeon()) {
     if (S.season === 3) {
       g.fillStyle = 'rgba(255,255,255,.85)';
       for (let i = 0; i < 90; i++) { const x = cx + ((i * 73.3 + clock * 14 + Math.sin(clock + i) * 8) % (VW + 20)) - 10, y = cy + ((i * 41.7 + clock * 24) % (VH + 20)) - 10; g.fillRect(Math.round(x), Math.round(y), 2, 2); }
@@ -1099,6 +1132,8 @@ function drawGround(g, tx, ty) {
     case GND.PLAZA: img = SPR.plaza; break;
     case GND.ROCKY: img = SPR.rocky[Math.floor(h * 3)]; break;
     case GND.BRIDGE: img = SPR.bridge; break;
+    case GND.DFLOOR: img = dungeonTiles(DUN.tier).floor[h < 0.7 ? 0 : h < 0.88 ? 1 : 2]; break;
+    case GND.DWALL: img = gAt(tx, ty + 1) === GND.DFLOOR ? dungeonTiles(DUN.tier).face : dungeonTiles(DUN.tier).top; break;
   }
   g.drawImage(img, X, Y);
   if (gt === GND.CLIFF && World.cliffD[i] > 2 && tx < W - 1 && gAt(tx + 1, ty) !== GND.CLIFF && gAt(tx + 1, ty) !== GND.FALLS) g.drawImage(SEAS.cliffSide, X, Y);
@@ -1150,6 +1185,14 @@ function drawObj(g, o, tx, ty, i) {
     case OB.LAMP: g.drawImage(SPR.lamp, X, Y - 16); break;
     case OB.CRATE: g.drawImage(SPR.crate, X, Y); break;
     case OB.SIGN: g.drawImage(SPR.sign, X, Y); break;
+    case OB.TESTCHEST: g.drawImage(SPR.testchest, X, Y); break;
+    case OB.STAIRS: g.drawImage(SPR.stairs, X, Y); break;
+    case OB.LADDER: g.drawImage(SPR.ladder, X, Y - 16); break;
+    case OB.LOOT: g.drawImage(SPR.loot, X, Y); break;
+    case OB.LOOTOPEN: g.drawImage(SPR.lootOpen, X, Y); break;
+    case OB.TORCH: g.drawImage(SPR.torch, X, Y - 8); break;
+    case OB.GEMROCK: g.drawImage(SPR.gemrock, X, Y); break;
+    case OB.DARKORE: g.drawImage(SPR.darkore, X, Y); break;
   }
 }
 function drawPlayer(g) {
@@ -1186,19 +1229,23 @@ function drawPlayer(g) {
 }
 function drawEnemy(g, e) {
   const t = ENEMY[e.kind];
-  let f = Math.floor(clock * 4 + e.t * 5) % 2, key = t.spr;
+  let f = Math.floor(clock * 4 + e.t * 5) % 2, key = t.spr, set;
   if (e.kind === 'wolf') { key = e.face > 0 ? 'wolfR' : 'wolf'; f = e.run ? Math.floor(clock * 10) % 2 : 0; }
-  const set = e.flash > 0 ? SPR[key + 'W'] : SPR[key];
+  if (e.set) { // dungeon monsters
+    if (e.kind === 'bat') f = Math.floor(clock * 10) % 2; else if (e.kind !== 'dslime') f = e.run !== false ? Math.floor(clock * 6) % 2 : 0;
+    set = e.flash > 0 ? (e.face > 0 ? e.set.RW : e.set.LW) : (e.face > 0 ? e.set.R : e.set.L);
+  } else set = e.flash > 0 ? SPR[key + 'W'] : SPR[key];
   g.globalAlpha = e.fade * (e.kind === 'wisp' ? 0.88 : 1);
   if (!e.fly) g.drawImage(SPR.shadow, Math.round(e.x) - 6, Math.round(e.y) - 2);
-  const bob = e.fly ? Math.round(Math.sin(clock * 3 + e.t * 7) * 2) - 6 : e.hop > 0 ? -2 : 0;
+  const bob = e.fly || e.kind === 'bat' ? Math.round(Math.sin(clock * 3 + e.t * 7) * 2) - 8 : e.hop > 0 ? -2 : 0;
   const img = set[e.hop > 0 ? 0 : f];
-  g.drawImage(img, Math.round(e.x) - img.width / 2, Math.round(e.y) - 15 + bob);
+  g.drawImage(img, Math.round(e.x) - img.width / 2, Math.round(e.y) - img.height + 1 + bob);
   g.globalAlpha = 1;
   if (e.hp < e.max) { g.fillStyle = '#1a1020'; g.fillRect(Math.round(e.x) - 7, Math.round(e.y) - 19 + bob, 14, 3); g.fillStyle = '#e0404a'; g.fillRect(Math.round(e.x) - 6, Math.round(e.y) - 18 + bob, Math.max(0, Math.round(12 * e.hp / e.max)), 1); }
 }
 
 function darkness(time) {
+  if (inDungeon()) return 0.82;
   let a = 0;
   if (time < 6.5 * 60) a = 0.2 * (1 - (time - 6 * 60) / 30);
   else if (time >= 17.5 * 60) a = Math.min(0.72, (time - 17.5 * 60) / 180 * 0.72);
@@ -1227,6 +1274,11 @@ function drawLighting(g, cx, cy, time) {
     else if (o === OB.GLOW) lights.push([X, Y, 26, '#5ff0d8']);
     else if (o === OB.CRYSTAL) lights.push([X, Y - 2, 22, '#b48cff']);
     else if (o === OB.SPRINKLER) lights.push([X, Y, 14, '#6fe3c8']);
+    else if (o === OB.TORCH) lights.push([X, Y - 12, 78, '#ffa040']);
+    else if (o === OB.STAIRS) lights.push([X, Y, 30, '#b48cff']);
+    else if (o === OB.LADDER) lights.push([X, Y - 12, 40, '#fff0b0']);
+    else if (o === OB.GEMROCK) lights.push([X, Y, 20, '#ff6a8a']);
+    else if (o === OB.TESTCHEST) lights.push([X, Y, 26, '#c8a8ff']);
     const c = World.crops.get(i);
     if (c && c.ready && CROPS[c.id].glow) lights.push([X, Y - 4, 26, CROPS[c.id].fruit]);
   }
@@ -1239,7 +1291,7 @@ function drawLighting(g, cx, cy, time) {
     else lights.push([bx + b.w * 8, by - 12, 46, '#ffd98a']);
   }
   if (playing) {
-    lights.push([P.x, P.y - 10, 50, null]);
+    lights.push([P.x, P.y - 10, inDungeon() ? 84 : 50, null]);
     for (const e of enemies) if (e.kind === 'wisp') lights.push([e.x, e.y - 10, 34, '#a58cff']);
   }
   L.globalCompositeOperation = 'destination-out';

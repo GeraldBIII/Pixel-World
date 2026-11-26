@@ -1,10 +1,12 @@
 'use strict';
 // The world is built from a hand-drawn map. Every coordinate in MAP_REF is a pixel
 // position on the reference photo; toTile() turns it into a tile (4 photo px = 1 tile).
-const W = 320, H = 312;
+// W/H and World change while you're in Moonfall Depths (a separate, smaller map).
+const OW = 320, OH = 312;
+let W = OW, H = OH;
 const PX0 = 140, PY0 = 430, PXS = 4; // 4 photo px per tile (the world was doubled)
-const GND = { GRASS: 0, PATH: 1, WATER: 2, SAND: 3, TILLED: 4, PLAZA: 5, FOREST: 6, ROCKY: 7, BRIDGE: 8, CLIFF: 9, FALLS: 10 };
-const OB = { NONE: 0, OAK: 1, PINE: 2, STUMP: 3, ROCK: 4, CRYSTAL: 5, ORE: 6, WEED: 7, TWIG: 8, BUSH: 9, CAP: 10, DEW: 11, GLOW: 12, FENCE: 13, SPRINKLER: 14, LANTERN: 15, BLOCK: 16, LAMP: 17, CRATE: 18, BOULDER: 19, SIGN: 20, DENSE: 21 };
+const GND = { GRASS: 0, PATH: 1, WATER: 2, SAND: 3, TILLED: 4, PLAZA: 5, FOREST: 6, ROCKY: 7, BRIDGE: 8, CLIFF: 9, FALLS: 10, DFLOOR: 11, DWALL: 12 };
+const OB = { NONE: 0, OAK: 1, PINE: 2, STUMP: 3, ROCK: 4, CRYSTAL: 5, ORE: 6, WEED: 7, TWIG: 8, BUSH: 9, CAP: 10, DEW: 11, GLOW: 12, FENCE: 13, SPRINKLER: 14, LANTERN: 15, BLOCK: 16, LAMP: 17, CRATE: 18, BOULDER: 19, SIGN: 20, DENSE: 21, TESTCHEST: 22, STAIRS: 23, LADDER: 24, LOOT: 25, LOOTOPEN: 26, TORCH: 27, GEMROCK: 28, DARKORE: 29 };
 
 const OBJ_INFO = [];
 OBJ_INFO[OB.OAK] = { solid: 1, hp: 6, tool: 'axe', drops: [['wood', 5, 8]], becomes: OB.STUMP, pc: '#8c5a35' };
@@ -28,6 +30,14 @@ OBJ_INFO[OB.LAMP] = { solid: 1 };
 OBJ_INFO[OB.CRATE] = { solid: 1 };
 OBJ_INFO[OB.SIGN] = { solid: 1 };
 OBJ_INFO[OB.DENSE] = { solid: 1 }; // the impassable eastern forest: can't be chopped
+OBJ_INFO[OB.TESTCHEST] = { solid: 1 };
+OBJ_INFO[OB.STAIRS] = { solid: 1 };
+OBJ_INFO[OB.LADDER] = { solid: 1 };
+OBJ_INFO[OB.LOOT] = { solid: 1 };
+OBJ_INFO[OB.LOOTOPEN] = { solid: 1 };
+OBJ_INFO[OB.TORCH] = { solid: 1 };
+OBJ_INFO[OB.GEMROCK] = { solid: 1, hp: 5, tool: 'pick', drops: [['stone', 1, 2]], gems: true, pc: '#e0406a' };
+OBJ_INFO[OB.DARKORE] = { solid: 1, hp: 5, tool: 'pick', drops: [['darkiron', 1, 2], ['stone', 0, 1]], pc: '#6a4aa8' };
 const PLACE_OBJ = { fence: OB.FENCE, sprinkler: OB.SPRINKLER, lantern: OB.LANTERN };
 const TOOL_NAMES = { axe: 'an axe', pick: 'a pickaxe', any: 'a tool' };
 
@@ -80,11 +90,14 @@ const PLAZA = { x: 70, y: 114 };
 const PENINSULA = { x0: 56, y0: 140, x1: 116, y1: 264 };
 const WOLFWOOD_X = 200; // forest east of this column is the Wolfwood
 
-const World = {
+const OVERWORLD = {
   ground: new Uint8Array(W * H), obj: new Uint8Array(W * H), wet: new Uint8Array(W * H),
   bmap: new Int16Array(W * H), farm: new Uint8Array(W * H), cliffD: new Uint8Array(W * H),
   crops: new Map(), hp: new Map(), buildings: [], signs: new Map(),
 };
+let World = OVERWORLD;
+const TEST_CHEST = { x: 176, y: 118 };
+let CAVE = null; // cave entrance building, placed beside the waterfall
 
 const BUILDING_DEFS = [
   { id: 'house', kind: 'farmhouse', x: 179, y: 115, w: 6, h: 4, door: 3, label: 'Sleep', action: 'sleep' },
@@ -110,7 +123,7 @@ const gAt = (x, y) => (inb(x, y) ? World.ground[idx(x, y)] : GND.WATER);
 const oAt = (x, y) => (inb(x, y) ? World.obj[idx(x, y)] : OB.BLOCK);
 const inRect = (r, x, y) => x >= r.x0 && x <= r.x1 && y >= r.y0 && y <= r.y1;
 const inFarm = (x, y) => inb(x, y) && World.farm[idx(x, y)] === 1;
-const blockedGround = g => g === GND.WATER || g === GND.CLIFF || g === GND.FALLS;
+const blockedGround = g => g === GND.WATER || g === GND.CLIFF || g === GND.FALLS || g === GND.DWALL;
 function solidTile(x, y) {
   if (!inb(x, y)) return true;
   const i = idx(x, y);
@@ -120,6 +133,7 @@ function solidTile(x, y) {
 }
 function buildingAt(x, y) { if (!inb(x, y)) return null; const b = World.bmap[idx(x, y)]; return b >= 0 ? World.buildings[b] : null; }
 function zoneAt(x, y) {
+  if (World.dungeon) return 'dungeon';
   if (inFarm(x, y)) return 'farm';
   if (inRect(VILLAGE, x, y)) return 'village';
   const g = gAt(x, y);
@@ -131,6 +145,7 @@ function zoneAt(x, y) {
 }
 
 function genWorld() {
+  World = OVERWORLD; W = OW; H = OH;
   const G = World.ground, O = World.obj, N = W * H;
   G.fill(GND.GRASS); O.fill(0); World.wet.fill(0); World.bmap.fill(-1); World.farm.fill(0); World.cliffD.fill(0);
   World.crops.clear(); World.hp.clear(); World.buildings = []; World.signs.clear();
@@ -310,8 +325,16 @@ function genWorld() {
   for (let y = 50; y <= 76; y++) for (let x = 78; x <= 102; x++) if ((x - 89) ** 2 + (y - 62) ** 2 <= 70 && G[idx(x, y)] !== GND.WATER) O[idx(x, y)] = 0;
   clearRect(26, 64, 44, 82);
 
-  // 11. Buildings
-  for (const def of BUILDING_DEFS) {
+  // 11. Buildings, plus the cave into Moonfall Depths in the cliff just west of the waterfall
+  let fx = W;
+  for (let x = 100; x < 140; x++) for (let y = 0; y < 40; y++) if (G[idx(x, y)] === GND.FALLS) fx = Math.min(fx, x);
+  let cx = fx - 6, cy = 0;
+  for (; cx > fx - 20; cx--) {
+    cy = 0; while (cy < H - 1 && G[idx(cx + 1, cy)] === GND.CLIFF) cy++;
+    if ([0, 1, 2].every(k => G[idx(cx + k, cy)] !== GND.WATER && G[idx(cx + k, cy - 1)] === GND.CLIFF)) break;
+  }
+  const caveDef = { id: 'cave', kind: 'cave', x: cx, y: cy - 2, w: 3, h: 2, door: 1, label: 'Enter the Depths', action: 'dungeon' };
+  for (const def of [...BUILDING_DEFS, caveDef]) {
     const b = Object.assign({}, def), bi = World.buildings.length;
     b.doorTile = def.door != null ? [b.x + def.door, b.y + b.h - 1] : null;
     World.buildings.push(b);
@@ -322,6 +345,8 @@ function genWorld() {
       if (G[i] === GND.PATH) G[i] = GND.GRASS;
     }
   }
+  CAVE = World.buildings.find(b => b.id === 'cave');
+  carve([[92, 63], [104, 44], [CAVE.x + 1, CAVE.y + 4], [CAVE.x + 1, CAVE.y + 2]]); // Moonwell -> the cave
   carve([[58, 107], [58, 110], [63, 112]]);         // seed shop
   carve([[80, 105], [80, 108], [76, 110]]);         // apothecary
   carve([[54, 122], [60, 122], [64, 118]]);         // elder's house
@@ -339,7 +364,15 @@ function genWorld() {
   sign(231, 128, 'East: the Wolfwood. Wolves hunt there, day and night. Carry your blade!');
   sign(110, 144, 'South: Sunny Meadow and the bridge to Fairy Isle.');
   putFree(186, 118, OB.CRATE);
+  O[idx(TEST_CHEST.x, TEST_CHEST.y)] = OB.TESTCHEST;
   clearRect(SPAWN.x - 1, SPAWN.y, SPAWN.x + 1, SPAWN.y + 1);
+}
+
+// After loading a save, put back fixed things the save may predate (new buildings, the test chest).
+function restampStatic() {
+  World.buildings.forEach((b, bi) => { for (let y = b.y; y < b.y + b.h; y++) for (let x = b.x; x < b.x + b.w; x++) { World.obj[idx(x, y)] = OB.BLOCK; World.bmap[idx(x, y)] = bi; } });
+  World.obj[idx(TEST_CHEST.x, TEST_CHEST.y)] = OB.TESTCHEST;
+  for (let y = CAVE.y + 2; y <= CAVE.y + 4; y++) for (let x = CAVE.x; x <= CAVE.x + 2; x++) { const i = idx(x, y); if (World.obj[i] && World.obj[i] !== OB.BLOCK) World.obj[i] = 0; }
 }
 
 // Respawns forage, debris and minerals each morning, up to a cap per type.
@@ -383,7 +416,7 @@ function dailyRespawn() {
 // One pixel per tile, used by the map screen.
 function mapImage() {
   const pal = SEASON_PAL[S ? S.season : 0];
-  const col = { [GND.GRASS]: pal.grass, [GND.PATH]: '#c8a070', [GND.WATER]: '#3f7fd0', [GND.SAND]: '#e3cc92', [GND.TILLED]: '#6b4a2e', [GND.PLAZA]: '#b8b0c8', [GND.FOREST]: pal.forest, [GND.ROCKY]: '#8d867a', [GND.BRIDGE]: '#a36f3c', [GND.CLIFF]: '#5a5048', [GND.FALLS]: '#d8f0ff' };
+  const col = { [GND.GRASS]: pal.grass, [GND.PATH]: '#c8a070', [GND.WATER]: '#3f7fd0', [GND.SAND]: '#e3cc92', [GND.TILLED]: '#6b4a2e', [GND.PLAZA]: '#b8b0c8', [GND.FOREST]: pal.forest, [GND.ROCKY]: '#8d867a', [GND.BRIDGE]: '#a36f3c', [GND.CLIFF]: '#5a5048', [GND.FALLS]: '#d8f0ff', [GND.DFLOOR]: '#6a6478', [GND.DWALL]: '#1a1622' };
   return mk(W, H, g => {
     const id = g.createImageData(W, H), d = id.data;
     for (let i = 0; i < W * H; i++) {

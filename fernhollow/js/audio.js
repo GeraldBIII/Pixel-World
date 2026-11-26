@@ -68,6 +68,10 @@ const Sound = {
       case 'crit': this.tone(260, 0.12, 'sawtooth', 0.18, 90); this.tone(1400, 0.08, 'square', 0.06, null, 0.02); break;
       case 'equip': this.noise(0.08, 0.2, 2000, 'bandpass'); this.tone(700, 0.06, 'square', 0.05, null, 0.05); break;
       case 'levelup': [523, 659, 784, 1046, 1318].forEach((f, i) => this.tone(f, 0.25, 'square', 0.08, null, i * 0.08)); break;
+      case 'descend': [392, 330, 262, 196].forEach((f, i) => this.tone(f, 0.22, 'triangle', 0.1, null, i * 0.09)); this.noise(0.4, 0.15, 400); break;
+      case 'chest': this.noise(0.12, 0.25, 900); [660, 880, 1100, 1320].forEach((f, i) => this.tone(f, 0.12, 'square', 0.06, null, 0.08 + i * 0.06)); break;
+      case 'goblin': this.tone(600, 0.08, 'square', 0.06, 900); this.tone(700, 0.1, 'square', 0.06, 1000, 0.1); break;
+      case 'bone': this.noise(0.08, 0.15, 2500, 'bandpass'); break;
       case 'ship': this.noise(0.1, 0.3, 500); this.tone(330, 0.1, 'triangle', 0.15, null, 0.05); break;
     }
   },

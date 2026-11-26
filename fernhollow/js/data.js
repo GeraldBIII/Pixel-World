@@ -3,7 +3,7 @@
 const SETTINGS_KEY = 'fernhollow-settings-v1';
 const SAVE_KEY = 'fernhollow-save-v3'; // v3: hand-drawn map at double size
 const Settings = Object.assign(
-  { music: 50, sfx: 80, zoom: 'normal', touch: 'auto', rumble: true, clock24: false, highlight: true },
+  { music: 50, sfx: 80, zoom: 'normal', touch: 'auto', rumble: true, clock24: false, highlight: true, god: false, onehit: false },
   Store.get(SETTINGS_KEY, {})
 );
 const saveSettings = () => Store.set(SETTINGS_KEY, Settings);
@@ -47,6 +47,16 @@ const ITEMS = {
   stew: { name: 'Forest Stew', cat: 'food', food: 60, heal: 30, sell: 90, desc: 'Hearty and warm. Restores 60 energy.' },
   tonic: { name: 'Vigor Tonic', cat: 'food', food: 100, heal: 60, sell: 60, desc: 'Fizzy and bright. Restores 100 energy.' },
   dust: { name: 'Growth Dust', cat: 'special', sell: 20, desc: 'Sprinkle on a growing crop to speed it up by one day.' },
+  rope: { name: 'Escape Rope', cat: 'special', sell: 50, desc: 'Use it in Moonfall Depths to climb straight back to the surface.' },
+  salve: { name: 'Slime Salve', cat: 'food', food: 20, heal: 50, sell: 70, desc: 'Gooey, but it closes wounds fast. Restores 50 health.' },
+  // Dungeon loot
+  bone: { name: 'Bone', cat: 'loot', sell: 8, desc: 'Dropped by skeletons. Bram buys these for crafting.' },
+  batwing: { name: 'Bat Wing', cat: 'loot', sell: 12, desc: 'Thin and leathery. Mirabel uses them in potions.' },
+  gobtooth: { name: 'Goblin Tooth', cat: 'loot', sell: 14, desc: 'Sharp and slightly gross. Bram can work these into blades.' },
+  darkiron: { name: 'Darksteel Ore', cat: 'mat', sell: 45, desc: 'Heavy black ore from floor 10 of Moonfall Depths and deeper.' },
+  ruby: { name: 'Ember Ruby', cat: 'loot', sell: 160, desc: 'A gem that feels warm. Found in gem rocks and treasure chests.' },
+  sapphire: { name: 'Tide Sapphire', cat: 'loot', sell: 220, desc: 'A deep blue gem that hums like the sea.' },
+  relic: { name: 'Ancient Relic', cat: 'loot', sell: 600, desc: 'A carved idol from deep in the Depths. Mirabel pays well for these.' },
 };
 for (const [k, c] of Object.entries(CROPS)) {
   const when = c.seasons.map(s => SEASONS[s]).join(' & ');
@@ -82,6 +92,13 @@ const GEAR = {
   charm: { name: 'Clover Charm', slot: 'trinket', sell: 250, stats: { crit: 0.06 }, vis: { c: '#5fbf4a' }, desc: 'A four-leaf clover sealed in amber.' },
   amulet: { name: 'Vigor Amulet', slot: 'trinket', sell: 380, stats: { sta: 30 }, vis: { c: '#e7b85a' }, desc: 'You could run all day.' },
   pendant: { name: 'Heart Pendant', slot: 'trinket', sell: 420, stats: { hp: 25 }, vis: { c: '#e0406a' }, desc: 'Warm against your chest.' },
+  gobshiv: { name: 'Goblin Shiv', slot: 'weapon', sell: 300, swing: 0.16, reach: 14, stats: { atk: 14, crit: 0.12 }, desc: 'Crude, jagged, and very quick.' },
+  dgreatsword: { name: 'Darksteel Greatsword', slot: 'weapon', sell: 2500, swing: 0.32, reach: 22, knock: 1.5, stats: { atk: 44 }, desc: 'A huge black blade that cleaves through the deep.' },
+  bonehelm: { name: 'Bone Helm', slot: 'head', sell: 350, stats: { def: 3, hp: 10 }, vis: { kind: 'helm', c: '#e8e4d8' }, desc: 'Built from skeleton bones. Grim, but sturdy.' },
+  batcloak: { name: 'Batwing Cloak', slot: 'body', sell: 500, stats: { def: 3, speed: 0.08 }, vis: { kind: 'tunic', c: '#4a3a5a' }, desc: 'Light as a shadow.' },
+  dplate: { name: 'Darksteel Plate', slot: 'body', sell: 2200, stats: { def: 10 }, vis: { kind: 'mail', c: '#4a4a5a' }, desc: 'Heavy black armor forged from the deep.' },
+  sward: { name: 'Sapphire Ward', slot: 'shield', sell: 2000, stats: { def: 7, block: 0.9 }, vis: { c: '#3a7ad8', rim: '#3a3a4a' }, desc: 'A darksteel shield set with a humming sapphire.' },
+  rubyring: { name: 'Ruby Ring', slot: 'trinket', sell: 900, stats: { atk: 4, crit: 0.1 }, vis: { c: '#e0302a' }, desc: 'It burns faintly when you swing.' },
 };
 const STAT_LABELS = { atk: ['Attack', v => v], def: ['Defense', v => v], hp: ['Max HP', v => '+' + v], sta: ['Stamina', v => '+' + v], speed: ['Speed', v => '+' + Math.round(v * 100) + '%'], crit: ['Crit', v => '+' + Math.round(v * 100) + '%'], block: ['Block', v => Math.round(v * 100) + '%'] };
 const gearStatsText = id => Object.entries(GEAR[id].stats).map(([k, v]) => `${STAT_LABELS[k][0]} ${STAT_LABELS[k][1](v)}`).join(' · ');
@@ -99,7 +116,7 @@ const ATTRS = {
   end: ['Endurance', 'Max Stamina +10 and Max Energy +10 each.'],
 };
 const xpNeed = L => Math.round(40 + 25 * L + 8 * L * L);
-const XP = { tree: 5, stump: 2, rock: 1, ore: 3, crystal: 6, boulder: 4, bush: 2, twig: 1, weed: 1, forage: 2, craft: 3, slime: 8, rockslime: 12, wisp: 10, wolf: 18 };
+const XP = { tree: 5, stump: 2, rock: 1, ore: 3, crystal: 6, boulder: 4, bush: 2, twig: 1, weed: 1, forage: 2, craft: 3, slime: 8, rockslime: 12, wisp: 10, wolf: 18, dslime: 6, bat: 7, skeleton: 12, goblin: 12, gem: 10, darkore: 6, chest: 15 };
 
 const RECIPES = [
   { id: 'buckler', qty: 1, need: { wood: 10 } },
@@ -107,6 +124,14 @@ const RECIPES = [
   { id: 'wolfcoat', qty: 1, need: { pelt: 5, fiber: 6 } },
   { id: 'moonblade', qty: 1, need: { shard: 4, ore: 8, glowcap: 2 } },
   { id: 'aegis', qty: 1, need: { shard: 5, ore: 10, stone: 10 } },
+  { id: 'salve', qty: 1, need: { gel: 4, dew: 1 } },
+  { id: 'gobshiv', qty: 1, need: { gobtooth: 6, ore: 2 } },
+  { id: 'bonehelm', qty: 1, need: { bone: 10 } },
+  { id: 'batcloak', qty: 1, need: { batwing: 8, fiber: 6 } },
+  { id: 'rubyring', qty: 1, need: { ruby: 2, ore: 3 } },
+  { id: 'dgreatsword', qty: 1, need: { darkiron: 10, ruby: 1 } },
+  { id: 'dplate', qty: 1, need: { darkiron: 14, bone: 6 } },
+  { id: 'sward', qty: 1, need: { darkiron: 8, sapphire: 1 } },
   { id: 'fence', qty: 4, need: { wood: 2 } },
   { id: 'lantern', qty: 1, need: { wood: 5, shard: 1 } },
   { id: 'sprinkler', qty: 1, need: { ore: 4, stone: 6, shard: 1 } },
@@ -122,6 +147,7 @@ const LOOKS = {
   bram: { skin: '#e0a07a', hair: '#c0603a', shirt: '#7a5a3a', pants: '#4a4a5a', acc: ['beard', 'bandana'] },
   lumi: { skin: '#f6dcc8', hair: '#6fe3c8', shirt: '#b48cff', pants: '#7a5ac8', acc: ['ears', 'wings'] },
   oswin: { skin: '#e8bfa0', hair: '#ececec', shirt: '#3f5f9a', pants: '#2f3f6a', acc: ['beard', 'robe'] },
+  grimble: { skin: '#7ac85a', hair: '#3a2a1a', shirt: '#8a5a34', pants: '#4a3a2a', acc: ['ears', 'bandana'] },
 };
 
 const NPCS = {
@@ -247,6 +273,7 @@ const FORTUNES = [
 // ---------- Shops ----------
 const SHOPS = {
   seeds: {
+    buys: id => ['crop', 'seed', 'forage'].includes(ITEMS[id].cat) || id === 'fiber', buysText: 'crops, seeds, forage and fiber',
     name: "Thistle's Seed Stall", owner: 'thistle', greet: "Fresh seeds for the season! Only what'll grow right now.",
     stock: () => [
       ...Object.keys(CROPS).filter(k => CROPS[k].seasons.includes(S.season)).map(k => ({ id: 'seed_' + k, price: CROPS[k].seed })),
@@ -255,10 +282,12 @@ const SHOPS = {
     ],
   },
   apothecary: {
+    buys: id => ['gel', 'gloom', 'batwing', 'glowcap', 'cap', 'dew', 'shard', 'ruby', 'sapphire', 'relic', 'salve', 'tonic'].includes(id) || (ITEMS[id].slot === 'trinket'), buysText: 'magical things: gels, wings, gems, shards, relics and trinkets',
     name: "Mirabel's Apothecary", owner: 'mirabel', greet: 'Potions, lanterns, and things you should not touch.',
     stock: () => [{ id: 'tonic', price: 150 }, { id: 'lantern', price: 250 }, { id: 'seed_bloom', price: 60 }, { id: 'charm', price: 600 }, { id: 'amulet', price: 900 }, { id: 'pendant', price: 1000 }, { id: 'swiftboots', price: 1200 }],
   },
   forge: {
+    buys: id => ['ore', 'darkiron', 'stone', 'wood', 'bone', 'gobtooth', 'pelt', 'shard', 'ruby', 'sapphire'].includes(id) || (isGear(id) && ITEMS[id].slot !== 'trinket'), buysText: 'ore, stone, wood, bones, teeth, pelts, gems and gear',
     name: "Bram's Forge", owner: 'bram', greet: 'Hrm. Buying or browsing?',
     stock: () => [
       { id: 'fence', price: 12 },
@@ -273,6 +302,16 @@ const SHOPS = {
   },
 };
 
+SHOPS.delve = {
+  name: "Grimble's Delve Stall", owner: 'grimble', greet: 'Heh! A customer, this deep? Grimble buys anything. Not at good prices, mind.',
+  buys: () => true, buysText: 'anything, at 60% of the usual price', sellMul: 0.6, always: true,
+  stock: () => [
+    { id: 'rope', price: 300 }, { id: 'salve', price: 140 }, { id: 'tonic', price: 180 }, { id: 'stew', price: 220 },
+    ...(DUN.floor >= 10 ? [{ id: 'ironsword', price: 1600 }, { id: 'kite', price: 1700 }] : [{ id: 'dagger', price: 500 }, { id: 'leathercap', price: 300 }]),
+    ...(DUN.floor >= 20 ? [{ id: 'darkiron', price: 140 }, { id: 'mail', price: 2600 }] : []),
+  ],
+};
+
 // ---------- Tasks (given by Elder Oswin) ----------
 const QUESTS = [
   { title: 'Clear the Way', desc: 'Gather 15 Wood by chopping branches, stumps or trees.', goal: 15, prog: s => s.stats.wood, reward: { gold: 150 } },
@@ -282,5 +321,6 @@ const QUESTS = [
   { title: 'Market Day', desc: 'Earn 2,000g from the Market Crate.', goal: 2000, prog: s => s.stats.shipped, reward: { items: [['sprinkler', 2]] } },
   { title: 'Friend of Fernhollow', desc: 'Reach 3 hearts with any villager. Talk daily and give gifts they like.', goal: 3, prog: s => Math.max(0, ...Object.values(s.friends).map(f => heartsOf(f.pts))), reward: { gold: 800 } },
   { title: 'Moonlit Harvest', desc: 'Grow and harvest a Wisp Pumpkin (plant in Autumn).', goal: 1, prog: s => s.stats.pumpkin, reward: { gold: 2500 } },
+  { title: 'Into the Depths', desc: 'Reach floor 10 of Moonfall Depths. The cave is beside the waterfall, north of the Moonwell.', goal: 10, prog: s => s.dungeonMax || 0, reward: { gold: 3000, items: [['rope', 3]] } },
 ];
 const heartsOf = pts => Math.min(5, Math.floor(pts / 50));

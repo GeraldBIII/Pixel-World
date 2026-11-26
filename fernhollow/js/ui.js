@@ -20,7 +20,7 @@ const UI = {
     });
     this.root.addEventListener('focusin', e => { const s = this.top(); if (s && s.onFocus) s.onFocus(e.target); });
     this.root.addEventListener('input', e => { const s = this.top(); if (s && s.onInput) s.onInput(e.target); });
-    for (const id of ['clock-date', 'clock-time', 'gold', 'en-bar', 'hp-bar', 'sta-bar', 'xp-bar', 'lv', 'task', 'itemname', 'hint', 'tb-act-label', 'tb-use-icon', 'tb-atk-icon']) this.hud[id] = document.getElementById(id);
+    for (const id of ['god', 'clock-date', 'clock-time', 'gold', 'en-bar', 'hp-bar', 'sta-bar', 'xp-bar', 'lv', 'task', 'itemname', 'hint', 'tb-act-label', 'tb-use-icon', 'tb-atk-icon']) this.hud[id] = document.getElementById(id);
     this.buildHotbar();
   },
 
@@ -166,7 +166,10 @@ const UI = {
   setText(id, v) { if (this._hud[id] !== v) { this._hud[id] = v; this.hud[id].textContent = v; } },
   updateHUD() {
     if (!playing || !S) return;
-    this.setText('clock-date', `${SEASONS[S.season]} ${S.day} · Year ${S.year}`);
+    this.setText('clock-date', inDungeon() ? `Moonfall Depths · Floor ${DUN.floor}` : `${SEASONS[S.season]} ${S.day} · Year ${S.year}`);
+    const godTxt = Settings.god || Settings.onehit ? `${Settings.god ? 'GOD' : ''}${Settings.god && Settings.onehit ? ' + ' : ''}${Settings.onehit ? '1-HIT' : ''} · PWR ${powerLevel()}${inDungeon() ? ` / floor ${floorPower(DUN.floor)}` : ''}` : '';
+    this.setText('god', godTxt);
+    this.hud.god.classList.toggle('hidden', !godTxt);
     const wIcon = S.weather === 'rain' ? (S.season === 3 ? '❄' : '☂') : (S.time >= 20 * 60 ? '☾' : '☀');
     this.setText('clock-time', `${wIcon} ${fmtTime(S.time)}`);
     this.setText('gold', `${S.gold.toLocaleString()}g`);
@@ -332,7 +335,7 @@ const UI = {
 
   // ---------- Settings ----------
   openSettings() {
-    const opts = { zoom: ['far', 'normal', 'close'], touch: ['auto', 'on', 'off'], rumble: [true, false], clock24: [false, true], highlight: [true, false] };
+    const opts = { zoom: ['far', 'normal', 'close'], touch: ['auto', 'on', 'off'], rumble: [true, false], clock24: [false, true], highlight: [true, false], god: [false, true], onehit: [false, true] };
     const names = { zoom: { far: 'Far', normal: 'Normal', close: 'Close' }, touch: { auto: 'Auto', on: 'Always', off: 'Off' } };
     const lbl = (k, v) => (names[k] ? names[k][v] : k === 'clock24' ? (v ? '24-hour' : '12-hour') : v ? 'On' : 'Off');
     const range = (k, label) => `<div class="set-row"><label>${label}</label><input type="range" min="0" max="100" step="5" value="${Settings[k]}" data-nav data-set="${k}"><span class="val">${Settings[k]}</span></div>`;
@@ -343,6 +346,8 @@ const UI = {
       html: `<div class="panel settings"><h2>Settings</h2>
         ${range('music', 'Music')}${range('sfx', 'Sound effects')}
         ${cyc('zoom', 'Camera zoom')}${cyc('touch', 'Touch controls')}${cyc('rumble', 'Controller vibration')}${cyc('clock24', 'Clock')}${cyc('highlight', 'Target highlight')}
+        <h3 class="sect">Playtesting</h3>
+        ${cyc('god', 'God mode (no damage, endless energy and stamina)')}${cyc('onehit', 'One-hit kills (monsters and rocks)')}
         <div class="set-row"><label>Fullscreen</label><button data-nav data-act="full">Toggle</button></div>
         <div class="menu-list"><button data-nav data-act="back">Back</button></div></div>`,
       onBack: () => UI.close(s),
@@ -390,7 +395,7 @@ const UI = {
     const K = 3, img = mapImage();
     const s = this.open({
       kind: 'map',
-      html: `<div class="panel big mapp"><h2>Map</h2><canvas class="mapc"></canvas><div class="menu-list"><button data-nav data-act="back">Close</button></div></div>`,
+      html: `<div class="panel big mapp"><h2>${inDungeon() ? `Moonfall Depths · Floor ${DUN.floor}` : 'Map'}</h2><canvas class="mapc"></canvas><div class="menu-list"><button data-nav data-act="back">Close</button></div></div>`,
       onBack: () => UI.close(s),
       actions: { back: () => UI.close(s) },
     });
@@ -400,7 +405,7 @@ const UI = {
     g.imageSmoothingEnabled = false;
     g.drawImage(img, 0, 0, W * K, H * K);
     g.font = 'bold 22px "Pixelify Sans", monospace'; g.textAlign = 'center'; g.lineWidth = 4;
-    for (const [t, x, y] of MAP_LABELS) { g.strokeStyle = 'rgba(20,12,30,.85)'; g.strokeText(t, x * K, y * K); g.fillStyle = '#fff3d0'; g.fillText(t, x * K, y * K); }
+    for (const [t, x, y] of inDungeon() ? [] : MAP_LABELS) { g.strokeStyle = 'rgba(20,12,30,.85)'; g.strokeText(t, x * K, y * K); g.fillStyle = '#fff3d0'; g.fillText(t, x * K, y * K); }
     const px = P.x / TS * K, py = P.y / TS * K;
     g.fillStyle = '#ff4060'; g.strokeStyle = '#fff'; g.lineWidth = 2;
     g.beginPath(); g.arc(px, py, 8, 0, Math.PI * 2); g.fill(); g.stroke();
@@ -497,7 +502,7 @@ const UI = {
         detail(focusSlot ?? S.sel);
       } else if (cur === 'hero') {
         const a = S.attrs, nx = xpNeed(S.level);
-        const statRows = [['Attack', ST.atk], ['Defense', ST.def], ['Max HP', S.maxHp], ['Max Stamina', S.maxSta], ['Max Energy', S.maxEnergy], ['Speed', Math.round(ST.speed * 100) + '%'], ['Crit chance', Math.round(ST.crit * 100) + '%'], ['Block', S.equip.shield ? Math.round(ST.block * 100) + '%' : '—']];
+        const statRows = [['Attack', ST.atk], ['Defense', ST.def], ['Max HP', S.maxHp], ['Max Stamina', S.maxSta], ['Max Energy', S.maxEnergy], ['Speed', Math.round(ST.speed * 100) + '%'], ['Crit chance', Math.round(ST.crit * 100) + '%'], ['Block', S.equip.shield ? Math.round(ST.block * 100) + '%' : '—'], ...(Settings.god || Settings.onehit ? [['Power level (hidden)', `${powerLevel()} / 100`]] : [])];
         body.innerHTML = `<div class="hero">
           <div class="hero-left">
             <canvas class="hero-pv px" width="16" height="28"></canvas>
@@ -542,6 +547,44 @@ const UI = {
     }
   },
 
+  // ---------- Playtest chest: every item in the game ----------
+  // Built from ITEMS, so anything added to the game shows up here automatically.
+  openTestChest() {
+    const cats = { tool: 'Tools', gear: 'Gear', seed: 'Seeds', crop: 'Crops', forage: 'Forage', food: 'Food', mat: 'Materials', loot: 'Monster loot', place: 'Placeables', special: 'Special' };
+    const ids = Object.keys(ITEMS).sort((a, b) => Object.keys(cats).indexOf(ITEMS[a].cat) - Object.keys(cats).indexOf(ITEMS[b].cat));
+    let s = null;
+    s = this.open({
+      kind: 'chest',
+      html: `<div class="panel big"><div class="shop-head"><img class="portrait px" src="${SPR.testchest.toDataURL()}" alt=""><div class="grow"><h3>Playtest Chest</h3><p class="muted">Every item in the game (${ids.length}). It never runs out.</p></div><button data-nav data-act="close" class="x">✕</button></div>
+        <div class="tabs"><button data-nav data-act="gold">+10,000g</button><button data-nav data-act="lvl">+1 level</button><button data-nav data-act="heal">Full heal</button><button data-nav data-act="night">Skip to night</button></div>
+        <div class="tbody"></div></div>`,
+      onBack: () => UI.close(s),
+      actions: {
+        close: () => UI.close(s),
+        take: el => {
+          const id = el.dataset.id, n = +el.dataset.n;
+          if (!canAdd(id, n)) { Sound.play('error'); UI.toastOnce('Your bag is full.'); return; }
+          addItem(id, n); UI.toastOnce(`Took ${ITEMS[id].name}${n > 1 ? ` ×${n}` : ''}.`);
+        },
+        gold: () => { S.gold += 10000; UI.toastOnce('+10,000g'); },
+        lvl: () => gainXP(xpNeed(S.level) - S.xp),
+        heal: () => { S.hp = S.maxHp; S.sta = S.maxSta; S.energy = S.maxEnergy; UI.toastOnce('Fully restored.'); },
+        night: () => { S.time = Math.max(S.time, 20 * 60 + 30); UI.toastOnce('It is now night.'); },
+      },
+      init: x => {
+        s = x;
+        let h = '', last = '';
+        for (const id of ids) {
+          const it = ITEMS[id];
+          if (it.cat !== last) { last = it.cat; h += `<h3 class="sect">${cats[it.cat] || it.cat}</h3>`; }
+          const single = maxStack(id) === 1;
+          h += `<div class="row"><img class="px ico2" src="${ICON_URL[id] || ICON_URL.bag}" alt=""><div class="grow"><b>${esc(it.name)}</b><div class="muted small">${esc(it.desc || '')}</div></div><button data-nav data-act="take" data-id="${id}" data-n="1">Take</button>${single ? '' : `<button data-nav data-act="take" data-id="${id}" data-n="50">×50</button>`}</div>`;
+        }
+        s.el.querySelector('.tbody').innerHTML = `<div class="rows">${h}</div>`;
+      },
+    });
+  },
+
   // ---------- Shop ----------
   openShop(id) {
     const sh = SHOPS[id];
@@ -560,7 +603,7 @@ const UI = {
         sell: el => {
           const i = +el.dataset.slot, it = S.inv[i];
           if (!it) return;
-          const n = el.dataset.all ? it.n : 1, v = ITEMS[it.id].sell * n;
+          const n = el.dataset.all ? it.n : 1, v = Math.max(1, Math.floor(ITEMS[it.id].sell * (sh.sellMul || 1))) * n;
           it.n -= n; if (it.n <= 0) S.inv[i] = null;
           S.gold += v; Sound.play('coin'); invChanged();
           render(`[data-act="sell"][data-slot="${i}"]${el.dataset.all ? '[data-all]' : ':not([data-all])'}`);
@@ -585,11 +628,13 @@ const UI = {
         const rows = [];
         for (let i = 0; i < S.invSize; i++) {
           const it = S.inv[i];
-          if (!it || !ITEMS[it.id].sell || isTool(it.id)) continue;
+          if (!it || !ITEMS[it.id].sell || isTool(it.id) || (sh.buys && !sh.buys(it.id))) continue;
           const d = ITEMS[it.id];
-          rows.push(`<div class="row"><img class="px ico2" src="${ICON_URL[it.id]}" alt=""><div class="grow"><b>${esc(d.name)} ×${it.n}</b> <span class="price">${d.sell}g each</span></div><button data-nav data-act="sell" data-slot="${i}">Sell 1</button><button data-nav data-act="sell" data-slot="${i}" data-all="1">All (${(d.sell * it.n).toLocaleString()}g)</button></div>`);
+          const each = Math.max(1, Math.floor(d.sell * (sh.sellMul || 1)));
+          rows.push(`<div class="row"><img class="px ico2" src="${ICON_URL[it.id]}" alt=""><div class="grow"><b>${esc(d.name)} ×${it.n}</b> <span class="price">${each}g each</span></div><button data-nav data-act="sell" data-slot="${i}">Sell 1</button><button data-nav data-act="sell" data-slot="${i}" data-all="1">All (${(each * it.n).toLocaleString()}g)</button></div>`);
         }
-        body.innerHTML = rows.length ? `<div class="rows">${rows.join('')}</div>` : '<p class="muted pad">You have nothing to sell.</p>';
+        const who = `<p class="muted small">${esc(NPCS[sh.owner] ? NPCS[sh.owner].name : 'Grimble')} buys ${esc(sh.buysText || 'anything')}. Anything else can go in your Market Crate.</p>`;
+        body.innerHTML = who + (rows.length ? `<div class="rows">${rows.join('')}</div>` : '<p class="muted pad">You have nothing this shop wants.</p>');
       }
       const f = (focusSel && body.querySelector(focusSel)) || body.querySelector('[data-nav]') || s.el.querySelector('[data-nav]');
       if (f) f.focus({ preventScroll: true });

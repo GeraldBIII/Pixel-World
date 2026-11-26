@@ -58,6 +58,13 @@ Browsers only let a page close its own tab in some cases. When they don't, Exit 
   - **Hero sheet:** shows your level, attributes and stats, plus six equipment slots (Weapon, Shield, Head, Body, Feet, Trinket).
   - **Gear:** 5 weapons, 3 shields, 9 armor pieces and 3 trinkets, bought from Bram and Mirabel or crafted. Equipped armor, helmets, boots and shields show on your hero.
   - **Blocking:** a raised shield stops most of a hit, but costs stamina. The dive roll makes you briefly untouchable.
+- **Moonfall Depths:** a tiered dungeon. The entrance is a cave in the cliff beside the waterfall.
+  - Every visit generates fresh floors with rooms, rocks, gem and darksteel ores, treasure chests and stairs down.
+  - Floor 1 and every 5th floor have an escape ladder, and every 5th floor also has Grimble's shop. Reaching a 5th floor unlocks it as a starting point.
+  - Slimes, bats, bone-throwing skeletons and goblins change color and gear every 5 floors and get stronger as you go down.
+  - Monster loot (bones, bat wings, goblin teeth, gems, darksteel and relics) feeds new crafting recipes. Each shopkeeper buys what fits their trade.
+- **Hidden power level (1–100):** `powerLevel()` in `js/dungeon.js` rates the hero's damage and toughness. Floors use the same scale for their monsters (`floorPower`). It's only shown with a playtesting option on.
+- **Playtesting:** Settings → Playtesting has God mode (no damage; energy, stamina and water never run out) and one-hit kills. The **Playtest Chest** beside the farmhouse hands out every item in the game. It reads the item list directly, so new items appear automatically. It also has +gold, +level, heal and skip-to-night buttons.
 - Slimes in the Whispering Woods, wolves in the Wolfwood, and wisps at night (the farm and village are safe)
 - Grass tufts and small sticks can be walked over, and still cut or chopped for fiber and wood
 
