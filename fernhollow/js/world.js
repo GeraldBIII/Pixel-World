@@ -6,7 +6,7 @@ const OW = 320, OH = 312;
 let W = OW, H = OH;
 const PX0 = 140, PY0 = 430, PXS = 4; // 4 photo px per tile (the world was doubled)
 const GND = { GRASS: 0, PATH: 1, WATER: 2, SAND: 3, TILLED: 4, PLAZA: 5, FOREST: 6, ROCKY: 7, BRIDGE: 8, CLIFF: 9, FALLS: 10, DFLOOR: 11, DWALL: 12 };
-const OB = { NONE: 0, OAK: 1, PINE: 2, STUMP: 3, ROCK: 4, CRYSTAL: 5, ORE: 6, WEED: 7, TWIG: 8, BUSH: 9, CAP: 10, DEW: 11, GLOW: 12, FENCE: 13, SPRINKLER: 14, LANTERN: 15, BLOCK: 16, LAMP: 17, CRATE: 18, BOULDER: 19, SIGN: 20, DENSE: 21, TESTCHEST: 22, STAIRS: 23, LADDER: 24, LOOT: 25, LOOTOPEN: 26, TORCH: 27, GEMROCK: 28, DARKORE: 29 };
+const OB = { NONE: 0, OAK: 1, PINE: 2, STUMP: 3, ROCK: 4, CRYSTAL: 5, ORE: 6, WEED: 7, TWIG: 8, BUSH: 9, CAP: 10, DEW: 11, GLOW: 12, FENCE: 13, SPRINKLER: 14, LANTERN: 15, BLOCK: 16, LAMP: 17, CRATE: 18, BOULDER: 19, SIGN: 20, DENSE: 21, TESTCHEST: 22, STAIRS: 23, LADDER: 24, LOOT: 25, LOOTOPEN: 26, TORCH: 27, GEMROCK: 28, DARKORE: 29, LOVESIGN: 30 };
 
 const OBJ_INFO = [];
 OBJ_INFO[OB.OAK] = { solid: 1, hp: 6, tool: 'axe', drops: [['wood', 5, 8]], becomes: OB.STUMP, pc: '#8c5a35' };
@@ -37,6 +37,7 @@ OBJ_INFO[OB.LOOT] = { solid: 1 };
 OBJ_INFO[OB.LOOTOPEN] = { solid: 1 };
 OBJ_INFO[OB.TORCH] = { solid: 1 };
 OBJ_INFO[OB.GEMROCK] = { solid: 1, hp: 5, tool: 'pick', drops: [['stone', 1, 2]], gems: true, pc: '#e0406a' };
+OBJ_INFO[OB.LOVESIGN] = { solid: 1 };
 OBJ_INFO[OB.DARKORE] = { solid: 1, hp: 5, tool: 'pick', drops: [['darkiron', 1, 2], ['stone', 0, 1]], pc: '#6a4aa8' };
 const PLACE_OBJ = { fence: OB.FENCE, sprinkler: OB.SPRINKLER, lantern: OB.LANTERN };
 const TOOL_NAMES = { axe: 'an axe', pick: 'a pickaxe', any: 'a tool' };
@@ -97,6 +98,7 @@ const OVERWORLD = {
 };
 let World = OVERWORLD;
 const TEST_CHEST = { x: 176, y: 118 };
+const LOVE_SIGN = { x: 180, y: 121, text: 'I love you Alissa.' };
 let CAVE = null; // cave entrance building, placed beside the waterfall
 
 const BUILDING_DEFS = [
@@ -365,6 +367,7 @@ function genWorld() {
   sign(110, 144, 'South: Sunny Meadow and the bridge to Fairy Isle.');
   putFree(186, 118, OB.CRATE);
   O[idx(TEST_CHEST.x, TEST_CHEST.y)] = OB.TESTCHEST;
+  O[idx(LOVE_SIGN.x, LOVE_SIGN.y)] = OB.LOVESIGN; World.signs.set(idx(LOVE_SIGN.x, LOVE_SIGN.y), LOVE_SIGN.text);
   clearRect(SPAWN.x - 1, SPAWN.y, SPAWN.x + 1, SPAWN.y + 1);
 }
 
@@ -372,6 +375,7 @@ function genWorld() {
 function restampStatic() {
   World.buildings.forEach((b, bi) => { for (let y = b.y; y < b.y + b.h; y++) for (let x = b.x; x < b.x + b.w; x++) { World.obj[idx(x, y)] = OB.BLOCK; World.bmap[idx(x, y)] = bi; } });
   World.obj[idx(TEST_CHEST.x, TEST_CHEST.y)] = OB.TESTCHEST;
+  World.obj[idx(LOVE_SIGN.x, LOVE_SIGN.y)] = OB.LOVESIGN;
   for (let y = CAVE.y + 2; y <= CAVE.y + 4; y++) for (let x = CAVE.x; x <= CAVE.x + 2; x++) { const i = idx(x, y); if (World.obj[i] && World.obj[i] !== OB.BLOCK) World.obj[i] = 0; }
 }
 

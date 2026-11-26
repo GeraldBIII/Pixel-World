@@ -567,7 +567,7 @@ function tileInteract(tx, ty, underfoot) {
     if (o === OB.STAIRS) return { label: `Descend to floor ${DUN.floor + 1}`, x: X, y: Y, run: () => enterDungeon(DUN.floor + 1) };
     if (o === OB.LADDER) return { label: 'Climb to the surface', x: X, y: Y - 16, run: () => exitDungeon() };
     if (o === OB.LOOT) return { label: 'Open', x: X, y: Y, run: () => openLootChest(tx, ty) };
-    if (o === OB.SIGN) return { label: 'Read', x: X, y: Y, run: () => UI.say({ name: 'Signpost', portrait: ICON_URL.fence }, [World.signs.get(i) || '...']) };
+    if (o === OB.SIGN || o === OB.LOVESIGN) return { label: 'Read', x: X, y: Y, run: () => UI.say({ name: 'Signpost', portrait: o === OB.LOVESIGN ? SPR.lovesign.toDataURL() : ICON_URL.fence }, [World.signs.get(i) || '...']) };
     if (World.ground[i] === GND.WATER && S.inv[S.sel] && S.inv[S.sel].id === 'can' && S.water < S.canMax) return null;
   }
   const o = World.obj[i];
@@ -1193,6 +1193,7 @@ function drawObj(g, o, tx, ty, i) {
     case OB.TORCH: g.drawImage(SPR.torch, X, Y - 8); break;
     case OB.GEMROCK: g.drawImage(SPR.gemrock, X, Y); break;
     case OB.DARKORE: g.drawImage(SPR.darkore, X, Y); break;
+    case OB.LOVESIGN: g.drawImage(SPR.lovesign, X, Y - 4); break;
   }
 }
 function drawPlayer(g) {
@@ -1279,6 +1280,7 @@ function drawLighting(g, cx, cy, time) {
     else if (o === OB.LADDER) lights.push([X, Y - 12, 40, '#fff0b0']);
     else if (o === OB.GEMROCK) lights.push([X, Y, 20, '#ff6a8a']);
     else if (o === OB.TESTCHEST) lights.push([X, Y, 26, '#c8a8ff']);
+    else if (o === OB.LOVESIGN) lights.push([X, Y - 8, 34, '#ff6a9a']);
     const c = World.crops.get(i);
     if (c && c.ready && CROPS[c.id].glow) lights.push([X, Y - 4, 26, CROPS[c.id].fruit]);
   }
