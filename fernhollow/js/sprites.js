@@ -87,8 +87,8 @@ function buildSeason(si) {
     line(g, c, 4, 14, 3, 8); line(g, c, 6, 14, 7, 6); line(g, d, 8, 14, 10, 8); line(g, c, 10, 14, 12, 9); line(g, d, 6, 14, 5, 10);
     R(g, shade(c, 0.25), 7, 6); R(g, shade(c, 0.25), 3, 8);
   }));
-  seasonCache[si] = out;
-  return out;
+  seasonCache[si] = applySeasonOverrides(out);
+  return seasonCache[si];
 }
 
 // Trees are drawn big: a 48x56 oak and a 40x60 pine, rooted in a single tile.

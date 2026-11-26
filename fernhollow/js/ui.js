@@ -551,7 +551,7 @@ const UI = {
 
   // ---------- The heart sign: read it, or change its message ----------
   openLoveSign() {
-    const pic = SPR.lovesign.toDataURL();
+    const pic = spriteURL(SPR.lovesign);
     const s = this.open({
       kind: 'lovesign',
       html: `<div class="panel lovesign"><img class="px signpic" src="${pic}" alt=""><p class="signtext">${esc(loveText())}</p>
@@ -611,7 +611,7 @@ const UI = {
     let s = null;
     s = this.open({
       kind: 'chest',
-      html: `<div class="panel big"><div class="shop-head"><img class="portrait px" src="${SPR.testchest.toDataURL()}" alt=""><div class="grow"><h3>Playtest Chest</h3><p class="muted">Every item in the game (${ids.length}). It never runs out.</p></div><button data-nav data-act="close" class="x">✕</button></div>
+      html: `<div class="panel big"><div class="shop-head"><img class="portrait px" src="${spriteURL(SPR.testchest)}" alt=""><div class="grow"><h3>Playtest Chest</h3><p class="muted">Every item in the game (${ids.length}). It never runs out.</p></div><button data-nav data-act="close" class="x">✕</button></div>
         <div class="tabs"><button data-nav data-act="gold">+10,000g</button><button data-nav data-act="lvl">+1 level</button><button data-nav data-act="heal">Full heal</button><button data-nav data-act="night">Skip to night</button></div>
         <div class="tbody"></div></div>`,
       onBack: () => UI.close(s),

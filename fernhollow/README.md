@@ -68,12 +68,24 @@ Browsers only let a page close its own tab in some cases. When they don't, Exit 
 - Slimes in the Whispering Woods, wolves in the Wolfwood, and wisps at night (the farm and village are safe)
 - Grass tufts and small sticks can be walked over, and still cut or chopped for fiber and wood
 
+## Custom sprites
+
+Replace any built-in art with your own PNGs. You don't need to write code:
+
+1. Copy a template from `assets/templates/`.
+2. Edit it in your pixel editor.
+3. Save it into `assets/`.
+4. Add one line to `assets/sprites.js`.
+
+`assets/README.md` lists every sprite name and size.
+
 ## Code layout
 
 | File | What it does |
 | --- | --- |
 | `js/data.js` | Crops, items, recipes, villagers, shops, tasks and settings. Start here to tweak the game |
-| `js/sprites.js` | All pixel art, drawn in code. Swap in your own PNGs here |
+| `js/sprites.js` | All built-in pixel art, drawn in code |
+| `js/assets.js` + `assets/sprites.js` | Loads your custom PNGs over the built-in art |
 | `js/world.js` | Map generation, regions, buildings and daily respawns |
 | `js/game.js` | Player, tools, farming, NPCs, enemies, the day cycle, saving and rendering |
 | `js/ui.js` | Menus, HUD, inventory, shops and dialogue, with controller/keyboard navigation |

@@ -53,6 +53,10 @@ function boot() {
   if (matchMedia('(pointer: coarse)').matches) Input.mode = 'touch';
   buildStatic();
   SEAS = buildSeason(0);
+  // Custom PNGs from assets/ load first, then the game starts
+  loadSpriteFiles().then(start);
+}
+function start() {
   genWorld();
   UI.init();
   Input.init();

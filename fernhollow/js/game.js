@@ -95,6 +95,7 @@ function heroLook() {
   return L;
 }
 function heroFrames() {
+  if (OVR['char.player']) return CHAR.player; // a custom player sheet replaces the gear-drawn hero
   const key = S ? EQUIP_SLOTS.map(k => S.equip[k] || '').join('|') : '';
   if (!heroCache.has(key)) heroCache.set(key, makeCharFrames(heroLook()));
   return heroCache.get(key);
@@ -569,7 +570,7 @@ function tileInteract(tx, ty, underfoot) {
     if (o === OB.LADDER) return { label: 'Climb to the surface', x: X, y: Y - 16, run: () => exitDungeon() };
     if (o === OB.LOOT) return { label: 'Open', x: X, y: Y, run: () => openLootChest(tx, ty) };
     if (o === OB.LOVESIGN) return { label: 'Read', x: X, y: Y, run: () => UI.openLoveSign() };
-    if (o === OB.SIGN) return { label: 'Read', x: X, y: Y, run: () => UI.say({ name: 'Signpost', portrait: o === OB.LOVESIGN ? SPR.lovesign.toDataURL() : ICON_URL.fence }, [World.signs.get(i) || '...']) };
+    if (o === OB.SIGN) return { label: 'Read', x: X, y: Y, run: () => UI.say({ name: 'Signpost', portrait: ICON_URL.fence }, [World.signs.get(i) || '...']) };
     if (World.ground[i] === GND.WATER && S.inv[S.sel] && S.inv[S.sel].id === 'can' && S.water < S.canMax) return null;
   }
   const o = World.obj[i];
@@ -1156,6 +1157,8 @@ function drawGround(g, tx, ty) {
   }
 }
 
+// Objects taller or wider than a tile: bottom-middle sits on the tile
+function drawTall(g, img, X, Y) { g.drawImage(img, X + 8 - (img.width >> 1), Y + 16 - img.height); }
 function drawTree(g, img, x, y, baseY) {
   const behind = playing && P.y < baseY && P.y > baseY - img.height + 10 && Math.abs(P.x - (x + img.width / 2)) < img.width / 2 - 2;
   if (behind) g.globalAlpha = 0.55;
@@ -1165,8 +1168,8 @@ function drawTree(g, img, x, y, baseY) {
 function drawObj(g, o, tx, ty, i) {
   const sh = shakes.get(i), ox = sh ? Math.round(Math.sin(sh * 70) * 1.5) : 0, X = tx * TS + ox, Y = ty * TS;
   switch (o) {
-    case OB.OAK: drawTree(g, SEAS.oak, X - 16, Y - 39, Y + 15); break;
-    case OB.PINE: case OB.DENSE: drawTree(g, SEAS.pine, X - 12, Y - 43, Y + 15); break;
+    case OB.OAK: drawTree(g, SEAS.oak, X + 8 - (SEAS.oak.width >> 1), Y + 17 - SEAS.oak.height, Y + 15); break;
+    case OB.PINE: case OB.DENSE: drawTree(g, SEAS.pine, X + 8 - (SEAS.pine.width >> 1), Y + 17 - SEAS.pine.height, Y + 15); break;
     case OB.STUMP: g.drawImage(SPR.stump, X, Y); break;
     case OB.ROCK: g.drawImage(SPR.rock, X, Y); break;
     case OB.BOULDER: g.drawImage(SPR.boulder, X, Y); break;
@@ -1180,22 +1183,22 @@ function drawObj(g, o, tx, ty, i) {
     case OB.GLOW: g.drawImage(SPR.glow, X, Y); break;
     case OB.FENCE: {
       const m = (oAt(tx - 1, ty) === OB.FENCE ? 1 : 0) | (oAt(tx + 1, ty) === OB.FENCE ? 2 : 0) | (oAt(tx, ty - 1) === OB.FENCE ? 4 : 0) | (oAt(tx, ty + 1) === OB.FENCE ? 8 : 0);
-      g.drawImage(SPR.fence[m], X, Y - 4); break;
+      drawTall(g, SPR.fence[m], X, Y); break;
     }
     case OB.SPRINKLER: g.drawImage(SPR.sprinkler, X, Y); break;
-    case OB.LANTERN: g.drawImage(SPR.lantern, X, Y - 8); break;
-    case OB.LAMP: g.drawImage(SPR.lamp, X, Y - 16); break;
+    case OB.LANTERN: drawTall(g, SPR.lantern, X, Y); break;
+    case OB.LAMP: drawTall(g, SPR.lamp, X, Y); break;
     case OB.CRATE: g.drawImage(SPR.crate, X, Y); break;
     case OB.SIGN: g.drawImage(SPR.sign, X, Y); break;
     case OB.TESTCHEST: g.drawImage(SPR.testchest, X, Y); break;
     case OB.STAIRS: g.drawImage(SPR.stairs, X, Y); break;
-    case OB.LADDER: g.drawImage(SPR.ladder, X, Y - 16); break;
+    case OB.LADDER: drawTall(g, SPR.ladder, X, Y); break;
     case OB.LOOT: g.drawImage(SPR.loot, X, Y); break;
     case OB.LOOTOPEN: g.drawImage(SPR.lootOpen, X, Y); break;
-    case OB.TORCH: g.drawImage(SPR.torch, X, Y - 8); break;
+    case OB.TORCH: drawTall(g, SPR.torch, X, Y); break;
     case OB.GEMROCK: g.drawImage(SPR.gemrock, X, Y); break;
     case OB.DARKORE: g.drawImage(SPR.darkore, X, Y); break;
-    case OB.LOVESIGN: g.drawImage(SPR.lovesign, X, Y - 4); break;
+    case OB.LOVESIGN: drawTall(g, SPR.lovesign, X, Y); break;
   }
 }
 function drawPlayer(g) {
